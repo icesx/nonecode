@@ -1,0 +1,7 @@
+1、安装插件
+	A、scala，下载scla-ide插件，在eclipse中安装
+	B、subclipse：在eclipse market安装就可以了
+	C、SparkBuilderGeneratorPlugin 在eclipse market安装就可以了
+2、清理工作空间
+	rm .metadata/.plugins/org.eclipse.e4.workbench -r
+
