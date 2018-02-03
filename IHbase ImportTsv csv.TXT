@@ -1,0 +1,17 @@
+0、Hbase进行大量数据导入的时候，通过API或者Mapreduce的方式太慢，经过研究发现，可以使用TSV导入的方式进行，又可以分为通过PUT和直接写HFile两种方式。
+1、put 方式
+./hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="CDC:CREATETIME,CDC:UPDATETIME,HBASE_ROW_KEY,CDC:ZPLX,CDC:DJR,CDC:ZHXGR,CDC:ZHXGJGMC,CDC:ZHXGJGDM,CDC:DJJGDM,CDC:RID,CDC:RKRQ,CDC:BZ,CDC:DJJGMC,CDC:ZHXGJG,CDC:ZHXGRXM,CDC:ZHXGSJ,CDC:DJJG,CDC:ETL_DATE,CDC:YXZT,CDC:ID,CDC:DJRDM,CDC:DJRXM,CDC:ZHXGRDM,CDC:DJSJ,CDC:YXYCKZPXSF,CDC:CARDNO,CDC:ZPXX,CDC:ZPXXBASE64" CDC_F_PSBW_P_RK_ZPXX hdfs://hadoop-gd10:9100/xjgz/cdc/import_csv/CDC_F_PSBW_P_RK_ZPXX.json.csv.csv 
+$bin/hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns=a,b,c <tablename> <hdfs-inputdir>
+
+2、
+	A,创建hfile
+./hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator="," -Dimporttsv.columns="CDC:CREATETIME,CDC:UPDATETIME,HBASE_ROW_KEY,CDC:ZPLX,CDC:DJR,CDC:ZHXGR,CDC:ZHXGJGMC,CDC:ZHXGJGDM,CDC:DJJGDM,CDC:RID,CDC:RKRQ,CDC:BZ,CDC:DJJGMC,CDC:ZHXGJG,CDC:ZHXGRXM,CDC:ZHXGSJ,CDC:DJJG,CDC:ETL_DATE,CDC:YXZT,CDC:ID,CDC:DJRDM,CDC:DJRXM,CDC:ZHXGRDM,CDC:DJSJ,CDC:YXYCKZPXSF,CDC:CARDNO,CDC:ZPXX,CDC:ZPXXBASE64" -Dimporttsv.bulk.output=hdfs://hadoop-gd10:9100/xjgz/cdc/import_csv/CDC_F_PSBW_P_RK_ZPXX CDC_F_PSBW_P_RK_ZPXX hdfs://hadoop-gd10:9100/xjgz/cdc/import_csv/CDC_F_PSBW_P_RK_ZPXX.json.csv.csv 
+$ bin/hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns=a,b,c -Dimporttsv.bulk.output=hdfs://storefile-outputdir <tablename> <hdfs-data-inputdir>
+	[这种方式可以判断是否格式的问题，有问题的话，控制台会提示]
+	B、发现使用入行命令创建的时候，mapreduce并没有进入到hadoop的管理界面上。并且产生的临时文件存储在了/tmp目录下，即使修改了hadoop和hbase的配置也没有用。故改为使用hadoop的方式执行mapreduce，命令如下
+	./hadoop jar ../../hbase-1.1.2/lib/hbase-server-1.1.2-jar importtst -Dimporttsv.separator="," -Dimporttsv.columns="CDC:CREATETIME,CDC:UPDATETIME,HBASE_ROW_KEY,CDC:ZPLX,CDC:DJR,CDC:ZHXGR,CDC:ZHXGJGMC,CDC:ZHXGJGDM,CDC:DJJGDM,CDC:RID,CDC:RKRQ,CDC:BZ,CDC:DJJGMC,CDC:ZHXGJG,CDC:ZHXGRXM,CDC:ZHXGSJ,CDC:DJJG,CDC:ETL_DATE,CDC:YXZT,CDC:ID,CDC:DJRDM,CDC:DJRXM,CDC:ZHXGRDM,CDC:DJSJ,CDC:YXYCKZPXSF,CDC:CARDNO,CDC:ZPXX,CDC:ZPXXBASE64" -Dimporttsv.bulk.output=hdfs://hadoop-gd10:9100/xjgz/cdc/import_csv/CDC_F_PSBW_P_RK_ZPXX CDC_F_PSBW_P_RK_ZPXX hdfs://hadoop-gd10:9100/xjgz/cdc/import_csv/CDC_F_PSBW_P_RK_ZPXX.json.csv.csv
+	C、加载
+	./hadoop jar /home/docker/software/hbase-1.1.2/lib/hbase-server-1.1.2.jar completebulkload   hdfs://hadoop-gd10:9100/xjgz/cdc/bulk/CDC_F_PSBW_P_RK_ZPXX/ CDC_F_PSBW_P_RK_ZPXX
+	注：加载后发现Hfile并不是256MB一个，可能很大，如上的例子中创建的HFile有10GB大小，估计Hbase后后续自己进行分割吧[经验证，Hbase会自己做平衡的]
+3、查看结果
+	./hbase org.apache.hadoop.hbase.mapreduce.RowCounter 'tableName'
