@@ -1,6 +1,6 @@
-1、ufw 相关的概念
+###ufw 相关的概念
 	ufw是ubuntu的简单防火墙
-2、相关的命令
+###相关的命令
    sudo ufw status
    ufw disable 
    ufw enable 
@@ -13,7 +13,7 @@
    ufw status verbose 
    ufw status numbered 
    ufw delete 11
-3、端口转发
+###端口转发
 	A、打开linux的ip转发
 		vi /etc/sysctl.cnf 
 		net.ipv4.ip_forward=1

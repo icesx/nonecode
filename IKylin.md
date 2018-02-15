@@ -10,3 +10,4 @@
 		帐号：ADMIN	密码：KYLIN
 	C、HIVE 数据库名
 		#echo kylin.source.hive.database-for-flat-table=CDC >> 	${kylin_home}/conf/kylin.properties
+###

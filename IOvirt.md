@@ -1,42 +1,43 @@
-1、engine
+###安装
+1. engine
 	yum install tar
 	yum install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release36.rpm
 	yum -y install ovirt-engine
 	engine-setup
-2、node
+2. node
 	yum install tar
 	yum install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release36.rpm
 	yum install vdsm
 	注：也可以不用执行此步，在增加hosts的时候，engine会自动安装相关的服务
-3、ISO
+3. ISO
 	ISO有多种方式：
-	A、local方式：在这种方式下，每个host只能使用自己的ISO,将ISO 复制到如下目录即可
+	A. local方式：在这种方式下，每个host只能使用自己的ISO,将ISO 复制到如下目录即可
 		[root@cdchard01 11111111-1111-1111-1111-111111111111]# pwd
 			/cloud/iso/9f604de2-3a0a-41b9-83fa-d75ac992afb3/images/11111111-1111-1111-1111-111111111111
 		[root@cdchard01 11111111-1111-1111-1111-111111111111]# ls
 			cn_windows_server_2008_datacenter_enterprise_standard_x64_dvd_x14-26746.iso  trusty-server-amd64.iso		
-	B、shared方式
+	B. shared方式
 		在shared模式下一个NFS挂载点只能被一个主机挂载一次
 		NFS共享的目录是存放虚拟文件的地方，故可能是性能问题的点
 		在shared模式下，所有的host可以共享虚拟机，虚拟机可以在各个host之间迁移——尚未确定动态迁移
 		colne也是在共享目录下clone一个虚拟机文件
-	C、ISO 可以用NFS的方式发布出去，然后在每个节点上attach iso
-4、export
+	C. ISO 可以用NFS的方式发布出去，然后在每个节点上attach iso
+4. export
 	
-4、window
+4. window
 	驱动：https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso
 	先安装scasi再安装以太网，以太网的要选对版本，否则可能会蓝屏
-5、配置相关
-	A、网络
+5. 配置相关
+	A. 网络
 		建立网络后，需要在host中将建立的虚拟网络和本地的网卡关联
-	B、如果建立的网桥绑定错了网卡的问题：
-		a、ovirt有bug，删除网络设备的时候，不能删除操作系统上的网络设备，需要手工删除，在如下目录中
+	B. 如果建立的网桥绑定错了网卡的问题：
+		a. ovirt有bug，删除网络设备的时候，不能删除操作系统上的网络设备，需要手工删除，在如下目录中
 			/etc/libvirt/qemu/networks
-		b、yum remove vdsm vdsm-* libvirt-*
-		b、删除之后，需要手动恢复设备的IP地址再重启network，需要使用brctl 来删除网桥
-		c、需要手动卸载vsdm，之后再将该节点增加到集群中，vsdm会自动创建正确的的ovirtmgmt
-6、问题处理
-	A、clone的虚拟机的网卡无法启动
+		b. yum remove vdsm vdsm-* libvirt-*
+		b. 删除之后，需要手动恢复设备的IP地址再重启network，需要使用brctl 来删除网桥
+		c. 需要手动卸载vsdm，之后再将该节点增加到集群中，vsdm会自动创建正确的的ovirtmgmt
+6. 问题处理
+	A. clone的虚拟机的网卡无法启动
 		原因是：虚拟机启动的时候，会按照mac地址绑定到eth*上面，而本体的虚拟机中已经有一个eth0了，clone的虚拟机会再增加一个eth1，但是此时如果/etc/network/interfaces中配置的是eth0的话，就无法使用网络了——因为克隆出来的机器根本没有eth0对应的mac地址。
 		解决版本：在clone的机器中ip绑定到eth1上,或者删除“SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="00:1a:4a:16:01:55", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"”然后重启虚拟机
 		docker@hadoop-xj110:~$ cat /etc/udev/rules.d/70-persistent-net.rules 
@@ -48,42 +49,42 @@
 
 		# PCI device 0x1af4:0x1000 (virtio_net)
 		SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="00:1a:4a:16:01:55", ATTR{dev_id}=="0x0", ATTR{type}=="1", KERNEL=="eth*", NAME="eth0"
-	B、网卡可以用，但是机器启动慢“waiting for network configuration”，是两个网关引起的
-	C、Cannot locate vdsm package
-	E、如果从高版本切换回低版本的时候，一定要#yum autoremove因为，高版本在卸载的时候可能没有将依赖的jar包卸载掉，导致版本的冲突。明确的引起的问题是
+	B. 网卡可以用，但是机器启动慢“waiting for network configuration”，是两个网关引起的
+	C. Cannot locate vdsm package
+	E. 如果从高版本切换回低版本的时候，一定要#yum autoremove因为，高版本在卸载的时候可能没有将依赖的jar包卸载掉，导致版本的冲突。明确的引起的问题是
 		Error during deploy dialog: java.io.IOException: Unexpected connection termination
 
-	F、	VDSNetworkException: Heartbeat exeeded，现象是虚拟机无法启动
+	F. 	VDSNetworkException: Heartbeat exeeded，现象是虚拟机无法启动
 		出现这个问题的原因是libvirtd 的问题
 		#journalctl -b -u libvirtd.service
 		#tail -f /var/log/messages
 		可以看到libvirtd.service: main process exited, code=killed, status=11，
 		解决的办法是：
-7、镜像的共享
-	A、需要在所有主机上开启NFS
+7. 镜像的共享
+	A. 需要在所有主机上开启NFS
 		[root@cdchard02 images]# cat /etc/exports
 		/iso *(rw,sync,no_subtree_check,all_squash,anonuid=36,anongid=36)
 		chown vdsm:kvm iso
-	B、
-	B、将创建好的vm_disk-windows-2008-base.qcow2 镜像文件cp到ovirt的manager的机器上
-	C、使用如下命令将qcow2文件做成ovrit可识别的镜像
+	B. 
+	B. 将创建好的vm_disk-windows-2008-base.qcow2 镜像文件cp到ovirt的manager的机器上
+	C. 使用如下命令将qcow2文件做成ovrit可识别的镜像
 		#wget https://jboggs.fedorapeople.org/guest-image-ovf-creator.py
 		#python guest-image-ovf-creator.py  --disk vm_disk-windows-2008-base.qcow2
-	D、使用如下命令将镜像上传到对应的主机的NFS中
+	D. 使用如下命令将镜像上传到对应的主机的NFS中
 		#engine-image-uploader list
 		#engine-image-uploader upload /tmp/tmp593dFa export-domain -e Export-NFS-02
-	E、此时可以在UI的Export-NFS-02上应该可以看到镜像了，但是实地上却没有，为什么呢？【目前还不知道】
-	F、
+	E. 此时可以在UI的Export-NFS-02上应该可以看到镜像了，但是实地上却没有，为什么呢？【目前还不知道】
+	F. 
 	
 
-8、关于自启动
-	A、#ln -s /run/libvirt/qemu/hadoop-vpn-xj127.xml  /etc/libvirt/qemu/hadoop-vpn-xj127.xml 【有待验证】
+###关于自启动
+	A. #ln -s /run/libvirt/qemu/hadoop-vpn-xj127.xml  /etc/libvirt/qemu/hadoop-vpn-xj127.xml 【有待验证】
 
-9、命令行
+###命令行
 	ovirt-shell -A /etc/pki/ovirt-engine/ca.pem -l https://cdchard01/api
 	【但是由于cdchard01这个域名没有.所有会报格式错误的异常】
 
-10、几个目录
+###几个目录
 	/var/lib/ovirt-engine/
 	/etc/ovirt*
 	/usr/share/ovirt-*
