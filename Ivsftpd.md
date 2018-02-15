@@ -10,7 +10,7 @@
 		chroot_list_enable=NO	【】
 		chroot_local_user=YES	【If chroot_local_user is YES, then this list becomes a list of users to NOT chroot()】
 		allow_writeable_chroot=YES   【允许chroot的时候写文件】
-		注：￥{home} 应该为755
+		注：${home} 应该为755
 		#被动模式	
 		pasv_enable=YES
 		pasv_min_port=6000

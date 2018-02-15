@@ -53,11 +53,11 @@
 	lrwxrwxrwx. 1 root root 33 5月   5 09:41 /etc/localtime -> /usr/share/zoneinfo/Asia/Shanghai
 ### tar
 	tar -cvf test.tgz test/ --exclude *.txt --exclude *.jpg
-###nc
+### nc
 	$  nc -vz -u 10.1.0.100 53
 	Connection to 10.1.0.100 53 port [udp/domain] succeeded!
 	
-###user home
+### user home
 
 
 	
