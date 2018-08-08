@@ -6,9 +6,8 @@
 	Ctrl + Shift + Enter 语句完成
 	Ctrl + P 参数信息（在方法中调用参数）
 	Ctrl + Q 快速查看文档
-	Shift + F1 外部文档
 	Ctrl + 鼠标 简介
-	Ctrl + F1 显示错误描述或警告信息
+	Shift+ F1 显示错误描述或警告信息
 	Alt + Insert 自动生成代码
 	Ctrl + O 重新方法
 	Ctrl + Alt + T 选中

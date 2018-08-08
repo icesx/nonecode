@@ -9,6 +9,7 @@ vi /etc/inittab
 ```
 ###wifi
 ```
+sudo iwlist wlan0 scan
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
     ssid="testing"
@@ -54,5 +55,3 @@ wiringPi Pin	Name	Board Pin	BCM GPIO
 18	GPIO 9		29
 19	GPIO10		30
 20	GPIO11		31
-
-

@@ -58,9 +58,22 @@
 	Connection to 10.1.0.100 53 port [udp/domain] succeeded!
 	
 ### user home
-
+	usermod -m -d /newhome/username username
 ### subString
 
+##ulimit 
+
+###/etc/security/limits.conf
+	$echo "* - nofile 102400" >> /etc/security/limits.conf
+ 
+###/etc/pam.d/login
+	session required /lib/security/pam_limits.so 
+
+### /etc/sysctl.cfg
+
+	fs.file-max=102400
+###/etc/ssh/sshd_config
+	UsePAM yes
 
 
 	
