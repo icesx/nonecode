@@ -1,8 +1,20 @@
 ###安装
-$./mysqld_safe --user=mysql&
-
-$chown -R mysql mysqld . 
-
+	$tar –zxvf mysql-enterprise-5.0.30-linux-i686-glibc23.tar.gz –C /usr/local/
+	$cd /usr/local/
+	$ln –s /cloud/mysql-enterprise-5.0.30-linux-i686-glibc23 mysql
+	$cd mysql
+	$groupadd mysql
+	$useradd -g mysql mysql
+	$chown -R mysql：mysql .
+	$sudo usermod  -a -G mysql docker [当前docker用户加入mysql组]
+	$scripts/mysql_install_db --user=mysql
+	$cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
+	$./mysqld_safe --user=mysql& 
+###创建用户
+	Grant alter,usage,drop,select,insert,update,delete,create,index,show view,create temporary tables,execute on cdc.*TO'docker'@'%' identified by 'xjgz@123'; 
+###权限处理
+	./mysqld_safe --skip-grant-table
+###异常处理
 
 ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
 

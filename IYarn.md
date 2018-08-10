@@ -53,12 +53,18 @@
 		export JAVA_HOME=/TOOLS/jdk1.7.0_71_linux_x64
 		export HADOOP_PID_DIR=/bigdata/hadoop/pids
 	E、yarn-site.xml
-		<configuration>
-		<property>  
-		<name>yarn.nodemanager.aux-services</name>  
-		<value>mapreduce_shuffle</value>  
-		</property>  
-		</configuration>
+		<property>
+			<name>yarn.nodemanager.aux-services</name>
+			<value>mapreduce_shuffle,spark_shuffle</value>
+		</property>
+		<property>
+			<name>yarn.nodemanager.aux-services.spark_shuffle.class</name>
+		<value>org.apache.spark.network.yarn.YarnShuffleService</value>
+		</property>
+				 <property>
+		  <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+		  <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+		 </property>
 	F、slavers文件中配置节点名称
 	J、需要在节点机器上的/etc/hosts中增加节点的ip和域名
 		因为hdfs启动的时候，会登录到节点上启动相关的程序，启动的时候会用ip反解域名，如果没有域名则启动异常
@@ -77,18 +83,7 @@
 		static{
 			System.setProperty("HADOOP_USER_NAME", "docker");
 		}
-	B、mapreduce不报错无法执行：
-		在yarn-site.xml 增加如下配置:
-		<configuration>
-		 <property>
-		  <name>yarn.nodemanager.aux-services</name>
-		  <value>mapreduce_shuffle</value>
-		 </property>
-		 <property>
-		  <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
-		  <value>org.apache.hadoop.mapred.ShuffleHandler</value>
-		 </property>
-		</configuration>
+
 	C、yarn启动异常
 		java.net.ConnectException: Call From hadoop2/172.16.1.2 to 0.0.0.0:8031 failed on connection exception，这个原因是yarn的默认配置去拿了0.0.0.0为resourcemanager的地址，需要在yarn-site中制定master地址。
 	D、yarn mapreduce执行等待时间长【yarn-2.6.0】
@@ -110,7 +105,10 @@
 	E、webUI 无法打卡 connection reset
 		yarn.resourcemanager.webapp.address，这个地址不能设置成0.0.0.0,需要设置为master地址
 ### start-yarn
-	#		
+	#
+### with spark
+	config yarn shuffleservice
+	echo "CLASSPATH=${CLASSPATH}:/home/docker/software/spark-2.1.1-bin-hadoop2.6/yarn/spark-2.1.1-yarn-shuffle.jar" >> ~${hadoop-home}/libexec/hadoop-config.sh
 		
 
 

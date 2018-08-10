@@ -59,6 +59,7 @@
 	
 ### user home
 	usermod -m -d /newhome/username username
+	
 ### subString
 
 ##ulimit 

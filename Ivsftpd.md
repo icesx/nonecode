@@ -41,8 +41,10 @@
 	
 
 ### 目前使用的配置为
+	listen_port=61321
 	userlist_enable=No
 	userList_deny=No
 	chroot_list_enable=No
 	chroot_local_user=YES
 	allow_writeable_chroot=YES
+	write_enable=YES

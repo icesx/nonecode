@@ -22,8 +22,9 @@
 ###配置存储路径
 	$vi $redis_home/redis.conf
 	dir /cloud/redis
-		
+###配置日志
+	dir /cloud/reids.log
 ###刷写数据
 	$./redis-cli save
 ###清理数据
-	$
+	
