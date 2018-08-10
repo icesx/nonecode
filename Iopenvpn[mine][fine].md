@@ -1,9 +1,9 @@
-1、安装
+###安装
 	centos7上yum里没有openvpn的源，需要安装readhead的源，使用如下命令
 	yum install epel-release
 	yum install openvpn easy-rsa -y
 	yum install 
-2、配置
+###配置
 	cp /usr/share/doc/openvpn-*/sample/sample-config-files/server.conf /etc/openvpn	
 	vi /etc/openvpn/server.conf
 		dh dh2048.pem
@@ -18,7 +18,7 @@
 	关闭 selinux 
 		setenforce 0 
 		vi /etc/sysconfig/selinux
-3、key on easy-rsa2
+###key on easy-rsa2
 	mkdir -p /etc/openvpn/easy-rsa/keys
 	cp -rf /usr/share/easy-rsa/2.0/* /etc/openvpn/easy-rsa
 	vi /etc/openvpn/easy-rsa/vars
@@ -38,7 +38,7 @@
 	#cp dh2048.pem ca.crt server.crt server.key /etc/openvpn
 	#cd /etc/openvpn/easy-rsa
 	#./build-key client	【client是你需要授权的账户，可以多次执行该命令来生成多个客户端的账户授权文件，如./build-key langk】
-3.1、 key on easy-rsa3
+###key on easy-rsa3
 	wget https://github.com/OpenVPN/easy-rsa/archive/master.zip
 	unzip master.zip
 	mv easy-rsa-master easy-rsa
@@ -51,17 +51,17 @@
 	cp pki/private/server.key /etc/openvpn/             
 	cp pki/issued/server.crt /etc/openvpn/                          
 	cp pki/dh.pem /etc/openvpn/
-4、操作系统配置
+###操作系统配置
 	vi /etc/sysctl.conf
 	net.ipv4.ip_forward = 1
 	sysctl -p
-5、服务器配置
+###服务器配置
 	systemctl -f enable openvpn@server.service
 	systemctl start openvpn@server.service
 	如果如上命令不能执行，使用如下命令：
 		openvpn --config /etc/openvpn/server.cnf
 	ifconfig p4p1:0 172.16.1.200 up	【增加一个虚拟网卡，用于链接到172.16.1.0/24网段】
-6、客户端配置
+###客户端配置
 	A、将如下三个文件发布给客户端机器	
 		/etc/openvpn/easy-rsa/keys/ca.crt
 		/etc/openvpn/easy-rsa/keys/client.crt
@@ -85,7 +85,7 @@
 		openvpn --config /etc/openvpn/client.ovpn
 		ping 10.8.0.1	【应该可以ping通】
 		ping 10.0.88.40	【应该ping不通】
-6、防火墙配置
+###防火墙配置
 		centos7 下
 		#systemctl stop firewalld
 		#systemctl mask firewalld
@@ -100,19 +100,18 @@
 			iptables -t nat -A POSTROUTING -d 172.16.1.0/24 -o eth1 -j MASQUERADE
 		ubuntu 下
 		ufw route allow in on tun0 out on ens18
-7、多客户端
+###多客户端
 	source ./vars
 	./build-key langk
 	./build-key jinwl
 
-8、注销账户
+###注销账户
 	./revoke-full client1
 	vim /etc/openvpn/server.conf
 	crl-verify /etc/openvpn/crl.pem
 	Reload the OpenVPN server to activate the revoke setting onle once.
 	/etc/init.d/openvpn reload
 
-9、问题处理
-	Failed to start OpenVPN Robust And Highly Flexible Tunneling Applica
-tion On server.
+###问题处理
+	Failed to start OpenVPN Robust And Highly Flexible Tunneling Application On server.
 	注释掉#tls-auth ta.key 0 # This file is secret
