@@ -10,10 +10,26 @@
 	$scripts/mysql_install_db --user=mysql
 	$cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
 	$./mysqld_safe --user=mysql& 
+###配置
+	$sudo cp my-default.cnf /etc/my.cnf
+	$vi /etc/my.cnf
+```
+[mysqld]
+character-set-server=utf8
+collation-server=utf8_general_ci
+
+
+[client]
+default-character-set=utf8
+
+
+```
+
 ###创建用户
 	Grant alter,usage,drop,select,insert,update,delete,create,index,show view,create temporary tables,execute on cdc.*TO'docker'@'%' identified by 'xjgz@123'; 
 ###权限处理
 	./mysqld_safe --skip-grant-table
+	
 ###异常处理
 
 ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)

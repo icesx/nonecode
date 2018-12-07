@@ -1,6 +1,8 @@
 ### usermod
 `usermod -a -G wheel docker`
 `logout`
+###sudoer
+	sudo usermod -a -G sudo <username>
 ###find
 	find ./*  -mtime +7 -type f -a  -exec rm -f {} \;
 	find . -exec cat {} \;|grep workSpace
@@ -75,6 +77,16 @@
 	fs.file-max=102400
 ###/etc/ssh/sshd_config
 	UsePAM yes
-
+### mount
+	/etc/fstab
+	mount -a
 
 	
+###rc.local
+#### 指定用户启动
+```
+su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
+```
+### network
+####显示网卡
+	ip link show

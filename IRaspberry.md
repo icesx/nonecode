@@ -1,3 +1,5 @@
+###安装
+sudo dd if=/TOOLS/TOOLS/Linux/ISO/2018-04-18-raspbian-stretch-lite.img  of=/dev/mmcblk0 bs=4M
 ### first
 user:pi
 passwd:raspberry
@@ -5,16 +7,28 @@ passwd:raspberry
 树莓派自带一个串口/dev/ttyAMA0,但是默认这个串口被getty使用了，所以在开机启动中，注销掉后，才能在py中使用这个串口
 ```
 vi /etc/inittab
-\#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
 ```
 ###wifi
 ```
+sudo ifconfig wlan0 up
 sudo iwlist wlan0 scan
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
 network={
     ssid="testing"
     psk="testingPassword"
 }
+```
+注意：目前测试网口和wifi无法同时用，网口用了后，wifi获取不到ip地址或者设备起不来
+### ip
+```
+auto eth0
+iface eth0 inet static
+   address 10.253.0.50
+   netmask 255.255.255.0
+   network 10.253.0.0
+   gateway 10.253.0.1
+   dns-nameservers 8.8.8.8
 ```
 ###keybord
 $sudo nano /etc/default/keyboard 

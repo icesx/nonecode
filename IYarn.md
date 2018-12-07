@@ -110,5 +110,41 @@
 	config yarn shuffleservice
 	echo "CLASSPATH=${CLASSPATH}:/home/docker/software/spark-2.1.1-bin-hadoop2.6/yarn/spark-2.1.1-yarn-shuffle.jar" >> ~${hadoop-home}/libexec/hadoop-config.sh
 		
+###log
 
++ mapred-site.xml
+<property> 
+      <name>mapreduce.jobtracker.address</name>
+      <value>hadoop-cx11</value>
+</property>
+<property> 
+      <name>mapreduce.jobhistory.address</name>
+      <value>hadoop-cx11:10020</value>
+</property>
+<property> 
+      <name>mapreduce.jobhistory.webapp.address</name>
+      <value>hadoop-cx11:19888</value>
+</property>
+<property>
+    <name>mapreduce.job.userlog.retain.hours</name>
+    <value>36</value>
+</property>
 
++ yarn-site.xml
+   
+<property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>true</value>
+</property>
+<property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>true</value>
+</property>
+<property>
+    <name>yarn.log-aggregation.retain-seconds</name>
+    <value>172800</value>
+</property>
+<property>
+    <name>yarn.log.server.url</name>
+    <value>http://solar10:19888/jobhistory/logs</value>
+</property>

@@ -7,6 +7,7 @@
 	$lvcreate -l 100%FREE -n cloud cdc
 	$lvreduce -L 500G /dev/centos_dell30/home
 	$lvextend -L +1T /dev/centos_dell30/root
+	$lvextend -l +100%FREE /dev/centos_dell30/root
 	$  vgdisplay 
 	$  lvdisplay 
 	$  mkfs.ext4 /dev/cdc/cloud 

@@ -5,5 +5,6 @@
 4、关闭系统的automatic pac
 5、开启ipv6
 	$sudo apt-get install miredo
-	$ping6 google.com
-	在xx-net中开启ipv6
+	$sudo service miredo restart
+	$修改路由器上的dns，否则miredo有时无法建立，经测试114.114.114.114暂时可以
+	

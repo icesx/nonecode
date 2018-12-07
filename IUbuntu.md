@@ -17,6 +17,24 @@ $gsettings set org.gnome.Vino require-encryption false
 	$vi /etc/network/interfaces
 	$ip addr flush dev ens160
 	$service networking restart
+####ubuntu18
+	network配置发生变化，修改方式如下：
+```
+solar@solarsystem:~$ cat /etc/netplan/01-netcfg.yaml 
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+      eno1:
+        dhcp4: no
+        dhcp6: no
+        addresses: [192.168.31.101/24]
+        gateway4: 192.168.31.1
+        nameservers:
+              addresses: [192.168.31.1]
+```
 ###多网卡配置
 	$ip link
 ##ufw
@@ -46,7 +64,8 @@ $gsettings set org.gnome.Vino require-encryption false
 		#DEFAULT_FORWARD_POLICY="DROP"
 		DEFAULT_FORWARD_POLICY="ACCEPT"
 		【配置的时候出现多次配置不成功的情况，后来估计就是这个原因】
-	C、vi /etc/ufw/befor.rulers
+	C、端口转发【ufw没有端口转发的命令】
+		vi /etc/ufw/befor.rulers
 		 在*filter前面增加
 		*nat
 		:PREROUTING ACCEPT [0:0]
@@ -61,3 +80,36 @@ $gsettings set org.gnome.Vino require-encryption false
 		ufw enable
 		[似乎reload不行]
 		或者重启操作系统
+	E、log
+		ufw allow log 8400
+		tail -f /var/log/ufw.log
+	F、delete
+		ufw status numbered
+		ufw delete 4
+### zip 乱码
+```
+sudo apt install unar
+$ lsar filename.zip
+$ unar filename.zip
+```
+###ulimit
+
+Modify /etc/systemd/user.conf and /etc/systemd/system.conf with the following line (this takes care of graphical login):
+
+	DefaultLimitNOFILE=65535
+Modify /etc/security/limits.conf with the following lines (this takes care of non-GUI login):
+
+	* hard nofile 65535
+	* soft nofile 65535
+### dns
+```
+
+For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
+
+iface eth0 inet static
+address 192.168.3.3
+netmask 255.255.255.0
+gateway 192.168.3.1
+dns-search example.com
+dns-nameservers 192.168.3.45 192.168.8.10
+```

@@ -5,8 +5,9 @@
 	vm.max_map_count=655360
 	set limit to 1024000
 2. 解压之后直接运行
+	$elasticsearch -d
 3. config
-	$vi $es/conf/elasticsearch.yml
+	$vi $es/config/elasticsearch.yml
 	network.host: ${HOSTNAME}
 	path.data: xxx
 	path.logs: yyy
@@ -24,17 +25,23 @@
 1. 插件
 	$bin/elasticsearch-plugin  install file:///TOOLS/software/elasticsearch/x-pack/x-pack-6.2.2.zip 
 	注：必须加file:///
+	在线安装
+	bin/elasticsearch-plugin install x-pack 
 2. 设置密码
 	${es_home}/bin/x-park/setup-passwords interactive
 3. Install X-Pack into Kibana
 	./kibana-plugin  install file:///TOOLS/software/elasticsearch/x-pack/x-pack-6.2.2.zip
 4.  Add credentials to the kibana.yml file
+	server.host: "solar25"
+	elasticsearch.url: "http://solar25:9200"
 	elasticsearch.username: "kibana"
 	elasticsearch.password: "elastic"
 5. Navigate to Kibana at http://localhost:5601/
 Log in as the built-in elastic user with the auto-generated password from step 3
 6. 安装插件后要重启才能生效
-
+7. ik
+	wget https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.4.2/elasticsearch-analysis-ik-6.4.2.zip
+	/cloud/software/elasticsearch/elasticsearch-6.2.2/bin/elasticsearch-plugin  install file:///cloud/es-plugin/elasticsearch-analysis-ik-6.4.2.zip
 ### kibana
 
 

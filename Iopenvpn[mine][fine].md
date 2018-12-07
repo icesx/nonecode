@@ -1,8 +1,15 @@
 ###安装
+####centos
 	centos7上yum里没有openvpn的源，需要安装readhead的源，使用如下命令
 	yum install epel-release
 	yum install openvpn easy-rsa -y
 	yum install 
+####ubuntu
+	sudo apt install openvpn easy-rsa -y
+	cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/
+####ubuntu offline
+	wget http://ftp.us.debian.org/debian/pool/main/e/easy-rsa/easy-rsa_2.2.2-1_all.deb
+	
 ###配置
 	cp /usr/share/doc/openvpn-*/sample/sample-config-files/server.conf /etc/openvpn	
 	vi /etc/openvpn/server.conf
@@ -86,20 +93,38 @@
 		ping 10.8.0.1	【应该可以ping通】
 		ping 10.0.88.40	【应该ping不通】
 ###防火墙配置
-		centos7 下
-		#systemctl stop firewalld
-		#systemctl mask firewalld
-		#yum install iptables-services -y
-		#systemctl enable iptables
-		#iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o p4p1 -j MASQUERADE【将来源于10.8.0.0/24的网段转发到 p4p1网卡——即讲客户端的请求转发到10.0.88.0/24这个网卡上】
-		ping 10.0.88.40	【应该ping通】
-		记得在10.0.88.70上增加指向172.16.1.0/24的路由
-			route add -net 172.16.1.0/24 gw 10.0.88.40
-		[新疆]
-			iptables -t nat -A POSTROUTING -d 192.168.0.0/24 -o eth0 -j MASQUERADE
-			iptables -t nat -A POSTROUTING -d 172.16.1.0/24 -o eth1 -j MASQUERADE
-		ubuntu 下
-		ufw route allow in on tun0 out on ens18
+####centos7 下
+	#systemctl stop firewalld
+	#systemctl mask firewalld
+	#yum install iptables-services -y
+	#systemctl enable iptables
+	#iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o p4p1 -j MASQUERADE【将来源于10.8.0.0/24的网段转发到 p4p1网卡——即讲客户端的请求转发到10.0.88.0/24这个网卡上】
+	ping 10.0.88.40	【应该ping通】
+	记得在10.0.88.70上增加指向172.16.1.0/24的路由
+		route add -net 172.16.1.0/24 gw 10.0.88.40
+	[新疆]
+		iptables -t nat -A POSTROUTING -d 192.168.0.0/24 -o eth0 -j MASQUERADE
+		iptables -t nat -A POSTROUTING -d 172.16.1.0/24 -o eth1 -j MASQUERADE
+####ubuntu 下
+将ufw默认的转发功能打开
+	
+	vi /etc/default/ufw	
+	#DEFAULT_FORWARD_POLICY="DROP"
+	DEFAULT_FORWARD_POLICY="ACCEPT"
+	
+vi /etc/ufw/befor.rules
+```	
+*nat
+:POSTROUTING ACCEPT [0:0]
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+# Allow traffic from OpenVPN client to eth0
+-A POSTROUTING -s 10.8.0.0/8 -o eth0 -j MASQUERADE
+COMMIT
+```
+	ufw enable
+	ufw start
 ###多客户端
 	source ./vars
 	./build-key langk

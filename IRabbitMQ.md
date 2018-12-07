@@ -34,8 +34,9 @@
 		tail -f /var/log/rabbitmq/rabbit\@hadoop-cq83.log 
 		user 'guest' - User can only log in via localhost
 		
-		So I created the rabbitmq.config inside the directory /etc/rabbitmq with this:
+		So I created the **rabbitmq.config** inside the directory /etc/rabbitmq with this:
 		[{rabbit, [{loopback_users, []}]}].
+
 		{后面的.不能少}
 		service rabbitmq-server restart
 		centos: rabbitmq-server stop
@@ -80,3 +81,4 @@ yum install esl-erlang_18.3-1-centos-7_amd64.rpm
 yum install esl-erlang-compat-18.1-1.noarch.rpm
 yum install rabbitmq-server-3.6.1-1.noarch.rpm
 
+/var/log/rabbitmq/rabbit

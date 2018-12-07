@@ -25,3 +25,4 @@
 	A、修改IP
 	$/opt/vmware/share/vami/vami_config_net
 	A、reset:https://${ip}:5480,database, reset db contents
+	rm /var /lib/rdb/db

@@ -10,6 +10,7 @@
 		#redis 127.0.0.1:6379> SAVE 
 		会产生如下文件：/home/docker/dump.rdb
 		#redis 127.0.0.1:6379> BGSAVE
+		#>CONFIG GET maxclients
 	D、恢复数据
 		如果需要恢复数据，只需将备份文件 (dump.rdb) 移动到 redis 安装目录并启动服务即可。获取 redis 目录可以使用 CONFIG 命令，如下所示：
 		#redis 127.0.0.1:6379> CONFIG GET dir

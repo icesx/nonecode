@@ -1,13 +1,12 @@
-###快捷键
-	Ctrl + Space 基本的代码完成（类、方法、属性）
+###快捷键 eclips schema
+	Ctrl + Alt + Space 列出成员
+	Shift+ F1 显示错误描述或警告信息
 	alt + enter 自动导入
-	Ctrl + Alt + Space 快速导入任意类
 	ctrl + alt + enter 插入一行
 	Ctrl + Shift + Enter 语句完成
 	Ctrl + P 参数信息（在方法中调用参数）
 	Ctrl + Q 快速查看文档
 	Ctrl + 鼠标 简介
-	Shift+ F1 显示错误描述或警告信息
 	Alt + Insert 自动生成代码
 	Ctrl + O 重新方法
 	Ctrl + Alt + T 选中

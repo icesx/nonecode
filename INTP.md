@@ -13,3 +13,4 @@
 	为ntpserver 增加hostname
 ###时区
 	#date -R
+### no server suitabl for synchronization found
