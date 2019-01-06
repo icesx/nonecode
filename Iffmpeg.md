@@ -1,6 +1,16 @@
 ##install
++ sample
+```
 	sudo apt-get install yasm libx264-dev
 	./configure --enable-shared --enable-libx264 --enable-gpl --prefix=/TOOLS/software/ffmpeg
+```
++ complix
+```
+sudo apt install libgsm1-dev  libmp3lame-dev  libx265-dev libwebp-dev libwavpack-dev libvpx-dev libvorbis-dev libzvbi-dev  libspeex-dev libmysofa-dev libshine-dev libopus-dev libtheora-dev libfontconfig1-dev libopencv-dev  libopencv-core-dev libopenjp2-7-dev  libopenmpt-dev libpulse-dev librsvg2-dev librubberband-dev  libsnappy-dev libsoxr-dev libssh-dev libtwolame-dev libxvidcore-dev libzmq3-dev libopenal-dev libcdio-dev libsdl2-dev
+
+./configure --prefix=/home/solar/ffmpeg-4.1 --extra-version=0ubuntu0.18.04.1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --enable-gpl --disable-stripping --enable-avresample --enable-avisynth  --enable-ladspa --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca  --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librubberband --enable-librsvg --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi  --enable-openal  --enable-sdl2 --enable-libdc1394 --enable-libdrm  --enable-chromaprint --enable-frei0r  --enable-libx264 --enable-shared --enable-pthreads
+
+```
 ## 参数
 	 -encoders
 	 -s 720*576

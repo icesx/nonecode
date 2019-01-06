@@ -113,3 +113,27 @@ gateway 192.168.3.1
 dns-search example.com
 dns-nameservers 192.168.3.45 192.168.8.10
 ```
+###超过2T分区
+	超过2T分区后 fdisk不支持，需要用parted
+	$parted /dev/sdc
+	mklable gpt
+	unit TB
+	mkpart
+	mkpart primary 0.00TB 4.00TB
+	print
+	quit
+	
+### shell for 
+通过如下命令可以实现for 循环 按照回车进行 换行，而不是 空格
+[参考地址](https://www.cnblogs.com/cocowool/archive/2013/01/15/2861904.html) 
+```
+	 IFS=$(echo -en "\n\b")
+        echo -en $IFS
+```
+###TIME_WAIT
+```
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_sack = 0
+net.ipv4.tcp_timestamps = 0
+net.ipv4.tcp_tw_recycle = 1
+```

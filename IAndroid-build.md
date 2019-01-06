@@ -1,5 +1,8 @@
 about android build
 ##############
+##关于翻墙
+
+https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/
 
 ##prepare
 + repo
@@ -38,16 +41,45 @@ source ./build/envsetup.sh
 lunch  aosp_arm64-eng 
 make -j8
 ```
+## about make 
+```
+Make 目标          说明
+make clean           执行清理，等同于：rm -rf out/。
+make sdk             编译出 Android 的 SDK。
+make clean-sdk       清理 SDK 的编译产物。
+make update-api      更新 API。在 framework API 改动之后，需要首先执行该命令来更新 API，公开的 API 记录在 frameworks/base/api 目录下。
+make dist            执行 Build，并将 MAKECMDGOALS 变量定义的输出文件拷贝到 /out/dist 目录。
+make all              编译所有内容，不管当前产品的定义中是否会包含。
+make help             帮助信息，显示主要的 make 目标。
+make snod             从已经编译出的包快速重建系统镜像。（其实主要对system进行打包）
+make libandroid_runtime   编译所有 JNI framework 内容。
+make framework        编译所有 Java framework 内容。
+make services         编译系统服务和相关内容。
+make <local_target>   编译一个指定的模块，local_target 为模块的名称。
+make clean-<local_target>   清理一个指定模块的编译结果。
+make dump-products     显示所有产品的编译配置信息，例如：产品名，产品支持的地区语言，产品中会包含的模块等信息。
+make bootimage        生成 boot.img
+make recoveryimage   生成 recovery.img
+make userdataimage   生成 userdata.img
+make cacheimage       生成 cache.img
 
-
+```
 
 ##tinkerboard
+### 下载源代码
+```
+repo init --config-name
+repo init -u https://git@bitbucket.org/TinkerBoard_Android/manifest.git -b sbc/tinkerboard/asus/Android-6.0.1
+repo sync
+
+```
 ###编译u-boot
 
 ```
 apt install bc
 cd [source tree]/u-boot
 make rk3288_defconfig
+make
 ```
 ###编译kernel
 ```
@@ -69,8 +101,23 @@ C.lunch rk3288-userdebug
 D.make -j8
 E../mkimage.sh
 ```
-###统计固件
+###统一固件
+```
+A.cd [source tree]/RKTools/linux/Linux_Pack_Firmware/rockdev_rk3288
+B../collectImages.sh && ./mkupdate.sh
 打包成统一固件 update.img
-在 Windows 下打包统一固件 update.img 很简单，按上一步骤将文件拷贝到 AndroidTool 的 rockdev\Image 目录中，然后运行 rockdev 目录下的mkupdate.bat 批处理文件即可创建 update.img 并存放到 rockdev\Image 目录里。
-
-update.img 方便固件的发布，供终端用户升级系统使用。一般开发时使用分区映像比较方便。
+```
+## 修改源代码
+在以上的命令中，加上 “showcommands”，会打印编译时使用的命令， -j 指定多核同步编译
+###make update-api
+sudo apt install lib32z1 lib32ncurses5
+	修改java代码后,需要 
+	```
+	make update-api
+	make sdk
+	```
+##丢弃本地修改
+```
+repo forall -vc "git reset --hard"
+repo sync
+```********
