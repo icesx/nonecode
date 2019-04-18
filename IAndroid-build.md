@@ -31,6 +31,11 @@ repo sync # 正常同步一遍即可得到完整目录
 ```
 + 调整编译缓存
 	ccache -M 50G
+	```
+	CCache 是一个能够把编译的中间产物缓存起来的工具，它会在实际编译之前先检查缓存
+	可以通过如下命令查看信息。
+	ccache -s
+	```
 + about gcc
 	android的交叉编译 工具链在:/prebuilt/gcc/linux-x86/arm-eabi-4.2.1/bin
 + android 编译用的 toochain可以在envsetup.sh中查看到
@@ -66,10 +71,17 @@ make cacheimage       生成 cache.img
 ```
 
 ##tinkerboard
-### 下载源代码
+### 下载源代码android-6.0.1
 ```
 repo init --config-name
 repo init -u https://git@bitbucket.org/TinkerBoard_Android/manifest.git -b sbc/tinkerboard/asus/Android-6.0.1
+repo sync
+
+```
+### 下载源代码android-7.0.1
+```
+repo init --config-name
+repo init -u https://git@bitbucket.org/TinkerBoard_Android/manifest.git -b sbc/tinkerboard/asus/Android-7.1.2
 repo sync
 
 ```
@@ -121,3 +133,16 @@ sudo apt install lib32z1 lib32ncurses5
 repo forall -vc "git reset --hard"
 repo sync
 ```********
+
+##编译app到系统应用
+### 原理
+
+System app can be updated, in two ways:
+
+Updated by the ota updating, this will change the app directly, and the app still exist on /system.
+
+updated by using package install api, this need the new version apk have the same signature with the one on /system, and the new version will be installed on /data. That means, if the device is reset, the new version will lose.
+
+Ota update is a normal way for system app updating.
+
+### 

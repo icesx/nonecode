@@ -35,3 +35,6 @@
 	Ctrl + Numpad+ 全部展开
 	Ctrl + Numpad- 全部折叠
 	Ctrl + F4 关闭运行的选项卡
+###问题处理
+1. please specify a different SDK name
+	有重复名称的virtualenv

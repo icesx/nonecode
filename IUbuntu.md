@@ -39,6 +39,10 @@ network:
 	$ip link
 ##ufw
 
+POSTROUTING是源地址转换，要把你的内网地址转换成公网地址才能让你上网。
+
+PREROUTING是目的地址转换，要把别人的公网IP换成你们内部的IP，才让访问到你们内部受防火墙保护的机器
+
 ###ufw 相关的概念
 	ufw是ubuntu的简单防火墙
 ###相关的命令
@@ -72,9 +76,12 @@ network:
 		:INPUT ACCEPT [0:0]
 		:OUTPUT ACCEPT [0:0]
 		:POSTROUTING ACCEPT [0:0]
-		-A PREROUTING  -p tcp -m tcp --dport 1194 -j DNAT --to-destination 192.168.0.127
-		-A POSTROUTING -j MASQUERADE
+		#将从 1194 端口来的包发送 到 172.16.10.15 的1194端口
+		-A PREROUTING  -p tcp -m tcp --dport 1194 -j DNAT --to-destination 172.16.10.15
+		#将从172.16.10.0/24来的包 通过ens20【外网网口】发送出去
+		-A POSTROUTING -s 172.16.10.0/24 -o ens20 -j MASQUERADE
 		COMMIT
+		
 	D、重启ufw
 		ufw disable 
 		ufw enable
@@ -136,4 +143,9 @@ net.ipv4.tcp_fin_timeout = 30
 net.ipv4.tcp_sack = 0
 net.ipv4.tcp_timestamps = 0
 net.ipv4.tcp_tw_recycle = 1
+```
+### install fonts
+```
+sudo cp -r ${fonts} /usr/share/fonts/
+sudo fc-cache  -fv
 ```

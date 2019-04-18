@@ -14,3 +14,6 @@
 ###时区
 	#date -R
 ### no server suitabl for synchronization found
+	chenge to ip not use hostname
+###on server 
+	watch ntpq -p

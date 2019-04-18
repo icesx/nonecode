@@ -9,11 +9,16 @@ passwd:raspberry
 vi /etc/inittab
 #T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
 ```
+###setup
+```
+sudo raspi-config
+```
 ###wifi
 ```
 sudo ifconfig wlan0 up
 sudo iwlist wlan0 scan
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+country=CN
 network={
     ssid="testing"
     psk="testingPassword"
