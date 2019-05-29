@@ -43,8 +43,22 @@
 ### 目前使用的配置为
 	listen_port=61321
 	userlist_enable=No
-	userList_deny=No
+	userlist_deny=No
 	chroot_list_enable=No
 	chroot_local_user=YES
 	allow_writeable_chroot=YES
 	write_enable=YES
+
+##on ubuntu
+###install
+	sudo apt install vsftpd
+### config
+	vi /etc/vsftpd.conf
+##端口转发
+### 被动模式
+1. 在vsftpd.conf 中增加数据端口限定
+	pasv_min_port=61400
+	pasv_max_port=61500 
+2. 在防火墙中增加端口转发
+-A PREROUTING -p tcp -m tcp --dport 61321 -j DNAT --to-destination 172.16.15.4
+-A PREROUTING -p tcp -m tcp --dport 61400:61500 -j DNAT --to-destination 172.16.15.4

@@ -35,5 +35,7 @@ sudo apt install libgsm1-dev  libmp3lame-dev  libx265-dev libwebp-dev libwavpack
 ## 锯齿
 -deinterlace
 ##样例
-	ffmpeg -y -i g7-2009-kbs.rm -c:v libx264 -strict -2 -deinterlace usb-target/g7-2009-kbs.deinterlace.mp4
+	ffmpeg -y -i g7-2009-kbs.rm -c:v libx264 -strict -2 -deinterlace  -vb 3300000 usb-target/g7-2009-kbs.deinterlace.mp4
 	
+##webm to mp4 
+	ffmpeg -fflags +genpts -i 吸毒打击.webm   吸毒打 击.mp4

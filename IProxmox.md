@@ -8,7 +8,7 @@ proxmox
 
 /var/lib/vz/template/iso/
 ##backup and restore
-###backip
+###backup
 + 选中虚拟机
 + backup
 + 查看生成的备份文件lzo格式
@@ -40,3 +40,7 @@ qmrestore vzdump-qemu-101-2018_12_02-15_03_28.vma.lzo 101
       *update* the config_version number under totem section
       #reboot
 ```
+
+### windows2008
+scsi驱动
+https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.141-1/virtio-win-0.1.141.iso

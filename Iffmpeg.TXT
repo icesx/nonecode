@@ -1,3 +1,0 @@
-sudo apt-get install yasm libx264-dev
-./configure --enable-shared --enable-libx264 --enable-gpl --prefix=/TOOLS/software/ffmpeg
-

@@ -149,3 +149,51 @@ net.ipv4.tcp_tw_recycle = 1
 sudo cp -r ${fonts} /usr/share/fonts/
 sudo fc-cache  -fv
 ```
+
+###自启动
+ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改
+
+1. sudo vim /etc/systemd/system/rc-local.service
+2.  add code to rc-local.service
+```
+[Unit]
+Description=/etc/rc.local Compatibility
+ConditionPathExists=/etc/rc.local
+ 
+[Service]
+Type=forking
+ExecStart=/etc/rc.local start
+TimeoutSec=0
+StandardOutput=tty
+RemainAfterExit=yes
+SysVStartPriority=99
+ 
+[Install]
+WantedBy=multi-user.target
+```
+3. sudo vim /etc/rc.local
+```
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+
+# By default this script does nothing.
+
+exit 0
+```
+3. run this command
+```
+sudo chmod 755 /etc/rc.local
+sudo systemctl enable rc-local
+sudo systemctl start rc-local.service
+sudo systemctl status rc-local.service
+
+```
+

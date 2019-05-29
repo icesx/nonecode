@@ -6,12 +6,13 @@
 	yum install 
 ####ubuntu
 	sudo apt install openvpn easy-rsa -y
-	cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/
+
 ####ubuntu offline
 	wget http://ftp.us.debian.org/debian/pool/main/e/easy-rsa/easy-rsa_2.2.2-1_all.deb
 	
 ###配置
-	cp /usr/share/doc/openvpn-*/sample/sample-config-files/server.conf /etc/openvpn	
+	cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/
+	gunzip server.conf.gz
 	vi /etc/openvpn/server.conf
 		dh dh2048.pem
 		push "redirect-gateway def1 bypass-dhcp"【这行如果加上的话，所有的网关走的是openvpn提供的，可以用了翻墙，但是如果加上了，会影响客户端的网速，甚至出现网络不通的情况】
