@@ -1,6 +1,6 @@
 git
 ==================
-##git client
+#git client
 ### clone
 $git clone http://xxx
 ### commit
@@ -12,7 +12,7 @@ $git push .
 $git add -A
 $git commit -m ""
 $git push
-##git server
+#git server
 + 安装apache
 ```
 apt-get install apache2 git-core
@@ -79,4 +79,30 @@ git push origin
 error: Cannot access URL http://solar27/spring-cloud-config.git/, return code 22
 fatal: git-http-push failed
 error: failed to push some refs to 'http://solar27/spring-cloud-config.git'
+```
+###保持密码
+git config --global credential.helper cache
+##branch
+###比较本地和远程
+git diff master origin/master
+### 中文文件名
+git config --global core.quotepath false
+
+
+###多人写作
+https://www.liaoxuefeng.com/wiki/896043488029600/900375748016320
+```
+因此，多人协作的工作模式通常是这样：
+
+首先，可以试图用git push origin <branch-name>推送自己的修改；
+
+如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；
+
+如果合并有冲突，则解决冲突，并在本地提交；
+
+没有冲突或者解决掉冲突后，再用git push origin <branch-name>推送就能成功！
+
+如果git pull提示no tracking information，则说明本地分支和远程分支的链接关系没有创建，用命令git branch --set-upstream-to <branch-name> origin/<branch-name>。
+
+这就是多人协作的工作模式，一旦熟悉了，就非常简单。
 ```

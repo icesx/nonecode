@@ -22,7 +22,8 @@ sudo apt install numpy
 mkdir build
 cd build
 cmake -D CMAKE_BUILD_TYPE=RELEASE     -D CMAKE_INSTALL_PREFIX=/usr/local     ..
-
+make -j4
+sudo make install && sudo ldconfig
 ```
 
 3. 

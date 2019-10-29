@@ -90,3 +90,5 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
 ### network
 ####显示网卡
 	ip link show
+###串口
+	cu -l ttyAMA0 -s 115200

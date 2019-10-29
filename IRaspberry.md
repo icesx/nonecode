@@ -74,3 +74,8 @@ wiringPi Pin	Name	Board Pin	BCM GPIO
 18	GPIO 9		29
 19	GPIO10		30
 20	GPIO11		31
+###apt
+###ssh
+如果出现无法远程的话
+sudo rm /etc/ssh/ssh_host_* && sudo dpkg-reconfigure openssh-server
+###ssh

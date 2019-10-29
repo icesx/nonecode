@@ -1,5 +1,6 @@
 ###安装
 	$reidis_home/make MALLOC=libc
+	$make
 ###单机
 	A、启动
 		./redis-server ../redis.conf

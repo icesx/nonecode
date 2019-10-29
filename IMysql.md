@@ -7,9 +7,9 @@
 	$useradd -g mysql mysql
 	$chown -R mysql：mysql .
 	$sudo usermod  -a -G mysql docker [当前docker用户加入mysql组]
-	$scripts/mysql_install_db --user=mysql
+	$sudo scripts/mysql_install_db --user=mysql
 	$cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
-	$./mysqld_safe --user=mysql& 
+	$sudo ./mysqld_safe --user=mysql& 
 ###配置
 	$sudo cp my-default.cnf /etc/my.cnf
 	$vi /etc/my.cnf
@@ -28,6 +28,7 @@ default-character-set=utf8
 ###创建用户
 ```
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xjgz@123';
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON bdp.* TO 'bjrdc'@'%' IDENTIFIED BY  'xjgz@123';
 ```
 ###权限处理
 	./mysqld_safe --skip-grant-table

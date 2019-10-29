@@ -45,3 +45,11 @@ authz-db = authz
 + svn: E220001: Unreadable path encountered; access denied
 
 	在项目的conf/svnserve.conf 中, 设置 anon-access = none 即可. 然后重启Subversion 服务.
+	
+###多项目配置
++ 多个项目共享 passwd authz 文件
+	add config to svnserve.conf
+	  [general]
+	auth-access = write
+	password-db = /svn/support/passwd
+	authz-db = /svn/support/authz

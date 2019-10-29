@@ -41,15 +41,17 @@
 		service rabbitmq-server restart
 		centos: rabbitmq-server stop
 		centos:	rabbitmq-server -detached
-
+	C guest 无法登录web界面3.3.0版本之后
+	This is a new features since the version 3.3.0. 
+```
+	sudo rabbitmqctl add_user test test
+	sudo rabbitmqctl set_user_tags test administrator
+	sudo rabbitmqctl set_permissions -p / test ".*" ".*" ".*"
+```
 	C、rabbitmqctl reset
 		no_running_cluster_nodes,"You cannot leave a cluster if no online nodes are present."
 		rabbitmqctl force_reset 
-###账户
-	rabbitmqctl  change_password guest NEWPASSWORD
-	rabbitmqctl add_user test test
-	rabbitmqctl set_user_tags test administrator
-	rabbitmqctl set_permissions -p / test ".*" ".*" ".*"
+	D、
 	
 ###log
 	/var/log/rabbitmq/rabbit@hadoop9.log
@@ -82,3 +84,6 @@ yum install esl-erlang-compat-18.1-1.noarch.rpm
 yum install rabbitmq-server-3.6.1-1.noarch.rpm
 
 /var/log/rabbitmq/rabbit
+
+###修改存储目录
+

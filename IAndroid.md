@@ -1,5 +1,6 @@
-about android build
+about android
 ##############
+# build
 ##关于翻墙
 
 https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/
@@ -124,11 +125,13 @@ B../collectImages.sh && ./mkupdate.sh
 ###make update-api
 sudo apt install lib32z1 lib32ncurses5
 	修改java代码后,需要 
-	```
+	
+```
 	make update-api
 	make sdk
-	```
+```
 ##丢弃本地修改
+
 ```
 repo forall -vc "git reset --hard"
 repo sync
@@ -145,4 +148,28 @@ updated by using package install api, this need the new version apk have the sam
 
 Ota update is a normal way for system app updating.
 
-### 
+#adb
+
+##基本命令
+
+
+$adb connect 192.168.31.158
+$adb root
+$adb shell "mount -o remount,rw /system"
+$adb push `pwd`/app/release/app-release.apk /system/app/solar/app-release.apk
+$adb push app/build/intermediates/cmake/debug/obj/armeabi-v7a/* /system/lib/
+$adb shell chmod 0644 /system/app/solar/app-release.apk
+$adb shell am start -n cn.tsnail.europa.gpio/cn.tsnail.europa.gpio.MainActivity
+
+adb install C:/work/example.apk
+
+adb uninstall <app package name>
+
+adb shell am set-debug-app -w com.example.jishuxiaoheiwu.appdebugsample
+
+###logcat
+adb logcat
+$ adb shell
+\# logcat
+
+adb logcat ActivityManager:I MyApp:D *:S

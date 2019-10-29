@@ -83,6 +83,8 @@
 		这个问题是进行人工的merge后出现的，等Hbase自己恢复，或者：
 		#hbase hbck -repaire
 		但是旺旺不能一次修复，需要重复执行几次,。
+		也可以针对一个表repaire
+		#hbase hbck -repaire 'CDC_PERSON'
 		如果提示 region still in transation,waiting for become ...
 		关闭hbase->删除zk中的/hbase目录->重启hbase
 	D:thereis a hole in region chain between...

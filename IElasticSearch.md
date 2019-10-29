@@ -11,10 +11,11 @@
 	network.host: ${HOSTNAME}
 	path.data: xxx
 	path.logs: yyy
-	discovery.zen.png.unicast.hosts:["hadoop-cx168","hadoop-cx169","hadoop-cv170"]
+	discovery.zen.pi	ng.unicast.hosts:["hadoop-cx168","hadoop-cx169","hadoop-cv170"]
 2. curl localhost:9200
 3. 在haoop-cx168 169 170 上分别启动es集群就起来了
 	$elasticsearch -d
+	
 4. 创建索引
 	$curl -H 'Content-Type:application/json' -X PUT hadoop-cx168:9200/blogs/i/1 -d '
 {

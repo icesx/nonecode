@@ -2,7 +2,8 @@
 	cat >>/home/docker/software/spark-1.5.0-bin-hadoop2.6/conf/spark-env.sh<<EOF
 	HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
 	EOF
-
+###启动pi
+./spark-submit --master yarn --class  org.apache.spark.examples.SparkPi /home/bjrdc/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar
 ### 启动Spark wordcount
 	/home/docker/software/spark-1.5.0/bin/spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/docker/mrs/spark-mapreduce-0.0.1-SNAPSHOT-package.jar
 	./spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 
@@ -47,3 +48,5 @@
 	Failed to get broadcast_1_piece0 of broadcast_1，可能是在闭包或者地柜中使用了rdd，修改为循环即可
 	 
 
+##python
+###

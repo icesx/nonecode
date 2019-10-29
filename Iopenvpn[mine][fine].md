@@ -139,5 +139,7 @@ COMMIT
 	/etc/init.d/openvpn reload
 
 ###问题处理
+1. 
 	Failed to start OpenVPN Robust And Highly Flexible Tunneling Application On server.
 	注释掉#tls-auth ta.key 0 # This file is secret
+2. 

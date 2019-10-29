@@ -11,6 +11,13 @@ export PYTHONPAT=$PYTHONPATH:/TOOLS/PYTHON_PATH/lib/python2.7/site-packages
 export PYTHONUSERBASE=/TOOLS/PYTHON_PATH
 
 ```
+### pip 源
+add some code to /etc/pip.conf
+```
+[global]
+index-url = https://mirrors.aliyun.com/pypi/simple/
+
+```
 ###python path
 1. 建议python安装在指定的目录下，这个时候需要设置python的PYTHONPATH环境变量
 2. PYTHONPATH的环境变量和--preifx的目录不一样

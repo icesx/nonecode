@@ -6,7 +6,11 @@ proxmox
 + 安装
 + https://ip:8006/
 
-/var/lib/vz/template/iso/
+##虚拟机安装
+###iso
+	scp scp -P 60202 cn_windows_7_ultimate_x64_dvd_x15-66043.iso bjrdc-pmx@211.157.177.100:/home/bjrdc-pmx/ 
+	mv /home/bjrdc-pmx/cn_windows_7_ultimate_x64_dvd_x15-66043.iso /var/lib/vz/template/iso/
+
 ##backup and restore
 ###backup
 + 选中虚拟机
@@ -24,7 +28,8 @@ qmrestore vzdump-qemu-101-2018_12_02-15_03_28.vma.lzo 101
 + 在节点A上backup虚拟机
 + scp  /var/lib/vz/dump/***.lzo B:`pwd`
 + 在gpi上restore
-
+###迁移
++ 
 ### 修改ip
 + [参考地址](https://forum.proxmox.com/threads/can-proxmox-server-ip-be-changed.43486/) 
 + change ip
@@ -44,3 +49,7 @@ qmrestore vzdump-qemu-101-2018_12_02-15_03_28.vma.lzo 101
 ### windows2008
 scsi驱动
 https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.141-1/virtio-win-0.1.141.iso
+### 删除不用disk
+	lvremove /dev/pve/vm-102-disk-1
+
+### 修改ip
