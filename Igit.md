@@ -82,6 +82,8 @@ error: failed to push some refs to 'http://solar27/spring-cloud-config.git'
 ```
 ###保持密码
 git config --global credential.helper cache
+###换行符^M忽略
+git config --global core.whitespace cr-at-eol
 ##branch
 ###比较本地和远程
 git diff master origin/master
@@ -89,20 +91,25 @@ git diff master origin/master
 git config --global core.quotepath false
 
 
-###多人写作
-https://www.liaoxuefeng.com/wiki/896043488029600/900375748016320
+##多人协作
+###删除Untracked files
+	git clean -f
+###强制更新
+	git fetch --all    //只是下载代码到本地，不进行合并操
+	git reset --hard origin/master
+###同时修改
+error: Your local changes to the following files would be overwritten by merge:
+Please commit your changes or stash them before you merge.
+
+解决办法：
+
+1、服务器代码合并本地代码
 ```
-因此，多人协作的工作模式通常是这样：
-
-首先，可以试图用git push origin <branch-name>推送自己的修改；
-
-如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；
-
-如果合并有冲突，则解决冲突，并在本地提交；
-
-没有冲突或者解决掉冲突后，再用git push origin <branch-name>推送就能成功！
-
-如果git pull提示no tracking information，则说明本地分支和远程分支的链接关系没有创建，用命令git branch --set-upstream-to <branch-name> origin/<branch-name>。
-
-这就是多人协作的工作模式，一旦熟悉了，就非常简单。
+$ git stash     //暂存当前正在进行的工作。
+$ git pull   origin master //拉取服务器的代码
+$ git stash pop //合并暂存的代码
 ```
+2、服务器代码覆盖本地代码
+```
+$git reset --hard  //回滚到上一个版本
+$git pull origin master 

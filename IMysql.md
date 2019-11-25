@@ -71,6 +71,8 @@ log-slow-queries=log-slow-query.log
 log-update=log-update.log
 long_query_time=2
  
+general_log=ON
+general_log_file=/tmp/mysql.log
 ###删除多余链接
 for i in `mysql -u root -pgehua -e "show processlist;"|grep Sleep|awk '{print $1}'`; do mysql -uroot -pgehua -e "kill $i;";done; 
 ###动态调整参数

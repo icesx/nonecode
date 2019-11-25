@@ -20,6 +20,7 @@ abi适用于应用程序二进制接口约定：eabi，gnueabi，gnueabihf
 https://releases.linaro.org/components/toolchain/binaries/
 
 ##多版本切换
+https://blog.csdn.net/ykr168age/article/details/61615212
 ###安装
 如果当前系统已经安装有gcc，一般安装在“/usr/lib/gcc”下，如果需要多版本，需要如下操作
 40、50为优先级	
@@ -29,17 +30,28 @@ whereis gcc
 /usr/bin/gcc
 //gcc 安装目录，一般也是一个链接文件，链接到/usr/bin/gcc-5
 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 40 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 50
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 30
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/lib/gcc-6.3.0/bin/gcc 31
 sudo update-alternatives --config gcc
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 50 
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 40
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 30 
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/lib/gcc-6.3.0/bin/g++ 31
 sudo update-alternatives --config g++
 gcc -v
 
 sudo update-alternatives --remove gcc /usr/bin/gcc-4.9
 
 ```
+ 至此 gcc版本切换完成
+ 下一步需要将libstdc++.so.6 链接完成。
+ 
+```
+cd /usr/lib/aarch64-linux-gnu/
+sudo ln -s /usr/lib/gcc-6.3.0/lib64/libstdc++.so.6.0.22 libstdc++.so.6.0.22
+sudo ln -s libstdc++.so.6.0.22 libstdc++.so.6
+
+```
+ ln -s 
+ 
 ###配置libstdc++.so.6
 存放在
 /usr/lib/aarch64-linux-gnu/libstdc++.so.6
