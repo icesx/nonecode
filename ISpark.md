@@ -43,6 +43,10 @@
 
 ### log4j
 	vi ${spark_home}/conf/log4j.properties
+### slf4j
+SLF4J: Found binding in [jar:file:/cloud/HDFS-YARN-TMP/nm-local-dir/usercache/bjrdc/filecache/16/__spark_libs__6014693449407005386.zip/slf4j-log4j12-1.7.16.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+SLF4J: Found binding in [jar:file:/home/bjrdc/software/hadoop-3.0.3/share/hadoop/common/lib/slf4j-log4j12-1.7.25.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+
 
 ### 异常处理
 	Failed to get broadcast_1_piece0 of broadcast_1，可能是在闭包或者地柜中使用了rdd，修改为循环即可

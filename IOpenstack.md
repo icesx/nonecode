@@ -1,7 +1,10 @@
-0、前提：centos
-1、在所有的节点上
+openstack
+============
+
+### 前提：centos
+1. 在所有的节点上
 	sudo systemctl disable NetworkManager $ sudo systemctl enable network $ sudo systemctl stop NetworkManager.service $ sudo systemctl start network.service
-2、在主节点上执行如下：
+2. 在主节点上执行如下：
 	yum search centos-release-openstack
 	[root@hadoop100 ~]# yum search centos-release-openstack
 	Loaded plugins: fastestmirror
@@ -18,18 +21,18 @@
 	yum install -y centos-release-openstack-mitaka
 	yum update -y
 	yum install -y openstack-packstack
-2、无密码登陆
+3. 无密码登陆
 	。。。。。。
-3、controller
+4. controller
 	packstack --install-hosts=hadoop100,hadoop100,hadoop50,hadoop1,hadoop150
 	packstack --install-hosts=hadoop100,hadoop100,hadoop50,hadoop1,hadoop150 --cinder-volumes-create=n --cinder-host=hadoop100,hadoop50,hadoop1,hadoop150
-4、问题处理
+5. 问题处理
 	A、mysql与mariadb的冲突——centos7之后使用的默认数据库是mariadb【虽然命令仍然是mysql】，有可能资源里一斤有mysql了，此时需要
 		#rm  -rf /etc/yum.repos.d/mysql-*
 		#yum clean dbcache
 	B、root无法登陆的问题
 		修改mariadb的默认密码为空密码
-5、关于LVM
+6. 关于LVM
 	默认情况下使用packstack安装openstack的时候，它会生成一个镜像文件在/var/libcinder/cinder-volumes，默认大小为20GB
 	[在安装的时候需要让packstack不要生成这个卷，而使用自己构建的卷- --cinder-volumes-create=n】
 	这个cinder-volumes会映射到/dev/loop[0-9]下，如/dev/loop2
@@ -40,6 +43,7 @@
 		/dev/loop2         0      0         0  0 /var/lib/cinder/cinder-volumes
 		/dev/loop3         0      0         1  0 /srv/loopback-device/swiftloopback
 	
+
 			  --- Volume group ---
 		  VG Name               cinder-volumes
 		  System ID             
@@ -61,7 +65,7 @@
 		#pvresize /dev/loop2
 		#losetup -d /dev/loop2 可以删除loop设备，但是一定记住不要使用rm 删除/dev/loop2
 
-6、问题
+7. 问题
 	openstack只支持lvm以iscsc的方式，哎
 
 	1. 本地存储
@@ -71,13 +75,3 @@
 7、卸载openstack
 
 yum -y remove openstack-* openvswitch memcached httpd python-neutron rabbitmq-server
-
-
-
-
-
-
-
-
-
-		
