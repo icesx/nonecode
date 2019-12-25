@@ -1,8 +1,13 @@
 ### 安装
+```
  	./configure --prefix=/home/docker/software/nginx-1.10.0-proxy --with-pcre --with-http_sub_module
+```
 ### 查看模块
+```
 	./sbin/nginx -V
+```
 ### sub_filter
+```	
 	sub_filter '52.4.1.145:8090' '58.42.241.252:8000';#将页面上的所有的52.4.1.145:8090 替换为 58.42.241.252:8000
 	sub_filter '52.4.1.145:8089' '58.42.241.252:8000';
 	sub_filter '52.4.1.188:6080' '58.42.241.252:6080';
@@ -10,12 +15,14 @@
 	sub_filter '52.4.1.145:18567' '58.42.241.252:8000';
 	sub_filter_once off;
 	sub_filter_types application/json application/javascript text/javascript;#针对这三总mime，这些mime需要通过抓包或者浏览器的调试工具获取
+```
 ### proxy
-	location / {
+```
+location / {
 		#http://52.4.1.176:8980/;
-            	root html;
-    		index  index.html index.htm;
-        }
+	        	root html;
+			index  index.html index.htm;
+	    }
 	location /cas{
 		proxy_pass http://52.4.1.176:8980/cas;
 	}
@@ -46,16 +53,18 @@
 	location /cdc-charts-api{
 		proxy_pass http://52.4.1.145:8089/cdc-charts-api;
 	}
-        #error_page  404              /404.html;
+	    #error_page  404              /404.html;
 	location /scitydatacenter{
 		proxy_pass http://52.4.1.176:8080/scitydatacenter;
 	}
 	location /cdc-subscribe{
 		proxy_pass http://52.4.1.145:8089/cdc-subscribe;
 	}
-
-###mp4
+```
+### mp4
+```
 --with-http_mp4_module
+```
 ```
 location /video/ {
 mp4;
@@ -65,7 +74,7 @@ mp4_max_buffer_size 5m;
 }
 ```
 
-####mp4
+#### mp4
 Syntax:
 mp4
 Default:
@@ -89,7 +98,7 @@ Reference: mp4_buffer_size
 Syntax:
 Default:
 Sets the buffer size used for processing mp4 file.
-####mp4_max_buffer_size
+#### mp4_max_buffer_size
 mp4_max_buffer_size size
 10M
 http

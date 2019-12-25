@@ -18,7 +18,7 @@
 	vi /etc/vsftpd/chroot_list
 	
 	vi /etc/vsftpd/user_list
-	
+
 ### 防火墙设置
 	iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 	iptables -A INPUT -p tcp  -m multiport --dport 20,21  -m state --state NEW -j ACCEPT
@@ -38,7 +38,7 @@
 		anon_mkdir_write_enable=yes
 		anon_other_write_enable=yes
 		...
-	
+
 
 ### 目前使用的配置为
 	listen_port=61321
@@ -49,12 +49,14 @@
 	allow_writeable_chroot=YES
 	write_enable=YES
 
-##on ubuntu
-###install
-	sudo apt install vsftpd
+## ubuntu
+### install
+​	`sudo apt install vsftpd`
+
 ### config
 	vi /etc/vsftpd.conf
-##端口转发
+## 端口转发
+
 ### 被动模式
 1. 在vsftpd.conf 中增加数据端口限定
 	pasv_min_port=61400

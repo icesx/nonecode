@@ -294,3 +294,27 @@
 
 	</configuration>
 ```
+
+## hadoop3 内存配置
+
+### 相关配置项
+
+1. hadoop3 内置有mapreduce的内存自动推导逻辑，目前测试的情况是没有配置mapreduce的相关内存使用就可以使用
+
+2. 只配置scheduler 相关参数即可
+
+   ```
+   <property>
+           <name>yarn.scheduler.maximum-allocation-vcores</name>
+           <value>6</value>
+           <final>false</final>
+   </property>
+   <property>
+           <name>yarn.scheduler.maximum-allocation-mb</name>
+           <value>20480</value>
+           <final>false</final>
+   
+   </property>
+   ```
+
+   

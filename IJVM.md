@@ -3,11 +3,11 @@ about jvm
 ## 开启GC相关的配置
 	JVM的GC日志可以打开，并保存到指定文件中
 	产生的文件可以通过第三方的分析工具进行分析【easygc.io】，或者自己分析
-		
+
 ### -XX:ParallelGCThreads
 	在使用CMS收集器的时候配置，并行收集的线程数量	
 	he determining factor is the value N returned by the Java method Runtime.availableProcessors(). For N <= 8 parallel GC will use just as many, i.e., N GC threads. For N > 8 available processors, the number of GC threads will be computed as 3+5N/8.
-	
+
 ### -XX:CMSInitiatingOccupancyFraction
 	默认值为68
 	-XX:CMSInitiatingOccupancyFraction=<value> where value denotes the utilization of old generation heap space in percent. For example, value=75 means that the first CMS cycle starts when 75% of the old generation is occupied
@@ -17,39 +17,41 @@ about jvm
 CMSInitiatingOccupancyFraction <=((Xmx-Xmn)-(Xmn-Xmn/(SurvivorRatior+2)))/(Xmx-Xmn)*100
 
 ## gc文件的手工分析
-	In normal (all most all) GC events, real time will be less than user + sys time. It’s because of multiple GC threads work concurrently to share the work load, thus real time will be less than user + sys time. Say user + sys time is 2 seconds. If 5 GC threads are concurrently working then real time should be some where in the neighbourhood of 400 milliseconds ( 2 seconds / 5 GC threads).
+In normal (all most all) GC events, real time will be less than user + sys time. It’s because of multiple GC threads work concurrently to share the work load, thus real time will be less than user + sys time. Say user + sys time is 2 seconds. If 5 GC threads are concurrently working then real time should be some where in the neighbourhood of 400 milliseconds ( 2 seconds / 5 GC threads).
+	
+But in certain circumstances you might see real time to be greater than user + sys time.
 
-	But in certain circumstances you might see real time to be greater than user + sys time.
+#### Example:
+[Times: user=0.20 sys=0.01, real=18.45 secs]
+If you notice multiple occurrences of this scenario in your GC log then it might be indicative of one of the following problems:
 
-####Example:
-	[Times: user=0.20 sys=0.01, real=18.45 secs]
-	If you notice multiple occurrences of this scenario in your GC log then it might be indicative of one of the following problems:
-
-	1. Heavy I/O activity
-	2. Lack of CPU
-	【意思是说，如果有大量的real>user+sys的情况的时候，说明系统的CPU资源不够，或者CPU在等待IO】
-	【在实地的场景中，会引起HBase的regionserver挂掉】
+1. Heavy I/O activity
+2. Lack of CPU
+【意思是说，如果有大量的real>user+sys的情况的时候，说明系统的CPU资源不够，或者CPU在等待IO】
+【在实地的场景中，会引起HBase的regionserver挂掉】
 ## 相关命令
-###jps
+### jps
 jps [options] [hostid]
 option参数
 -l : 输出主类全名或jar路径
 -q : 只输出LVMID
 -m : 输出JVM启动时传递给main()的参数
 -v : 输出JVM启动时显示指定的JVM参数
+```
 $ jps -l -m
   28920 org.apache.catalina.startup.Bootstrap start
   11589 org.apache.catalina.startup.Bootstrap start
   25816 sun.tools.jps.Jps -l -m
-###jstat
-	jstat(JVM statistics Monitoring)是用于监视虚拟机运行时状态信息的命令，它可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。
-
-	jstat [option] LVMID [interval] [count]
+```
+### jstat
+jstat(JVM statistics Monitoring)是用于监视虚拟机运行时状态信息的命令，它可以显示出虚拟机进程中的类装载、内存、垃圾收集、JIT编译等运行数据。
+	
+jstat [option] LVMID [interval] [count]
 [option] : 操作参数
 LVMID : 本地虚拟机进程ID
 [interval] : 连续输出的时间间隔
 [count] : 连续输出的次数
-####option 参数总览
+#### option 参数总览
 + Option	Displays…
 + class	class loader的行为统计。Statistics on the behavior of the class loader.
 + compiler	HotSpt JIT编译器行为统计。Statistics of the behavior of the HotSpot Just-in-Time compiler.
@@ -64,7 +66,7 @@ LVMID : 本地虚拟机进程ID
 + gcpermcapacity	永生代行为统计。Statistics of the sizes of the permanent generation.
 + printcompilation	HotSpot编译方法统计。HotSpot compilation method statistics.
 
-####-class
+#### -class
 监视类装载、卸载数量、总空间以及耗费的时间
 ```
 $ jstat -class 11589
@@ -76,7 +78,7 @@ Bytes : class字节大小
 Unloaded : 未加载class的数量
 Bytes : 未加载class的字节大小
 Time : 加载时间
-####-compiler
+#### -compiler
 输出JIT编译过的方法数量耗时等
 ```
 $ jstat -compiler 1262
@@ -89,7 +91,8 @@ Invalid : 无效数量
 Time : 编译耗时
 FailedType : 失败类型
 FailedMethod : 失败方法的全限定名
-####-gc
+
+#### -gc
 垃圾回收堆的行为统计，常用命令
 ```
 $ jstat -gc 1262
@@ -112,11 +115,12 @@ YGCT : 新生代垃圾回收时间
 FGC : 老年代垃圾回收次数
 FGCT : 老年代垃圾回收时间
 GCT : 垃圾回收总消耗时间
+
 ```
 $ jstat -gc 1262 2000 20
 这个命令意思就是每隔2000ms输出1262的gc情况，一共输出20次
 ```
-####-gccapacity
+#### -gccapacity
 类似-gc，不过还会输出Java堆各区域使用到的最大、最小空间
 ```
 $ jstat -gccapacity 1262
@@ -132,14 +136,14 @@ OC：当前年老代的空间 (KB)
 PGCMN : perm占用的最小空间
 PGCMX : perm占用的最大空间
 
-####-gcutil
+#### -gcutil
 类似-gc，不过输出的是已使用空间占总空间的百分比
 ```
 $ jstat -gcutil 28920
   S0     S1     E      O      P     YGC     YGCT    FGC    FGCT     GCT   
  12.45   0.00  33.85   0.00   4.44  4       0.242     0    0.000    0.242
 ```
-####-gccause
+#### -gccause
 垃圾收集统计概述（同-gcutil），附加最近两次垃圾回收事件的原因
 ```
 $ jstat -gccause 28920
@@ -148,7 +152,7 @@ $ jstat -gccause 28920
 ```
 LGCC：最近垃圾回收的原因
 GCC：当前垃圾回收的原因
-####-gcnew
+#### -gcnew
 统计新生代的行为
 ```
 $ jstat -gcnew 28920
@@ -158,7 +162,7 @@ $ jstat -gcnew 28920
 TT：Tenuring threshold(提升阈值)
 MTT：最大的tenuring threshold
 DSS：survivor区域大小 (KB)
-####-gcnewcapacity
+#### -gcnewcapacity
 新生代与其相应的内存空间的统计
 ```
 $ jstat -gcnewcapacity 28920
@@ -170,24 +174,24 @@ S0CMX:最大的S0空间 (KB)
 S0C:当前S0空间 (KB)
 ECMX:最大eden空间 (KB)
 EC:当前eden空间 (KB)
-####-gcold
+#### -gcold
 统计旧生代的行为
 $ jstat -gcold 28920
    PC       PU        OC           OU       YGC    FGC    FGCT     GCT   
 1048576.0  46561.7   6291456.0     0.0      4      0      0.000    0.242
-####-gcoldcapacity
+#### -gcoldcapacity
 统计旧生代的大小和空间
 $ jstat -gcoldcapacity 28920
    OGCMN       OGCMX        OGC         OC         YGC   FGC    FGCT     GCT   
   6291456.0   6291456.0   6291456.0   6291456.0     4     0    0.000    0.242
-####-gcpermcapacity
+#### -gcpermcapacity
 永生代行为统计
 ```
 $ jstat -gcpermcapacity 28920
     PGCMN      PGCMX       PGC         PC      YGC   FGC    FGCT     GCT   
  1048576.0  2097152.0  1048576.0  1048576.0     4     0    0.000    0.242
 ```
-####-printcompilation
+#### -printcompilation
 hotspot编译方法统计
 ```
 $ jstat -printcompilation 28920
@@ -198,12 +202,10 @@ Compiled：被执行的编译任务的数量
 Size：方法字节码的字节数
 Type：编译类型
 Method：编译方法的类名和方法名。类名使用”/” 代替 “.” 作为空间分隔符. 方法名是给出类的方法名. 格式是一致于HotSpot – XX:+PrintComplation 选项
-###jmap
+### jmap
 	jmap(JVM Memory Map)命令用于生成heap dump文件，如果不使用这个命令，还阔以使用-XX:+HeapDumpOnOutOfMemoryError参数来让虚拟机出现OOM的时候·自动生成dump文件。 jmap不仅能生成dump文件，还阔以查询finalize执行队列、Java堆和永久代的详细信息，如当前使用率、当前使用的是哪种收集器等。
 
-####命令格式
-
-####jmap [option] LVMID
+#### jmap [option] LVMID
 option参数
 + dump : 生成堆转储快照
 + finalizerinfo : 显示在F-Queue队列等待Finalizer线程执行finalizer方法的对象
@@ -211,19 +213,21 @@ option参数
 + histo : 显示堆中对象的统计信息
 + permstat : to print permanent generation statistics
 + F : 当-dump没有响应时，强制生成dump快照
-####-dump
 
--dump::live,format=b,file=<filename> pid
+#### -dump 
+
+\-dump::live,format=b,file=<filename> pid
 dump堆到文件,format指定输出格式，live指明是活着的对象,file指定文件名
 ```
-$ jmap -dump:live,format=b,file=dump.hprof 28920
+jmap -dump:live,format=b,file=dump.hprof 28920
   Dumping heap to /home/xxx/dump.hprof ...
   Heap dump file created
 ```
 dump.hprof这个后缀是为了后续可以直接用MAT(Memory Anlysis Tool)打开。
 
-####-finalizerinfo
+#### -finalizerinfo
 打印等待回收对象的信息
+
 ```
 $ jmap -finalizerinfo 28920
   Attaching to process ID 28920, please wait...
@@ -234,32 +238,33 @@ $ jmap -finalizerinfo 28920
 ```
 可以看到当前F-QUEUE队列中并没有等待Finalizer线程执行finalizer方法的对象。
 
-####-heap
+#### -heap
 打印heap的概要信息，GC使用的算法，heap的配置及wise heap的使用情况,可以用此来判断内存目前的使用情况以及垃圾回收情况
+
 ```
 $ jmap -heap 28920
-```  
+
   Attaching to process ID 28920, please wait...
   Debugger attached successfully.
   Server compiler detected.
   JVM version is 24.71-b01  
- 
+
   using thread-local object allocation.
   Parallel GC with 4 thread(s)//GC 方式  
- 
+
   Heap Configuration: //堆内存初始化配置
-     MinHeapFreeRatio = 0 //对应jvm启动参数-XX:MinHeapFreeRatio设置JVM堆最小空闲比率(default 40)
-     MaxHeapFreeRatio = 100 //对应jvm启动参数 -XX:MaxHeapFreeRatio设置JVM堆最大空闲比率(default 70)
-     MaxHeapSize      = 2082471936 (1986.0MB) //对应jvm启动参数-XX:MaxHeapSize=设置JVM堆的最大大小
-     NewSize          = 1310720 (1.25MB)//对应jvm启动参数-XX:NewSize=设置JVM堆的‘新生代’的默认大小
-     MaxNewSize       = 17592186044415 MB//对应jvm启动参数-XX:MaxNewSize=设置JVM堆的‘新生代’的最大大小
-     OldSize          = 5439488 (5.1875MB)//对应jvm启动参数-XX:OldSize=<value>:设置JVM堆的‘老生代’的大小
-     NewRatio         = 2 //对应jvm启动参数-XX:NewRatio=:‘新生代’和‘老生代’的大小比率
-     SurvivorRatio    = 8 //对应jvm启动参数-XX:SurvivorRatio=设置年轻代中Eden区与Survivor区的大小比值 
-     PermSize         = 21757952 (20.75MB)  //对应jvm启动参数-XX:PermSize=<value>:设置JVM堆的‘永生代’的初始大小
-     MaxPermSize      = 85983232 (82.0MB)//对应jvm启动参数-XX:MaxPermSize=<value>:设置JVM堆的‘永生代’的最大大小
-     G1HeapRegionSize = 0 (0.0MB)  
- 
+  MinHeapFreeRatio = 0 //对应jvm启动参数-XX:MinHeapFreeRatio设置JVM堆最小空闲比率(default 40)
+  MaxHeapFreeRatio = 100 //对应jvm启动参数 -XX:MaxHeapFreeRatio设置JVM堆最大空闲比率(default 70)
+  MaxHeapSize      = 2082471936 (1986.0MB) //对应jvm启动参数-XX:MaxHeapSize=设置JVM堆的最大大小
+  NewSize          = 1310720 (1.25MB)//对应jvm启动参数-XX:NewSize=设置JVM堆的‘新生代’的默认大小
+  MaxNewSize       = 17592186044415 MB//对应jvm启动参数-XX:MaxNewSize=设置JVM堆的‘新生代’的最大大小
+  OldSize          = 5439488 (5.1875MB)//对应jvm启动参数-XX:OldSize=<value>:设置JVM堆的‘老生代’的大小
+  NewRatio         = 2 //对应jvm启动参数-XX:NewRatio=:‘新生代’和‘老生代’的大小比率
+  SurvivorRatio    = 8 //对应jvm启动参数-XX:SurvivorRatio=设置年轻代中Eden区与Survivor区的大小比值 
+  PermSize         = 21757952 (20.75MB)  //对应jvm启动参数-XX:PermSize=<value>:设置JVM堆的‘永生代’的初始大小
+  MaxPermSize      = 85983232 (82.0MB)//对应jvm启动参数-XX:MaxPermSize=<value>:设置JVM堆的‘永生代’的最大大小
+  G1HeapRegionSize = 0 (0.0MB)  
+
   Heap Usage://堆内存使用情况
   PS Young Generation
   Eden Space://Eden区内存分布
@@ -287,15 +292,15 @@ $ jmap -heap 28920
      used     = 2496528 (2.3808746337890625MB)
      free     = 19523568 (18.619125366210938MB)
      11.337498256138392% used  
- 
-  670 interned Strings occupying 43720 bytes.
+670 interned Strings occupying 43720 bytes.
 可以很清楚的看到Java堆中各个区域目前的情况。
-
-####-histo
+```
+#### -histo
 打印堆的对象统计，包括对象数、内存大小等等 （因为在dump:live前会进行full gc，如果带上live则只统计活对象，因此不加live的堆大小要大于加live堆的大小 ）
+
 ```
 $ jmap -histo:live 28920 | more
-```
+
  num     #instances         #bytes  class name
 ----------------------------------------------
    1:         83613       12012248  <constMethodKlass>
@@ -320,11 +325,13 @@ J  long
 Z  boolean
 [  数组，如[I表示int[]
 [L+类名 其他对象
-####-permstat
+```
+#### -permstat
 打印Java堆内存的永久保存区域的类加载器的智能统计信息。对于每个类加载器而言，它的名称、活跃度、地址、父类加载器、它所加载的类的数量和大小都会被打印。此外，包含的字符串数量和大小也会被打印。
+
 ```
 $ jmap -permstat 28920
- ```
+
   Attaching to process ID 28920, please wait...
   Debugger attached successfully.
   Server compiler detected.
@@ -332,22 +339,24 @@ $ jmap -permstat 28920
   finding class loader instances ..done.
   computing per loader stat ..done.
   please wait.. computing liveness.liveness analysis may be inaccurate ...
- 
+
   class_loader            classes bytes   parent_loader           alive?  type  
   <bootstrap>             3111    18154296          null          live    <internal>
   0x0000000600905cf8      1       1888    0x0000000600087f08      dead    sun/reflect/DelegatingClassLoader@0x00000007800500a0
   0x00000006008fcb48      1       1888    0x0000000600087f08      dead    sun/reflect/DelegatingClassLoader@0x00000007800500a0
   0x00000006016db798      0       0       0x00000006008d3fc0      dead    java/util/ResourceBundle$RBClassLoader@0x0000000780626ec0
   0x00000006008d6810      1       3056      null          dead    sun/reflect/DelegatingClassLoader@0x00000007800500a0
+```
 -F
 强制模式。如果指定的pid没有响应，请使用jmap -dump或jmap -histo选项。此模式下，不支持live子选项。
 
-###jhat
+### jhat
 jhat(JVM Heap Analysis Tool)命令是与jmap搭配使用，用来分析jmap生成的dump，jhat内置了一个微型的HTTP/HTML服务器，生成dump的分析结果后，可以在浏览器中查看。在此要注意，一般不会直接在服务器上进行分析，因为jhat是一个耗时并且耗费硬件资源的过程，一般把服务器生成的dump文件复制到本地或其他机器上进行分析。
 
 命令格式
-####jhat [dumpfile]
+#### jhat [dumpfile]
 参数
+
 + -stack false|true 关闭对象分配调用栈跟踪(tracking object allocation call stack)。 如果分配位置信息在堆转储中不可用. 则必须将此标志设置为 false. 默认值为 true.>
 + -refs false|true 关闭对象引用跟踪(tracking of references to objects)。 默认值为 true. 默认情况下, 返回的指针是指向其他特定对象的对象,如反向链接或输入引用(referrers or incoming references), 会统计/计算堆中的所有对象。>
 + -port port-number 设置 jhat HTTP server 的端口号. 默认值 7000.>
@@ -367,7 +376,7 @@ $ jhat -J-Xmx512m dump.hprof
   Snapshot resolved.
   Started HTTP server on port 7000
   Server is ready.
- ```
+```
 中间的-J-Xmx512m是在dump快照很大的情况下分配512M内存去启动HTTP服务器，运行完之后就可在浏览器打开Http://localhost:7000进行快照分析 堆快照分析主要在最后面的Heap Histogram里，里面根据class列出了dump的时候所有存活对象。
 
 分析同样一个dump快照，MAT需要的额外内存比jhat要小的多的多，所以建议使用MAT来进行分析，当然也看个人偏好。
@@ -381,26 +390,27 @@ Show finalizer summary
 Execute Object Query Language (OQL) query
 一般查看堆异常情况主要看这个两个部分： Show instance counts for all classes (excluding platform)，平台外的所有对象信息。如下图： 
 
-###jstack
+### jstack
 jstack用于生成java虚拟机当前时刻的线程快照。线程快照是当前java虚拟机内每一条线程正在执行的方法堆栈的集合，生成线程快照的主要目的是定位线程出现长时间停顿的原因，如线程间死锁、死循环、请求外部资源导致的长时间等待等。 线程出现停顿的时候通过jstack来查看各个线程的调用堆栈，就可以知道没有响应的线程到底在后台做什么事情，或者等待什么资源。 如果java程序崩溃生成core文件，jstack工具可以用来获得core文件的java stack和native stack的信息，从而可以轻松地知道java程序是如何崩溃和在程序何处发生问题。另外，jstack工具还可以附属到正在运行的java程序中，看到当时运行的java程序的java stack和native stack的信息, 如果现在运行的java程序呈现hung的状态，jstack是非常有用的。
 
-####命令格式
+#### 命令格式
 jstack [option] LVMID
 option参数
 -F : 当正常输出请求不被响应时，强制输出线程堆栈
 -l : 除堆栈外，显示关于锁的附加信息
 -m : 如果调用到本地方法的话，可以显示C/C++的堆栈
+
 ```
 $ jstack -l 11494|more
 2016-07-28 13:40:04
 Full thread dump Java HotSpot(TM) 64-Bit Server VM (24.71-b01 mixed mode):
- 
+
 "Attach Listener" daemon prio=10 tid=0x00007febb0002000 nid=0x6b6f waiting on condition [0x0000000000000000]
    java.lang.Thread.State: RUNNABLE
- 
+
    Locked ownable synchronizers:
         - None
- 
+
 "http-bio-8005-exec-2" daemon prio=10 tid=0x00007feb94028000 nid=0x7b8c waiting on condition [0x00007fea8f56e000]
    java.lang.Thread.State: WAITING (parking)
         at sun.misc.Unsafe.park(Native Method)
@@ -415,22 +425,25 @@ Full thread dump Java HotSpot(TM) 64-Bit Server VM (24.71-b01 mixed mode):
         at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
         at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
         at java.lang.Thread.run(Thread.java:745)
- 
+
    Locked ownable synchronizers:
         - None
       .....
 ```
 
-###jinfo
+### jinfo
 jinfo(JVM Configuration info)这个命令作用是实时查看和调整虚拟机运行参数。 之前的jps -v口令只能查看到显示指定的参数，如果想要查看未被显示指定的参数的值就要使用jinfo口令
 
-####命令格式
+#### 命令格式
 jinfo [option] [args] LVMID
 option参数
 -flag : 输出指定args参数的值
 -flags : 不需要args参数，输出所有JVM参数的值
 -sysprops : 输出系统属性，等同于System.getProperties()
+
 ```
 $ jinfo -flag 11494
 -XX:CMSInitiatingOccupancyFraction=80
+
+
 ```

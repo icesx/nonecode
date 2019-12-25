@@ -1,11 +1,12 @@
 about android
-##############
+============
 # build
-##关于翻墙
+
+## 关于翻墙
 
 https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/
 
-##prepare
+## prepare
 + repo
 ``` shell
 	mkdir ~/bin
@@ -19,7 +20,7 @@ REPO_URL = 'https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 ```
 sudo apt-get install m4 ccache
 ```
-	
+
 + download code
 ```
 wget -c https://mirrors.tuna.tsinghua.edu.cn/aosp-monthly/aosp-latest.tar # 下载初始化包——如果无法翻墙的话
@@ -71,7 +72,7 @@ make cacheimage       生成 cache.img
 
 ```
 
-##tinkerboard
+## tinkerboard
 ### 下载源代码android-6.0.1
 ```
 repo init --config-name
@@ -86,7 +87,7 @@ repo init -u https://git@bitbucket.org/TinkerBoard_Android/manifest.git -b sbc/t
 repo sync
 
 ```
-###编译u-boot
+### 编译u-boot
 
 ```
 apt install bc
@@ -94,14 +95,14 @@ cd [source tree]/u-boot
 make rk3288_defconfig
 make
 ```
-###编译kernel
+### 编译kernel
 ```
 sudo apt install lzop gcc-multilib
 A.cd [source tree]/kernel
 B.make rockchip_defconfig
 C.make rk3288-miniarm.img
 ```
-###编译android
+### 编译android
 ```
 sudo add-apt-repository ppa:openjdk-r/ppa  
 sudo apt-get update   
@@ -114,7 +115,7 @@ C.lunch rk3288-userdebug
 D.make -j8
 E../mkimage.sh
 ```
-###统一固件
+### 统一固件
 ```
 A.cd [source tree]/RKTools/linux/Linux_Pack_Firmware/rockdev_rk3288
 B../collectImages.sh && ./mkupdate.sh
@@ -122,23 +123,22 @@ B../collectImages.sh && ./mkupdate.sh
 ```
 ## 修改源代码
 在以上的命令中，加上 “showcommands”，会打印编译时使用的命令， -j 指定多核同步编译
-###make update-api
+### make update-api
+```
 sudo apt install lib32z1 lib32ncurses5
 	修改java代码后,需要 
-	
-```
 	make update-api
 	make sdk
 ```
-##丢弃本地修改
+## 丢弃本地修改
 
 ```
 repo forall -vc "git reset --hard"
 repo sync
-```********
+```
 
-##编译app到系统应用
-### 原理
+## 编译app到系统应用
+###  原理
 
 System app can be updated, in two ways:
 
@@ -148,11 +148,11 @@ updated by using package install api, this need the new version apk have the sam
 
 Ota update is a normal way for system app updating.
 
-#adb
+# adb
 
-##基本命令
+## 基本命令
 
-
+```
 $adb connect 192.168.31.158
 $adb root
 $adb shell "mount -o remount,rw /system"
@@ -166,10 +166,11 @@ adb install C:/work/example.apk
 adb uninstall <app package name>
 
 adb shell am set-debug-app -w com.example.jishuxiaoheiwu.appdebugsample
-
-###logcat
-adb logcat
+```
+### logcat
+`adb logcat`
 $ adb shell
 \# logcat
 
 adb logcat ActivityManager:I MyApp:D *:S
+```

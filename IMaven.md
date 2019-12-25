@@ -1,0 +1,154 @@
+Maven
+========
+
+# nexus about 
+## 安装
+1. 官网下载最新版本，解压缩
+	https://www.sonatype.com/download-oss-sonatype
+2. 修改端口
+```
+vi ${nexus_home}/etc/nexus-default.properties
+```
+### 密码修改
+1. 停服
+
+2. 进入OrientDB控制台
+	
+```
+cd ${nexus_home}
+	java -jar ./lib/support/nexus-orient-console.jar
+```
+
+3. 在控制台执行：
+```
+  connect plocal:/home/bjrdc/software/sonatype-work/nexus3/db/security admin admin
+```
+4. 重置密码为admin123
+```
+  update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"
+```
+5. 启动服务
+
+```
+./nexus start
+```
+
+###  添加阿里源
+在nexus后台添加repository aliyun-public
+http://maven.aliyun.com/nexus/content/groups/public
+
+### maven-public
+在maven-public repository中增加 aliyun-public 
+
+# maven about
+### maven/conf/settings 
+```
+<servers>
+<server>
+	<id>nexus</id>
+	<username>admin</username>
+	<password>zgjx@321</password>
+</server>
+</servers>
+....
+<mirror>
+    <id>nexus</id>
+    <!--nexus must = server.nexus-->
+    <mirrorOf>*</mirrorOf>
+    <name>nexus component</name>
+    <url>http://bjrdc9:8099/repository/maven-public</url>
+</mirror>
+<profile>  
+      <id>nexus</id>
+      <repositories>
+        <repository>
+          <id>nexus</id>
+          <url>http://bjrdc9:8099/repository/maven-public</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </repository>
+      </repositories>
+      <activation>
+        <activeByDefault>true</activeByDefault>      
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
+      </properties>
+    </profile>
+  </profiles>
+<activeProfiles>
+    <activeProfile>nexus</activeProfile>
+</activeProfiles>
+```
+
+
+## 本地代码deploy
+在项目的pom文件中增加如下配置
+```
+	<distributionManagement>
+		<snapshotRepository>
+			<id>nexus</id>
+			<!--等于mirror中server.nexus-->
+			<url>http://bjrdc9:8099/repository/maven-snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.7.0</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.2</version>
+				<executions>
+					<execution>
+						<id>deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>deploy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+```
+
+## 本地第三方库提交
+
