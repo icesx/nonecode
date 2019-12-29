@@ -1,4 +1,7 @@
-###安装
+Elasticsearch
+=======
+### 安装
+
 1. linux
 	$vi /etc/sysctl.conf 
 	添加下面配置：

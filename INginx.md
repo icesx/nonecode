@@ -1,10 +1,10 @@
 ### 安装
 ```
- 	./configure --prefix=/home/docker/software/nginx-1.10.0-proxy --with-pcre --with-http_sub_module
+./configure --prefix=/home/docker/software/nginx-1.10.0-proxy --with-pcre --with-http_sub_module
 ```
 ### 查看模块
 ```
-	./sbin/nginx -V
+./sbin/nginx -V
 ```
 ### sub_filter
 ```	

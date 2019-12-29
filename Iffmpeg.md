@@ -1,4 +1,6 @@
-##install
+ffmpeg
+======
+## install
 + sample
 ```
 	sudo apt-get install yasm libx264-dev
@@ -12,6 +14,7 @@ sudo apt install libgsm1-dev  libmp3lame-dev  libx265-dev libwebp-dev libwavpack
 
 ```
 ## 参数
+```
 	 -encoders
 	 -s 720*576
 	 -target dvd
@@ -30,12 +33,19 @@ sudo apt install libgsm1-dev  libmp3lame-dev  libx265-dev libwebp-dev libwavpack
 	 -preset
 	 	是一個選項集合，這設定一編碼速度來決定壓縮比。速度越慢則會得到更好的壓縮編碼效率 (畫質-位元率比 或 畫質-檔案大小比)。也就是說，若你設定一個目標位元率或是檔案大小，則越慢的 Preset 將會得到更好的輸出品質。而對於設定一個恆定品質 (CRF) 或是恆定量化值 (QP)，你可以透過選擇更慢的 Preset 來簡單的節省位元率 (也就是得到更小的檔案大小)。
 	一般而言是使用你所能忍受的最慢 Preset。目前 Presets 依速度遞減排序是: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow, placebo。該預設 Preset 是 medium。忽略 placebo 因為它會比 veryslow 浪費更多時間而且效果差異太小。
-##视频信息
-	ffprobe -i xx.mp4 
+```
+## 视频信息
+
+```
+ffprobe -i xx.mp4 
+```
+
 ## 锯齿
--deinterlace
-##样例
-	ffmpeg -y -i g7-2009-kbs.rm -c:v libx264 -strict -2 -deinterlace  -vb 3300000 usb-target/g7-2009-kbs.deinterlace.mp4
-	
-##webm to mp4 
+### -deinterlace
+
+## 样例
+```
+ffmpeg -y -i g7-2009-kbs.rm -c:v libx264 -strict -2 -deinterlace  -vb 3300000 usb-target/g7-2009-kbs.deinterlace.mp4
+```
+## webm to mp4 
 	ffmpeg -fflags +genpts -i 吸毒打击.webm   吸毒打 击.mp4

@@ -207,4 +207,8 @@ do
 done
 exit 0;
 ```
+### 查询链接
+`./mysqladmin -uadmin -p -h10.140.1.1 processlist`
 
+### 查看链接状态
+`./mysqladmin  -uadmin -p -h10.140.1.1 status`

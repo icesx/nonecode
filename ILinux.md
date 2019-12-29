@@ -370,3 +370,11 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
         echo -en $IFS
 ```
 
+### tcpdump
+
+```
+tcpdump tcp port 8088 -s 0 -v -w hsvod.pcap
+```
+
+
+

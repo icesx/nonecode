@@ -25,4 +25,5 @@ typedef struct
 Simple2 u1, u2[20], *u3;
 ```
 > **typedef** 声明结构体变量后，可以在使用结构体的时候，避免使用**struct**关键字
+## on eclipse
 

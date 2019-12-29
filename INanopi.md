@@ -1,12 +1,11 @@
 nanopi
 =============
-
+neo2
+-------
 ### install
 
 Insert this card into your board's BOOT slot and power on (with a 5V/2A power source). If the PWR LED is on and the STAT LED is blinking this indicates your board has successfully booted.
-
-
-
+### eflasher
 ```
 cu -l ttyAMA0 -s 115200
 pi

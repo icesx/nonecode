@@ -1,5 +1,8 @@
-###安装
+RPI
+==========
+### 安装
 sudo dd if=/TOOLS/TOOLS/Linux/ISO/2018-04-18-raspbian-stretch-lite.img  of=/dev/mmcblk0 bs=4M
+
 ### first
 user:pi
 passwd:raspberry
@@ -9,11 +12,13 @@ passwd:raspberry
 vi /etc/inittab
 #T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
 ```
-###setup
+### setup
+
 ```
 sudo raspi-config
 ```
-###wifi
+### wifi
+
 ```
 sudo ifconfig wlan0 up
 sudo iwlist wlan0 scan
@@ -35,7 +40,7 @@ iface eth0 inet static
    gateway 10.253.0.1
    dns-nameservers 8.8.8.8
 ```
-###keybord
+### keybord
 $sudo nano /etc/default/keyboard 
 
 and hit enter. locate the following line
@@ -44,7 +49,7 @@ XKBLAYOUT=”gb”
 
 Change the gb to us (This assumes you want a us mapping, if not replace the gb with the two letter code for your country)i
 
-###GPIO
+### GPIO
 第一列是wiringPi API中的缺省编号，wiringPiSetup()采用这列编号
 第二列（Name）往往是转接板的编号
 第三列是树莓派板子上的自然编号（左边引脚为1-15，右边引脚为2-26），RPi.GPIO.setmode(GPIO.BOARD)采用这列编号
@@ -74,8 +79,8 @@ wiringPi Pin	Name	Board Pin	BCM GPIO
 18	GPIO 9		29
 19	GPIO10		30
 20	GPIO11		31
-###apt
-###ssh
+### apt
+
+### ssh
 如果出现无法远程的话
 sudo rm /etc/ssh/ssh_host_* && sudo dpkg-reconfigure openssh-server
-###ssh

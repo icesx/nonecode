@@ -1,4 +1,6 @@
-###debootstrap 
+LXC
+======
+### debootstrap 
 0. virtualbox的配置
 	A. 首先安装ubuntu14.10版本，其他的版本应该也可以，本文档基于ubuntu14.10测试通过
 	B. 安装的虚拟机配置两个网卡，一个使用host-only【用于远程登录】，一个采用“网络地址转换NAT”【用于连接外网，经过测试后发现，“NAT”模式不行，无法从虚拟机中ping出外网】
@@ -60,7 +62,7 @@
 9. 下一步试试lxc-create
 
 
-###lcx-create
+### lcx-create
 0. 之前经过debootstrap来创建container发现是可以的，但是发现总是不够稳定。下面将使用lxc-create试试
 1. 通过lxc-create命令创建的container就很简单，详细如下：
 	A. sudo lxc-create -t ubuntu -n ubuntu
@@ -97,7 +99,7 @@
 		【源文件目录】					【需要挂载到的实例的目录，一定要存在】				
 	E. ubuntu/fstab
 		A. lxc.mount.entry=/TOOLS/jdk1.7.0_71_linux_x64 home/ubuntu/jdk1.7.0_71_linux_x64   none bind,ro 0 0
-		
+	
 5. 启动实例
 	A. 启动
 		cd /DOING/LXC/hadoop01/
@@ -107,7 +109,7 @@
 		B. df查看分区，可能只能看到一个hadoop的挂载点，但是cd jdk1.7.0_71_linux_x64，却能看到内容——估计是一个bug
 		C. mount的代码默认使用ubuntu账户，需要的话，可以chmod -R i:i /TOOLS/hadoop修改hadoop的目录权限给i账户
 	C. 这样基本就配置好了，下一步就是将hadoop跑起来了。
-	 
+	
 6. 修改root密码 $ sudo lxc-attach -n hadoop01
 7. 关于lxc.utsname=无法生效的问题，经过无意间的测试发现，将模板ubuntu的hostName修改为非ubuntu则外部的这个utsname就可以生效了，奇哉怪哉
 

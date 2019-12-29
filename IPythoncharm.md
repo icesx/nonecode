@@ -1,4 +1,4 @@
-###快捷键 eclips schema
+### 快捷键 eclips schema
 	Ctrl + Alt + Space 列出成员
 	Shift+ F1 显示错误描述或警告信息
 	alt + enter 自动导入
@@ -35,6 +35,6 @@
 	Ctrl + Numpad+ 全部展开
 	Ctrl + Numpad- 全部折叠
 	Ctrl + F4 关闭运行的选项卡
-###问题处理
+### 问题处理
 1. please specify a different SDK name
 	有重复名称的virtualenv
