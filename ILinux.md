@@ -25,13 +25,31 @@ $gsettings set org.gnome.Vino require-encryption false
 	$apt-get update 
 ```
 ### 修改IP地址
+
+#### ubuntu 16
+
 ```
-	$vi /etc/network/interfaces
-​	$ip addr flush dev ens160
-​	$service networking restart
+$vi /etc/network/interfaces
+auto eth0
+iface eth0 inet static
+address 192.168.31.10
+netmask 255.255.255.0
+gateway 192.168.31.1
 ```
 
+修改NDS 
+
+```
+sudo systemctl enable dnsmasq
+sudo vi /etc/dnsmasq.conf
+	server=114.114.114.114
+sudo systemctl start dnsmasq
+```
+
+
+
 #### ubuntu18
+
 	network配置发生变化，修改方式如下：
 ```
 solar@solarsystem:~$ cat /etc/netplan/01-netcfg.yaml 
@@ -188,15 +206,6 @@ sudo apt install unar
 $ lsar filename.zip
 $ unar filename.zip
 ```
-### ulimit
-
-Modify /etc/systemd/user.conf and /etc/systemd/system.conf with the following line (this takes care of graphical login):
-
-	DefaultLimitNOFILE=65535
-Modify /etc/security/limits.conf with the following lines (this takes care of non-GUI login):
-
-	* hard nofile 65535
-	* soft nofile 65535
 ### dns
 ```
 
@@ -313,16 +322,16 @@ sudo fc-cache  -fv
 
 ## ulimit 
 
-### /etc/security/limits.conf
-​	$echo "* - nofile 102400" >> /etc/security/limits.conf
+1. /etc/security/limits.conf
+​	$echo "* - nofile 102400" >> /etc/security/limits.conf/etc/pam.d/login
 
-### /etc/pam.d/login
 ​	session required /lib/security/pam_limits.so 
 
-### /etc/sysctl.cfg
+2. /etc/sysctl.cfg
 
 	fs.file-max=102400
-### /etc/ssh/sshd_config
+3. /etc/ssh/sshd_config
+
 ​	UsePAM yes
 
 ### mount
@@ -356,7 +365,8 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
    ```
 2. 通过如下命令可以实现for 循环 按照回车进行 换行，而不是 空格
 [参考地址](https://www.cnblogs.com/cocowool/archive/2013/01/15/2861904.html) 
-```
+```cu
 	 IFS=$(echo -en "\n\b")
         echo -en $IFS
 ```
+

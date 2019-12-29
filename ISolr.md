@@ -1,40 +1,56 @@
+Solr
+======
 ### 研究了2天基本上讲solr的一些东西搞清楚了
-	A、单机安装
- 		### 下载安装solr /:$ unzip -q solr-5.1.0.zip /:$ cd solr-5.1.0/
- 		### 启动solr ./bin/solr start
- 		### 建立名称为”mycore”的core。 ./bin/solr create -c mycore
-		安装完成后，在solr/server/solr/mycore/下有此mycore的所有文件
-	B、solrcloud模式
-		【】
+####单机安装
+1. 下载安装
+`$ unzip -q solr-5.1.0.zip /:$ cd solr-5.1.0/`
+2. 启动
+`./bin/solr start`
+3. 建立名称为”mycore”的core
+`./bin/solr create -c mycore`
+安装完成后，在solr/server/solr/mycore/下有此mycore的所有文件
+4. solrcloud模式
+
 ### wiki
 	https://wiki.apache.org/solr/
 	https://cwiki.apache.org/confluence/display/solr/
 ### solr原理
-	A、接口
-	B、配置
-		I、配置文件
-			A、mycore的配置文件在
-				solr/server/solr/mycore/conf/slorconfig.xml
-			B、schema
-				在solrconfig.xml中有如下的行：
-				  <schemaFactory class="ManagedIndexSchemaFactory">
-				    <bool name="mutable">true</bool>
-				    <str name="managedSchemaResourceName">managed-schema</str>
-				  </schemaFactory>	
-		II、请求地址相关
-			在solr/server/solr/mycore/conf/slorconfig.xml中由如下的相关篇日志需要关注
-			A、<requestHandler name="/select" class="solr.SearchHandler">	【使用solr的client进行调用的时候执行的http请求如：】
-				QueryResponse response = solr.query(
-				new SolrQuery().setRows(100).setSort("price", SolrQuery.ORDER.asc).set(CommonParams.Q, "price:*"));
-				SolrDocumentList list = response.getResults();
-				对应的url为：
-				GET /solr/mycore/select?rows=100&sort=price+asc&q=price%3A*&wt=javabin&version=2
-			B、  <requestHandler name="/update/extract" startup="lazy"  class="solr.extraction.ExtractingRequestHandler" >【为另外一个url，可用于上传文件】
-				POST /solr/mycore/update/extract?fmap.content=attr_content&commit=true&softCommit=false&waitSearcher=true&wt=javabin&version=2
-	C、几个关键字
-		fq (Filter Query)
-		fl (Field List)
-		Specifies a default field, overriding the definition of a default field in the schema.xml file.
+#### 接口
+#### 配置
+####配置文件
+1. mycore的配置文件在
+`solr/server/solr/mycore/conf/slorconfig.xml`
+	
+2. schema
+
+  在solrconfig.xml中有如下的行：
+
+  ```
+    <schemaFactory class="ManagedIndexSchemaFactory">
+  			    <bool name="mutable">true</bool>
+  			    <str name="managedSchemaResourceName">managed-schema</str>
+  			  </schemaFactory>	
+  ```
+
+3. 请求地址相关
+  
+  在solr/server/solr/mycore/conf/slorconfig.xml中由如下的相关篇日志需要关注
+  `<requestHandler name="/select" class="solr.SearchHandler">`
+  
+  ​	【使用solr的client进行调用的时候执行的http请求如：】
+    			QueryResponse response = solr.query(
+    			new SolrQuery().setRows(100).setSort("price", SolrQuery.ORDER.asc).set(CommonParams.Q, "price:*"));
+    			SolrDocumentList list = response.getResults();
+    			对应的url为：
+    			GET /solr/mycore/select?rows=100&sort=price+asc&q=price%3A*&wt=javabin&version=2
+    ` <requestHandler name="/update/extract" startup="lazy"  class="solr.extraction.ExtractingRequestHandler" >`
+  
+  【为另外一个url，可用于上传文件】
+    			POST /solr/mycore/update/extract?fmap.content=attr_content&commit=true&softCommit=false&waitSearcher=true&wt=javabin&version=2
+    C、几个关键字
+    	fq (Filter Query)
+    	fl (Field List)
+    	Specifies a default field, overriding the definition of a default field in the schema.xml file.
 ### tomcat
 	A、安装网上的教程讲solr-5.3.1移植到tomcat里，倒不是很复杂，如下几部即可
 		zip -r /TOOLS/software/solr-5.3.1/server/solr-webapp/webapp solr.war
@@ -47,7 +63,7 @@
 			       <env-entry-value>/DOING/solr-data</env-entry-value>
 			       <env-entry-type>java.lang.String</env-entry-type>
 			    </env-entry>
-
+	
 	B、问题：启动tomcat后，solr可以访问，但是无法创建core
 		未完待续。。。。。。	
 ### 中文分词
@@ -73,7 +89,7 @@
 			    </analyzer>
 			</fieldtype>			
 		III、需要在/cloud/software/solr-5.3.1/dicpath目录下创建词库文件words.dic,并且词库文件每行一个单词，换行符需要使用windows的
-					
+
 ### 集群配置
 	### 主机启动
 		 ./solr -c -z hadoop7:2181
@@ -88,7 +104,7 @@
 		org.apache.solr.common.SolrException: Error loading config name for collection
 		问题：如果链接不上zookeeper,则使用zookeeper的zoCli.sh rmr /clusterstate.json,重启solr，然后再删除server/solr/下的分片目录，再执行
 		./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs -shards 3 -replicationFactor 2 -
-
+	
 		160107 14:22:14,607 ERROR [CloudSolrClient.java.requestWithRetryOnStaleState(902)][main] Request to collection cdcore failed due to (400) org.apache.solr.client.solrj.impl.HttpSolrClient$RemoteSolrException: Error from server at http://172.16.1.9:8983/solr/cdcore: Document is missing mandatory uniqueKey field: id, retry? 0
 		./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs -shards 4 -replicationFactor 2
 	【在实地的使用中，由于share是挂在不同的机器上的，replication是复制的数量，多了影响创建索引的性能，所以可以将replicationFcator设置为2，这样就可以将数据分到4台机器上，每个数据有2个备份】
@@ -118,7 +134,7 @@
 	ERROR: Error loading config name for collection
 	关闭solr，登陆到zookepper，rmr /clusterstate.json
 	#./zkCli.sh -server haoop-xx:3181
-	
+
 ### 关于排序
 	solr的排序基于Luncene，主要是评分算法，在solr中对与排序结果进行修改的可以通过如下的方法：
 	第一、不同的field不同的boost，boost越大，则计算出来的评分越大。

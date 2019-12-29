@@ -3,22 +3,22 @@ mysql
 
 ### 安装
 ```
-​	$tar –zxvf mysql-enterprise-5.0.30-linux-i686-glibc23.tar.gz –C /usr/local/
-​	$cd /usr/local/
-​	$ln –s /cloud/mysql-enterprise-5.0.30-linux-i686-glibc23 mysql
-​	$cd mysql
-​	$groupadd mysql
-​	$useradd -g mysql mysql
-​	$chown -R mysql：mysql .
-​	$sudo usermod  -a -G mysql docker [当前docker用户加入mysql组]
-​	$sudo scripts/mysql_install_db --user=mysql
-​	$cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
-​	$sudo ./mysqld_safe --user=mysql& 
+$tar –zxvf mysql-enterprise-5.0.30-linux-i686-glibc23.tar.gz –C /usr/local/
+$cd /usr/local/
+$ln –s /cloud/mysql-enterprise-5.0.30-linux-i686-glibc23 mysql
+$cd mysql
+$groupadd mysql
+$useradd -g mysql mysql
+$chown -R mysql：mysql .
+$sudo usermod  -a -G mysql docker [当前docker用户加入mysql组]
+$sudo scripts/mysql_install_db --user=mysql
+$cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
+$sudo ./mysqld_safe --user=mysql& 
 ```
 ### 配置
 ```
-​	$sudo cp my-default.cnf /etc/my.cnf
-​	$vi /etc/my.cnf
+$sudo cp my-default.cnf /etc/my.cnf
+$vi /etc/my.cnf
 ```
 ```
 [mysqld]
@@ -35,11 +35,13 @@ default-character-set=utf8
 ### 创建用户
 ```
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xjgz@123';
+
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON bdp.* TO 'bjrdc'@'%' IDENTIFIED BY  'xjgz@123';
 ```
 ### 权限处理
-	./mysqld_safe --skip-grant-table
-	
+```
+./mysqld_safe --skip-grant-table
+```
 ### 异常处理
 
 ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
@@ -48,12 +50,12 @@ to do this
 ```
 $ln -s /var/lib/mysql/mysql.sock /tmp/mysql.sock
 ```
-to do this
+### 关闭
 ```
 $mysqladmin -u root -p shutdown
 ```
 
-to do this
+### 修改密码
 ```
 $mysql -u root -p
 USE mysql

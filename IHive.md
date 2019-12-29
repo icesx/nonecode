@@ -1,14 +1,19 @@
+Hive
+========
 ### 安装
 #### mysql
 
 ```
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON hive_metastore.* TO 'hive'@'%' IDENTIFIED BY  'hive123';
 ```
-+ debug
+### debug
+```
 hive --hiveconf hive.root.logger=DEBUG,console
-+ create metastor
+```
+### create metastor
+```
   schematool -dbType mysql -initSchema
-
+```
 ### 创建原始表
 ```
 Create table baseball.Master
@@ -120,7 +125,7 @@ mvn clean install -DskipTests
 		</property>
 	
 		</configuration>
-	```	
+```
 
 ### 与hbase整合
 
@@ -138,24 +143,24 @@ mvn clean install -DskipTests
 ​	A、注意大小写，当Hbase中字段为大写的时候，在创建Hivetable的时候，一定要讲mapping字段中写上大写的。
 
 ### 问题处理
-
-+ 
-Caused by: org.apache.hadoop.hive.ql.metadata.HiveException: org.apache.hadoop.hive.serde2.SerDeException: HBase row key cannot be NULL
-		这是因为在insert的时候，有rowkey为空，如下：
++ Caused by: org.apache.hadoop.hive.ql.metadata.HiveException: org.apache.hadoop.hive.serde2.SerDeException: HBase row key cannot be NULL
+这是因为在insert的时候，有rowkey为空，如下：
 ```
 		 INSERT OVERWRITE TABLE cdc.CDC_ANALYSIS_APPEAR_OFTEN_GOODS_SITES
 		  --/*物品经常出现的场所*/
 		 select concat(mac,"_",lpad(string(size(time_d_col)),4,"0"),"_",rpad(string(rand()),16,"0")),mac,site_id,concat_ws(",",time_d_col)
 ```
-		当mac字段为空或者null的时候，就出现上面的问题，解决办法是where mac<>''
+当mac字段为空或者null的时候，就出现上面的问题，解决办法是where mac<>''
 
 + hive> drop table cdc_analysis_walkingwith_pre;
 FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask. MetaException(message:For direct MetaStore DB connections, we don't support retries at the client level.)
-		替换mysql的jar from mysql-connector-java-5.1.1.jar mysql-connector-java-5.1.32.jar
+
+替换mysql的jar from mysql-connector-java-5.1.1.jar mysql-connector-java-5.1.32.jar
 	
 + hbase Attempt to do update or delete using transaction manager that does not support these operations
-		https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions#Configuration
-		【注：但是惊奇的发现，如果加上如下配置后，INSERT INTO TABLE cdc.CDC_NETWORK_AUDIT_CLEAN 就无法用了——hive2.0.0】
+https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions#Configuration
+注：但是惊奇的发现，如果加上如下配置后，INSERT INTO TABLE cdc.CDC_NETWORK_AUDIT_CLEAN 就无法用了——hive2.0.0】
+```
 		hive-site.xml增加如下配置，重启hive
 		   <property>
 		    <name>hive.support.concurrency</name>
@@ -177,6 +182,7 @@ FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTa
 		    <name>hive.compactor.worker.threads</name>
 		    <value>1</value>
 		  </property>
+```
 + Caused by: java.io.IOException: HBase row key cannot be NULL
 + Hbase 的overwrite
 	Overwrite
@@ -184,11 +190,14 @@ FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTa
 
 + NULL值判断
 	A、如果是hbase的话，可以使用如下sql来判断是否有NULL
-		select * from cdc_network_audit where mac is NULL;
-		但是select count(*) from cdc_network_audit where mac is NULL;没有查出来数据，是不是bug？
+	select * from cdc_network_audit where mac is NULL;
+	但是select count(*) from cdc_network_audit where mac is NULL;没有查出来数据，是不是bug？
 ### 方法
-	A、select visit_time,regexp_replace(visit_time, '-([0-9]{2})-', '-06-') from cdc.cdc_community_mj_access limit 10;
+```
+select visit_time,regexp_replace(visit_time, '-([0-9]{2})-', '-06-') from cdc.cdc_community_mj_access limit 10;
+```
 ### 强制mapreduce
+```
 	set hive.fetch.task.conversion=none[all mapreduce]
 	set hive.fetch.task.conversion=more[no mapreduce]
-
+```
