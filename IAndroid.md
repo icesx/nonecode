@@ -170,7 +170,8 @@ adb shell am set-debug-app -w com.example.jishuxiaoheiwu.appdebugsample
 ### logcat
 `adb logcat`
 $ adb shell
-\# logcat
+```
+# logcat
 
 adb logcat ActivityManager:I MyApp:D *:S
 ```

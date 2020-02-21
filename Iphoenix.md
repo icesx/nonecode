@@ -1,4 +1,4 @@
-###install
+### install
 To install a pre-built phoenix, use these directions:
 
 Download and expand the latest phoenix-[version]-bin.tar.
@@ -7,6 +7,8 @@ Restart HBase.
 Add the phoenix-[version]-client.jar to the classpath of any Phoenix client.
 
 ### 使用
-$sqlline.py zookeeper:2181
 
-### 
+```
+$sqlline.py zookeeper:2181
+```
+

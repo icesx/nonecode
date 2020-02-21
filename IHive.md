@@ -66,27 +66,42 @@ Create table baseball.Master
 ```
 ### 一些有用的case
 #### 每秒请求量【TPS】
-​		from (select substr(time,0,21) as t from xjgz.portal_98) t select t,count(t) as count group by t order by count desc limit 50
-​	效果与下句相同
-​		select ti.t,count(ti.t) as count from (select substr(time,0,21) as t from portal_98) ti group by t order by count desc limit 50
+```
+from (select substr(time,0,21) as t from xjgz.portal_98) t select t,count(t) as count group by t order by count desc limit 50
+```
+效果与下句相同
+```
+select ti.t,count(ti.t) as count from (select substr(time,0,21) as t from portal_98) ti group by t order by count desc limit 50
+```
 #### 一秒内同时访问的IP【同行】
-​		select ti.t,ti.ip from (select substr(time,9,13) as t,ip from portal_98) ti group by ti.t,ti.ip order by ti.t desc limit 50;
+```
+select ti.t,ti.ip from (select substr(time,9,13) as t,ip from portal_98) ti group by ti.t,ti.ip order by ti.t desc limit 50;
+```
 #### 一秒内同时访问的IP
-​		select ti.ip, collect_set(ti.t) as ct from (select substr(time,9,13) as t,ip from portal_98) ti group by ti.ip  order by ct  desc limit 50;
+```
+select ti.ip, collect_set(ti.t) as ct from (select substr(time,9,13) as t,ip from portal_98) ti group by ti.ip  order by ct  desc limit 50;
+```
 #### ip访问的时间【同行】
-​		select collect_set(ip) as cip,ct from (select ip , collect_set(t) as ct from (select substr(time,9,12) as t,ip from portal_98) ti group by ti.ip) as c group by ct limit 50;
-​		select cip,ct from(select collect_set(ip) as cip,ct from (select ip , collect_set(t) as ct from (select substr(time,9,12) as t,ip from cdc.portal_98) ti group by ti.ip) c group by c.ct) e where size(cip)>2 and size(ct)>2 limit 50;
+```
+select collect_set(ip) as cip,ct from (select ip , collect_set(t) as ct from (select substr(time,9,12) as t,ip from portal_98) ti group by ti.ip) as c group by ct limit 50;
+```
+```
+select cip,ct from(select collect_set(ip) as cip,ct from (select ip , collect_set(t) as ct from (select substr(time,9,12) as t,ip from cdc.portal_98) ti group by ti.ip) c group by c.ct) e where size(cip)>2 and size(ct)>2 limit 50;
+```
 #### 频繁出没
 ​		select ti.t,ti.ip,count(ti.ip) as ipc from (select substr(time,9,11) as t,ip from cdc.portal_98) ti group by ti.t,ti.ip where ipc>20 order by ipc desc;
 ​		#以天为单位统计ip出现的次数
-​		select ti.ip,count(ti.ip) as ipc from (select substr(time,9,11) as t,ip from cdc.portal_98) ti group by ti.ip order by ipc desc limit 50;
-​	
+```
+select ti.ip,count(ti.ip) as ipc from (select substr(time,9,11) as t,ip from cdc.portal_98) ti group by ti.ip order by ipc desc limit 50;
+```
+
 ### 异常处理
 ​	A、load data inpath '/user/i/gehua/portal/98' overwrite into table portal_98;
 ​		FAILED: SemanticException [Error 10028]: Line 1:18 Path is not legal ''/xjgz/cdc/resource/hitlog/98'': Move from: hdfs://hadoop1:9100/xjgz/cdc/resource/hitlog/98 to: hdfs://172.16.1.1:9100/user/hive/warehouse/cdc.db/hitlog is not valid. Please check that values for params "default.fs.name" and "hive.metastore.warehouse.dir" do not conflict.
 ​		使用external table 发现可以，不知道为什么！！！
-​	create external table cdc.hitlog(ip string,frank string,user_id string,time string,time_zone string,method string,url string,code string,size string,referer string,used_seconds int,used_microseconds int) row format delimited fields terminated by ' ' location '/xjgz/cdc/resource/hitlog';
-
+```
+create external table cdc.hitlog(ip string,frank string,user_id string,time string,time_zone string,method string,url string,code string,size string,referer string,used_seconds int,used_microseconds int) row format delimited fields terminated by ' ' location '/xjgz/cdc/resource/hitlog';
+```
 ### 相关命令
 ​	./hive --service hiveserver2
 ​	show tables

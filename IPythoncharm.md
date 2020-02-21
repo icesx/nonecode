@@ -38,3 +38,14 @@
 ### 问题处理
 1. please specify a different SDK name
 	有重复名称的virtualenv
+	
+### 本地PYTHON_PATH
+
+1. select Preferences > Project Interpreter
+2. to the right of interpreter selector there is a "..." button, click it
+3. select "more..."
+4. pop up a new "Project Interpreters" window
+5. select the rightest button (named "show paths for the selected interpreter")
+6. pop up a "Interpreter Paths" window
+7. click the "+" buttom > select your desired PYTHONPATH directory (the folder which contains python modules) and click OK
+8. Done! Enjoy it!

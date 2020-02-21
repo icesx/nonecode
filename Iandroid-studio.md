@@ -1,8 +1,8 @@
-###install
-	在ubuntu 64位上，需要安装如下几个包，否则，无法build
-	【Error:org.gradle.process.internal.ExecException: A problem occurred starting process 'command aapt''】	
-	$ sudo apt-get install lib32stdc++6
-	$ sudo apt-get install lib32z1
+### install
+​	在ubuntu 64位上，需要安装如下几个包，否则，无法build
+​	【Error:org.gradle.process.internal.ExecException: A problem occurred starting process 'command aapt''】	
+​	$ sudo apt-get install lib32stdc++6
+​	$ sudo apt-get install lib32z1
 
 ### NAK
 0. sudo apt install gcc-aarch64-linux-gnu,g++-aarch64-linux-gnu

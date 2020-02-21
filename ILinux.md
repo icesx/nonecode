@@ -110,20 +110,26 @@ DEFAULT_FORWARD_POLICY="ACCEPT"
 ```
 ​		【配置的时候出现多次配置不成功的情况，后来估计就是这个原因】
 ​	C、端口转发【ufw没有端口转发的命令】
+
 ```
-		vi /etc/ufw/befor.rulers
-​		 在*filter前面增加
-​		*nat
-​		:PREROUTING ACCEPT [0:0]
-​		:INPUT ACCEPT [0:0]
-​		:OUTPUT ACCEPT [0:0]
-​		:POSTROUTING ACCEPT [0:0]
-​		#将从 1194 端口来的包发送 到 172.16.10.15 的1194端口
-​		-A PREROUTING  -p tcp -m tcp --dport 1194 -j DNAT --to-destination 172.16.10.15
-​		#将从172.16.10.0/24来的包 通过ens20【外网网口】发送出去
-​		-A POSTROUTING -s 172.16.10.0/24 -o ens20 -j MASQUERADE
-​		COMMIT
-​		
+vi /etc/ufw/befor.rulers
+在*filter前面增加
+```
+
+
+
+```
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+#将从 1194 端口来的包发送 到 172.16.10.15 的1194端口
+-A PREROUTING  -p tcp -m tcp --dport 1194 -j DNAT --to-destination 172.16.10.15
+#将从172.16.10.0/24来的包 通过ens20【外网网口】发送出去
+-A POSTROUTING -s 172.16.10.0/24 -o ens20 -j MASQUERADE
+COMMIT
+		
 ```
 	D、重启ufw
 ```
@@ -144,26 +150,37 @@ ufw delete 4
 ### 自启动
 ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改
 ```
-1. sudo vim /etc/systemd/system/rc-local.service
-2.  add code to rc-local.service
-```
-```
+sudo vi /etc/systemd/system/rc-local.service
 [Unit]
-Description=/etc/rc.local Compatibility
+
+Description=/etc/rc.local Compatibility
+
 ConditionPathExists=/etc/rc.local
- 
+
+
+
 [Service]
+
 Type=forking
-ExecStart=/etc/rc.local start
+
+ExecStart=/etc/rc.local start
+
 TimeoutSec=0
+
 StandardOutput=tty
+
 RemainAfterExit=yes
+
 SysVStartPriority=99
- 
+
+
+
 [Install]
+
 WantedBy=multi-user.target
 ```
-3. sudo vim /etc/rc.local
+sudo vim /etc/rc.local
+
 ```
 #!/bin/sh -e
 #
@@ -183,11 +200,18 @@ exit 0
 3. run this command
 ```
 sudo chmod 755 /etc/rc.local
-sudo systemctl enable rc-local
 sudo systemctl start rc-local.service
 sudo systemctl status rc-local.service
 
 ```
+
+### apt
+
+```
+sudo apt-get build-dep --download-only -o dir::cache=./ openssh-server
+```
+
+
 
 Centos
 ---------------------
@@ -206,19 +230,10 @@ sudo apt install unar
 $ lsar filename.zip
 $ unar filename.zip
 ```
-### dns
-```
+# Disk
 
-For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
-
-iface eth0 inet static
-address 192.168.3.3
-netmask 255.255.255.0
-gateway 192.168.3.1
-dns-search example.com
-dns-nameservers 192.168.3.45 192.168.8.10
-```
 ### parted （超过2T分区）
+
 ​	超过2T分区后 fdisk不支持，需要用parted
 ```
 	$parted /dev/sdc
@@ -231,6 +246,28 @@ dns-nameservers 192.168.3.45 192.168.8.10
 ​	
 ```
 
+### 动态扫描硬盘
+
+```
+echo '- - -' >/sys/class/scsi_host/host0/scan
+```
+
+# NET
+
+### dns
+
+```
+For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
+
+iface eth0 inet static
+address 192.168.3.3
+netmask 255.255.255.0
+gateway 192.168.3.1
+dns-search example.com
+dns-nameservers 192.168.3.45 192.168.8.10
+```
+
+
 ### TIME_WAIT
 
 ```
@@ -239,7 +276,35 @@ net.ipv4.tcp_sack = 0
 net.ipv4.tcp_timestamps = 0
 net.ipv4.tcp_tw_recycle = 1
 ```
+### tcpkill
+
+```
+	sudo netstat -ap | grep :<port_number>
+​	Also you can try this to close the socket connection
+​	tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
+​	Replace X with the IP address, and Y with the port number.
+​	example
+​	#tcpkill -i eth1 -9 host 183.129.145.18
+```
+
+### tcpdump
+
+```
+tcpdump tcp port 8088 -s 0 -v -w hsvod.pcap
+```
+
+## SSH
+
+### 禁止远程
+
+```
+
+```
+
+
+
 ### install fonts
+
 ```
 sudo cp -r ${fonts} /usr/share/fonts/
 sudo fc-cache  -fv
@@ -250,55 +315,53 @@ sudo fc-cache  -fv
 `logout`
 
 ### sudoer
-​	sudo usermod -a -G sudo username
-
+```
+	sudo usermod -a -G sudo username
+```
 ### find
-​	find ./*  -mtime +7 -type f -a  -exec rm -f {} \;
+```
+	find ./*  -mtime +7 -type f -a  -exec rm -f {} \;
 ​	find . -exec cat {} \;|grep workSpace
+```
 ### history
 ​	home/.bach_profile
-​	export HISTTIMEFORMAT='%F %T '
+```
+	export HISTTIMEFORMAT='%F %T '
 ​	export HISTSIZE=45000
-### tcpkill
-​	sudo netstat -ap | grep :<port_number>
-​	Also you can try this to close the socket connection
-​	tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
-​	Replace X with the IP address, and Y with the port number.
-​	example
-​	#tcpkill -i eth1 -9 host 183.129.145.18
-
+```
 ### expect
 
  1. shell
  ```
-	#/usr/bin/expect <<EOF
-	set timeout 3000
-	spawn scp ${zip_file} ${user}@${host}:${remote}/
-	expect "password:"
-	send "${password}\r"
-	#expect "$"
-	#spawn ssh ${user}@${host}
-	#expect "password:"
-	#send "${password}\r"
-	#expect "${user}@"
-	#send "${spark_commit} --master yarn-cluster --class  ${main_class}  /home/docker/mrs/${jar}\r"
-	expect EOF  
+ #/usr/bin/expect <<EOF
+ set timeout 3000
+ spawn scp ${zip_file} ${user}@${host}:${remote}/
+ expect "password:"
+ send "${password}\r"
+ #expect "$"
+ #spawn ssh ${user}@${host}
+ #expect "password:"
+ #send "${password}\r"
+ #expect "${user}@"
+ #send "${spark_commit} --master yarn-cluster --class  ${main_class}  /home/docker/mrs/${jar}\r"
+ expect EOF  
  ```
  2. ssh yes
+
  ```
-	#!/usr/bin/expect
-	set user [lindex $argv 0] 
-	set host [lindex $argv 1] 
-	set password root
-	set timeout -1
-	spawn ssh $user@$host
-	expect {  
-	  "*yes/no" { send "yes\r"}
-	  "$user@" {send "exit\r"}
-	}
-	expect "$user@"
-	send "exit\r"
-	interact
+ #!/usr/bin/expect
+ set user [lindex $argv 0] 
+ set host [lindex $argv 1] 
+ set password root
+ set timeout -1
+ spawn ssh $user@$host
+ expect {  
+ "*yes/no" { send "yes\r"}
+ "$user@" {send "exit\r"}
+ }
+ expect "$user@"
+ send "exit\r"
+ interact
  ```
 ### cu
 ```
@@ -370,11 +433,38 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
         echo -en $IFS
 ```
 
-### tcpdump
+## Samba
+1、关闭seliux
+disable selinux
+2、修改samba的配置
+	[homes]
+	comment=Home Directories
+	wirteable=yes
+	
+3、添加用户，一定要添加本地用户
 
 ```
-tcpdump tcp port 8088 -s 0 -v -w hsvod.pcap
+#sambapasswd -a docker
+zgjx@321
+zgjx@321
 ```
+
+
+
+## DNS
+
+```
+	#yum install bind
+ 	#vi /etc/named.conf
+				listen-on port 53 { 127.0.0.1; };
+				allow-query     { localhost; };
+			修改为
+				listen-on port 53 { any; };
+				allow-query     { any; };
+	#service named restart
+```
+
+
 
 
 

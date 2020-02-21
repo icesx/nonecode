@@ -1,7 +1,7 @@
 openvpn
 ========
-### 安装
-#### centos
+## 安装
+### centos
 ​	centos7上yum里没有openvpn的源，需要安装readhead的源，使用如下命令
 
 ```
@@ -12,7 +12,7 @@ yum install
 
 
 
-#### ubuntu
+### ubuntu
 
 #### apt
 
@@ -28,7 +28,8 @@ sudo dpkg -i reasy-rsa_2.2.2-1_all.deb
 ```
 
 
-### 配置
+## 配置
+### 参数配置
 
 ```
 cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz /etc/openvpn/

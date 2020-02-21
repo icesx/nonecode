@@ -1,4 +1,11 @@
 ### 安装
+
+```
+sudo apt-get install libpcre3 libpcre3-dev zlib1g-dev gcc make
+```
+
+
+
 ```
 ./configure --prefix=/home/docker/software/nginx-1.10.0-proxy --with-pcre --with-http_sub_module
 ```
@@ -98,6 +105,7 @@ Reference: mp4_buffer_size
 Syntax:
 Default:
 Sets the buffer size used for processing mp4 file.
+
 #### mp4_max_buffer_size
 mp4_max_buffer_size size
 10M

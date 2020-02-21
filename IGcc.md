@@ -17,6 +17,7 @@ abi适用于应用程序二进制接口约定：eabi，gnueabi，gnueabihf
 ​	./configure --enable-checking=release --enable-languages=c,c++ --prefix=/usr/lib/gcc-6.3.0
 ​	make -j4
 ​	make install
+
 ## arm 交叉编译工具
 https://releases.linaro.org/components/toolchain/binaries/
 
@@ -55,11 +56,11 @@ sudo ln -s libstdc++.so.6.0.22 libstdc++.so.6
 ```
  ln -s 
 
-###配置libstdc++.so.6
+### 配置libstdc++.so.6
 存放在
 /usr/lib/aarch64-linux-gnu/libstdc++.so.6
 /usr/lib/x86_64-linux-gnu/libstdc++.so.6
-##ldconfig
+## ldconfig
 ldconfig命令的用途主要是在默认搜寻目录/lib和/usr/lib以及动态库配置文件/etc/ld.so.conf内所列的目录下，搜索出可共享的动态链接库（格式如lib*.so*）,进而创建出动态装入程序(ld.so)所需的连接和缓存文件
 
 1. 往/lib和/usr/lib里面加东西，是不用修改/etc/ld.so.conf的，但是完了之后要调一下ldconfig，不然这个library会找不到。

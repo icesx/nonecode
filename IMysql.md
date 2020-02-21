@@ -59,7 +59,7 @@ $mysqladmin -u root -p shutdown
 ```
 $mysql -u root -p
 USE mysql
-update user set host='%', Password=password('ipanelappsmgs123456') where User='root'£»
+update user set host='%', Password=password('ipanelappsmgs123456') where User='root';
 flush privileges;
 ```
 ### 显示链接
