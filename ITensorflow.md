@@ -1,13 +1,21 @@
 tensorflow
 =============
-##on ubuntu
-###install
+## on ubuntu
+### install
+
 ```
-sudo apt install python python-pip
-sudo apt install tensorflow #非gpu版本
+sudo apt install python3 python3-pip
+pip3 install tensorflow 
+#非gpu版本
 ```
-###on raspberry
-###install
+### 模型训练
+
+#### 
+
+## on raspberry
+
+### install
+
 ```
 sudo apt install python3-pip
 #尽量用python3，因为python2 2020年就不维护了
@@ -15,13 +23,15 @@ pip3 install tensorflow
 #如果安装过程出现 秘钥错误的问题，可以先wget下来，然后用如下命令安装
 pip3 install tensorflow-1.13.1-cp35-none-linux_armv7l.whl
 ```
-####illegal instruction (core dumped)
+#### illegal instruction (core dumped)
 虚拟化软件中需要将cpu设置为Broadwell，不能用kvm-processer
-###base test
+
+### base test
 
 
 
-###object_detection
+### object_detection
+
 ```
 mkdir ts
 cd ts
@@ -40,8 +50,9 @@ python3 Object_detection_picamera.py
 ```
 models/research/object_detection/
 
-##编译安装
-###prepare
+## 编译安装
+### prepare
+
 1. 显卡驱动
 NVIDIA-Linux-x86_64-430.40.run
 
@@ -56,12 +67,12 @@ sudo bash -c "echo options nouveau modeset=0 >> /etc/modprobe.d/blacklist-nvidia
 2. cuda 库（安装runtime和dev两个）
 libcudnn7_7.6.2.24-1+cuda10.1_amd64.deb
 libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
-3. 
-pip3 install numpy 
-###问题处理
-####找不到cuda头文件
+3. pip3 install numpy 
+### 问题处理
+#### 找不到cuda头文件
 安装dev版本的cuda
-####Illegal ambiguous match on configurable attribute “deps” in 
+
+#### Illegal ambiguous match on configurable attribute “deps” in 
 1. Do you want to use clang as CUDA compiler? [y/N] choose y, here you use clang as the backend cuda code compiler, then you can use command: bazel build --config=opt --config=cuda_clang //tensorflow/tools/pip_package:build_pip_package.
 
 2. Do you want to use clang as CUDA compiler? [y/N] choose N, here you use nvcc as the backend cuda code compiler, then you can use command: bazel build --config=opt --config=cuda //tensorflow/tools/pip_package:build_pip_package.

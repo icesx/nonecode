@@ -1,4 +1,4 @@
-###长兴测试结果
+### 长兴测试结果
 	1. 7.2K rpm的硬盘，raid5，H330【无缓存】
 		连续写 50MB/S
 		写入磁盘寻道延迟 100ms
@@ -15,7 +15,8 @@
 		写入磁盘寻道延迟 50ms
 	5. 72Kraid10,
 		H730P，开启write back 300MB/S
-###重庆-巴南
+
+### 重庆-巴南
 	1. 7.2k 12GB 2TSAS 12块 raid5 h730P-2G centos
 		#dd if=/dev/zero of=test.iso bs=4k count=5000000
 		756MB/S
@@ -23,5 +24,6 @@
 		#dd if=/dev/zero of=test.iso bs=4k count=5000000
 		1.0GB/S
 	3. centos与ubuntu两者性能差别估计在于内核版本吧。。。。。。
-	
-	
+
+
+​	

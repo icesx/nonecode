@@ -1,13 +1,19 @@
-###安装
+### 安装
+
+
 1. engine
+```
 	yum install tar
 	yum install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release36.rpm
 	yum -y install ovirt-engine
 	engine-setup
+```
 2. node
+```
 	yum install tar
 	yum install http://plain.resources.ovirt.org/pub/yum-repo/ovirt-release36.rpm
 	yum install vdsm
+```
 	注：也可以不用执行此步，在增加hosts的时候，engine会自动安装相关的服务
 3. ISO
 	ISO有多种方式：
@@ -68,29 +74,35 @@
 	B. 
 	B. 将创建好的vm_disk-windows-2008-base.qcow2 镜像文件cp到ovirt的manager的机器上
 	C. 使用如下命令将qcow2文件做成ovrit可识别的镜像
+	
+	```
 		#wget https://jboggs.fedorapeople.org/guest-image-ovf-creator.py
 		#python guest-image-ovf-creator.py  --disk vm_disk-windows-2008-base.qcow2
+	```
+	
 	D. 使用如下命令将镜像上传到对应的主机的NFS中
+	```
 		#engine-image-uploader list
 		#engine-image-uploader upload /tmp/tmp593dFa export-domain -e Export-NFS-02
+	```
 	E. 此时可以在UI的Export-NFS-02上应该可以看到镜像了，但是实地上却没有，为什么呢？【目前还不知道】
 	F. 
 	
 
-###关于自启动
-	A. #ln -s /run/libvirt/qemu/hadoop-vpn-xj127.xml  /etc/libvirt/qemu/hadoop-vpn-xj127.xml 【有待验证】
+### 关于自启动
+​	A. #ln -s /run/libvirt/qemu/hadoop-vpn-xj127.xml  /etc/libvirt/qemu/hadoop-vpn-xj127.xml 【有待验证】
 
-###命令行
-	ovirt-shell -A /etc/pki/ovirt-engine/ca.pem -l https://cdchard01/api
-	【但是由于cdchard01这个域名没有.所有会报格式错误的异常】
+### 命令行
+​	ovirt-shell -A /etc/pki/ovirt-engine/ca.pem -l https://cdchard01/api
+​	【但是由于cdchard01这个域名没有.所有会报格式错误的异常】
 
-###几个目录
-	/var/lib/ovirt-engine/
-	/etc/ovirt*
-	/usr/share/ovirt-*
-	/etc/pki/ovirt-engine/
-	/etc/pki/ovirt-vmconsole
-	rm -rf /etc/libvirt/*
+### 几个目录
+​	/var/lib/ovirt-engine/
+​	/etc/ovirt*
+​	/usr/share/ovirt-*
+​	/etc/pki/ovirt-engine/
+​	/etc/pki/ovirt-vmconsole
+​	rm -rf /etc/libvirt/*
  1322  rm -rf /etc/ovirt-*
  1323  rm -rf /etc/pki/ovirt-*
  1324  rm -rf /etc/pki/libvirt/
