@@ -55,6 +55,20 @@ sudo apt-get update && sudo apt-get upgrade
 
 5. That’s it. You have done it. 
 
+6. start 
+
+   ```
+   cd fabric-samples/first-network
+   ./byfn.sh generate
+   ./byfn.sh up
+   ```
+
+#### 问题处理
+
+1.  error getting chaincode bytes: failed to calculate dependencies: incomplete package
+2. 
+
 
 
 ### 多节点安装
+

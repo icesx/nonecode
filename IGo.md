@@ -1,7 +1,7 @@
 Go
 ====
 
-### install
+## install
 
 1. go的安装相对简单，下载源代码，按照说明安装即可。
 2. 安装tools
@@ -22,7 +22,7 @@ Go
       			#：x=`find .|grep .go$`
       			#：for i in $x; do sed -i "s/golang.org\/x/github.com\/golang/g" $i; done
 
-### install 1.14
+## install 1.14
 
 1. 先安装默认的go，用于编译
 
@@ -62,4 +62,43 @@ Go
    export PATH=$PATH:$GOROOT/bin
    ```
 
-   
+
+### GOPATH
+
+1. 工作区用于放置 Go 语言的**源码文件（source file）**以及安装（install）后的**归档文件（archive file，也就是以“.a”为扩展名的文件）**和**可执行文件（executable file）**
+2. 在工作区中，一个代码包的导入路径实际上就是从 src 子目录，到该包的实际存储位置的相对路径
+3. 源码文件通常会被放在某个工作区的 src 子目录下。
+4. 那么在安装后如果产生了归档文件，就会放进该工作区的 pkg 子目录；如果产生了可执行文件，就可能会放进该工作区的 bin 子目录。
+
+## code
+
+
+
+### helloworld
+
+```
+package main
+import "fmt"
+func main() {
+    fmt.Println("hello world")
+}
+```
+
+```
+go run hw.go
+```
+
+
+
+## 编译
+
+1. go build 产生的可执行文件是自带环境的，不需要动态链接（cp到其他机器上可以直接执行）。
+2. 自动获取依赖包
+
+```
+#当前目录下执行：
+go get ./...
+```
+
+
+
