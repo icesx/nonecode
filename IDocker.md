@@ -24,6 +24,12 @@ Docker
 1. 关于自启动
 docker命令的最后一个“/bin/bash”就是这个container启动的时候启动的命令，可以在container中搞一个自启动文件，然后调用它。
 ```
+docker run hello-world
+```
+
+
+
+```
 docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 xjgz/ubuntu:v9 /home/hadoop/docker/common/autostart.sh，通过这个命令调用自启动的时候老是失败，目前尚不知道问题所在，但是使用变通的办法如下：
 ```
 ```

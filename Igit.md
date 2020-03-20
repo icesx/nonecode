@@ -3,63 +3,23 @@ git
 # git client
 
 ### clone
+```
 $git clone http://xxx
+```
 ### commit
+```
 $git commit .
 $git commit -a .
+```
 ### push
+```
 $git push .
+```
 ### push delete file
+```
 $git add -A
 $git commit -m ""
 $git push
-
-# git server
-
-+ 安装apache
-```
-apt-get install apache2 git-core
-```
-+ 创建仓库
-```
-mkdir /solar-data/spring-cloud-config.git
-cd /solar-data/spring-cloud-config.git
-git --bare init
-git update-server-info
-chown -R www-data:www-data .
-```
-+ 修改apache配置
-```
-htpasswd -m -c /solar-data/git-respository/passowrd i
-a2enmod dav_fs
-rm -rf /etc/apache2/sites-enabled/000-default.conf
-#80端口被默认占用了
-touch /etc/apache2/conf-enabled/git.conf
-----------------------
-<VirtualHost *:80>
-       
-        ServerAdmin webmaster@localhost
-        
-        DocumentRoot /solar-data/git-respository/
-
-        ErrorLog ${APACHE_LOG_DIR}/error.log
-        CustomLog ${APACHE_LOG_DIR}/access.log combined
-
-<Location /spring-cloud-config.git>
-   DAV on
-   AuthType Basic
-   AuthName "Git"
-   AuthUserFile /solar-data/git-respository/password
-   Require valid-user
-</Location>
-</VirtualHost>
-----------------------
-
-```
-
-+ 重启apache
-```
-service apache2 restart
 ```
 
 ## git client
