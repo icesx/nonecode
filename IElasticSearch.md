@@ -46,12 +46,19 @@ Log in as the built-in elastic user with the auto-generated password from step 3
 7. ik
 	wget https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.4.2/elasticsearch-analysis-ik-6.4.2.zip
 	/cloud/software/elasticsearch/elasticsearch-6.2.2/bin/elasticsearch-plugin  install file:///cloud/es-plugin/elasticsearch-analysis-ik-6.4.2.zip
+####  问题处理
+
+without increasing [node.max_local_storage_nodes] (was [1])
+
+
+
 ### kibana
 
 
 ### plugin
 1. 底层仍然使用lunce的
-2. 
+
+## 基本概念
 
 ### type
 #### keyword

@@ -1,14 +1,14 @@
-###注意事项	
+### 注意事项	
 	1. ./hadoop fs -rm -r -f /tmp/logs/docker/logs/
 	2. bin/hadoop fsck / -delete
 		一般不要去执行-delete，因为hadoop自己会进行分片的复制
 	3. hadoop启动会自动去进行分片的平衡，当删除一个datenode后，或者增加一个datenode后，hadoop会自动将丢失的分片找回来
-
+	
 	4. slow readProcessor read fields took 。。。ms
 		 
 	5. There appears to be a gap in the edit log
 		-recover
-
+	
 	6. hadoop dfsadmin -safemode leave 
 ### 设置分片
 	$hadoop dfs -setrep -w 2 -R /hbase/data/default/CDC_PARTY_SCORE

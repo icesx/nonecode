@@ -1,4 +1,9 @@
+oozie
+====
+## 基本功能
+
 ### 编译问题
+
 	编译的时候，使用如下命令即可
 	#./bin/mkdistro.sh -Phadoop-2  -Dtomcat.version=7.0.64 -Dhive.version=2.0.0 -Dhbase.version=1.1.2
 	该命令编译的版本会在
@@ -15,7 +20,7 @@
 	extjs-2.2的版本，下载完成后，需要将其cp到${oozie_home}/oozie_server/webapps/oozie/，并解压缩
 	【按照官网说的放到${oozie_home}/libext不行的】		
 ### mysql配置
-		
+
 
 ### hadoop配置
 	${oozie_home}/conf/hadoop-conf/core-site.xml
@@ -28,7 +33,7 @@
 	编辑hadoop/etc/hadoop/core-site.xml 增加如下配置	  
 	<property>
 	    <name>hadoop.proxyuser.docker.hosts</name>
-    		<value>*</value>
+			<value>*</value>
 	  </property>
 	  <property>
 	    <name>hadoop.proxyuser.docker.groups</name>
@@ -56,4 +61,13 @@
 	在${oozie}/conf/oozie-env.sh中添加
 	export JAVA_HOME=......
 
+## with spark
+
+
+
+## with hive
+
+
+
+## with mapreduce
 

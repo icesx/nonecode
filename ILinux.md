@@ -4,7 +4,7 @@ ubuntu
 -------------------
 ### 初始化安装
 ```
-sudo apt install gcc make automake net-tools route zip unzip 
+sudo apt install gcc make automake net-tools route zip unzip binutils
 ```
 ### 远程桌面
 
@@ -148,37 +148,22 @@ ufw status numbered
 ufw delete 4
 ```
 ### 自启动
-ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改
+ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改：
+
+systemd默认读取/etc/systemd/system下的配置文件，该目录下的文件会链接/lib/systemd/system/下的文件。一般系统安装完/lib/systemd/system/下会有rc-local.service文件，即我们需要的配置文件。
+链接过来：
+
 ```
-sudo vi /etc/systemd/system/rc-local.service
-[Unit]
-
-Description=/etc/rc.local Compatibility
-
-ConditionPathExists=/etc/rc.local
-
-
-
-[Service]
-
-Type=forking
-
-ExecStart=/etc/rc.local start
-
-TimeoutSec=0
-
-StandardOutput=tty
-
-RemainAfterExit=yes
-
-SysVStartPriority=99
-
-
-
-[Install]
-
-WantedBy=multi-user.target
+sudo ln -fs /lib/systemd/system/rc-local.service /etc/systemd/system/rc-local.service
 ```
+sudo vi  /etc/systemd/system/rc-local.service add content blow:
+
+```
+[Install]  
+WantedBy=multi-user.target  
+Alias=rc-local.service
+```
+
 sudo vim /etc/rc.local
 
 ```
@@ -199,9 +184,7 @@ exit 0
 ```
 3. run this command
 ```
-sudo chmod 755 /etc/rc.local
-sudo systemctl start rc-local.service
-sudo systemctl status rc-local.service
+
 
 ```
 

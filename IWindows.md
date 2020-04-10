@@ -1,0 +1,5 @@
+win10
+====
+### 安装
+1. 安装秘钥
+VK7JG-NPHTM-C97JM-9MPGT-3V66T
