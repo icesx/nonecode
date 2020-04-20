@@ -464,3 +464,21 @@ i
 
 
 
+## sendmail
+
+1. install
+
+```
+sudo apt install postfix mailutils
+```
+
+
+
+1. 发送邮件
+
+```
+echo "test message42..." | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
+echo "test message42..." | mailx -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
+-r : from
+```
+
