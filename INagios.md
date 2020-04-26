@@ -427,6 +427,8 @@ echo "This is really cool!" | mailx -s "我正在使用postfix给自己发送邮
 
 `-a "From:13824365716@163.com"`是发件箱
 
+
+
 ## 问题处理
 
 1. NRPE: Command 'check_swap!20%!10%' not defined 
@@ -434,6 +436,16 @@ echo "This is really cool!" | mailx -s "我正在使用postfix给自己发送邮
    此问题可能是在被监控主机上的nrpe/etc/nrpe.cfg中的check_swap command没有设置
 
 2. 注意：在xxx.cfg 中的配置，如果service_description 不修改，重启nagios，不会让nagios重新加载该配置文件的修改。
+
+3. Error: Could not open command file '/usr/local/nagios/var/rw
+
+让www-data账户有bjrdc的权限
+
+```
+sudo usermod  -a -G bjrdc www-data
+sudo service nagios restart       
+sudo service apache2 restart
+```
 
 
 
