@@ -59,7 +59,7 @@ sudo apt install libncurses5-dev
 4. 编译安装
 
 ```
-cmake . -DCMAKE_INSTALL_PREFIX=/moa/mysql -DMYSQL_DATADIR=/moa/mysql/data/ -DWITH_BOOST=/home/bjrdc/software/boost_1_59_0 -DSYSCONFDIR=/etc -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_MYISAM_STORAGE_ENGINE=1 -DENABLED_LOCAL_INFILE=1 -DENABLE_DTRACE=0 -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_EMBEDDED_SERVER=1
+cmake . -DCMAKE_INSTALL_PREFIX=/moa/mysql -DMYSQL_DATADIR=/moa/mysql/data/ -DWITH_BOOST=/home/bjrdc/software/boost_1_59_0 -DSYSCONFDIR=/moa/mysql/etc -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_MYISAM_STORAGE_ENGINE=1 -DENABLED_LOCAL_INFILE=1 -DENABLE_DTRACE=0 -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_EMBEDDED_SERVER=1 -DMYSQL_TCP_PORT=3308
 ```
 
 
@@ -215,6 +215,8 @@ cmake . -DCMAKE_INSTALL_PREFIX=/moa/mysql -DMYSQL_DATADIR=/moa/mysql/data/ -DWIT
 mysqld --initialize [with random root password]
 
 mysqld --initialize-insecure [with blank root password]
+
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456';
 ```
 
 如果没有设置root密码，登录后使用mysql交互命令，有如下错误：
@@ -265,11 +267,20 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 wget https://github.com/akopytov/sysbench/archive/1.0.19.tar.gz
 ```
 
+2. 安装
+
+```
+sudo apt install automake pkg-config libmysqlclient-dev
+
+```
+
+
+
 2. 测试
 
 ```
-./sysbench ../share/sysbench/oltp_read_only.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
-./sysbench ../share/sysbench/oltp_read_only.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 ```
 
 结果

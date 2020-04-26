@@ -18,8 +18,8 @@ rabbitmq
 ### 启动	
 + 安装好后，使用如下命令启动
 ```
-#rabbitmq-server -detached	
-#rabbitmq-plugins enable rabbitmq_management
+rabbitmq-server -detached	
+rabbitmq-plugins enable rabbitmq_management
 #rabbitmq-server stop
 #rabbitmq-server -detached
 ```
@@ -56,9 +56,9 @@ centos:	rabbitmq-server -detached
 + guest 无法登录web界面3.3.0版本之后
 This is a new features since the version 3.3.0. 
 ```
-	sudo rabbitmqctl add_user test test
-	sudo rabbitmqctl set_user_tags test administrator
-	sudo rabbitmqctl set_permissions -p / test ".*" ".*" ".*"
+sudo rabbitmqctl add_user test test
+sudo rabbitmqctl set_user_tags test administrator
+sudo rabbitmqctl set_permissions -p / test ".*" ".*" ".*"
 ```
 + rabbitmqctl reset
 no_running_cluster_nodes,"You cannot leave a cluster if no online nodes are present."

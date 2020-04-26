@@ -69,7 +69,7 @@ fi
 ```
 #### 字符串相等
 ```
-if [ $command = "all" ];then
+if [[ $command = "all" ]];then
 else
 fi
 ```

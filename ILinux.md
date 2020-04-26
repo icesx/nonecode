@@ -69,7 +69,7 @@ network:
 ```
 ### 多网卡配置
 ```
-	$ip link
+$ip link
 ```
 ## ufw
 
@@ -81,18 +81,18 @@ PREROUTING是目的地址转换，要把别人的公网IP换成你们内部的IP
 ​	ufw是ubuntu的简单防火墙
 ### 相关的命令
 ```
-	   sudo ufw status
-​	   ufw disable 
-​	   ufw enable 
-​	   ufw  status
-​	   ufw  allow out 80,8080/tcp
-​	   ufw allow out 53
-​	   sudo ufw allow out to any port 53
-​	   ufw default allow 
-​	   ufw default deny 
-​	   ufw status verbose 
-​	   ufw status numbered 
-​	   ufw delete 11
+sudo ufw status
+ufw disable 
+ufw enable 
+ufw  status
+ufw  allow out 80,8080/tcp
+ufw allow out 53
+sudo ufw allow out to any port 53
+ufw default allow 
+ufw default deny 
+ufw status verbose 
+ufw status numbered 
+ufw delete 11
 ```
 ### 端口转发
 ​	A、打开linux的ip转发
@@ -133,14 +133,15 @@ COMMIT
 ```
 	D、重启ufw
 ```
-		ufw disable 
-		ufw enable
+ufw disable 
+ufw enable
 ```
 [似乎reload不行]或者重启操作系统
 E、log
+
 ```
-		ufw allow log 8400
-		tail -f /var/log/ufw.log
+ufw allow log 8400
+tail -f /var/log/ufw.log
 ```
 F、delete
 ```
@@ -184,8 +185,7 @@ exit 0
 ```
 3. run this command
 ```
-
-
+sudo systemctl enable rc.
 ```
 
 ### apt
@@ -480,5 +480,16 @@ sudo apt install postfix mailutils
 echo "test message42..." | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
 echo "test message42..." | mailx -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
 -r : from
+```
+
+## cat EOF
+
+```
+cat >> /root/test.txt <<EOF
+Hello!
+My site is www.361way.com
+My site is www.91it.org
+Test for cat and EOF!
+EOF
 ```
 

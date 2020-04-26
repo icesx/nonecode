@@ -94,7 +94,7 @@ location /video {
 mp4 on;
 }
 ```
-####mp4_buffer_size
+#### mp4_buffer_size
 mp4_buffer_size size
 Default:512K
 	http
