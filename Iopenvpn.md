@@ -193,14 +193,37 @@ ufw reload
 ```
 ### 注销账户
 ```
+	source ./vars
 	./revoke-full client1
 	vim /etc/openvpn/server.conf
-	crl-verify /etc/openvpn/crl.pem
+	crl-verify /etc/openvpn/easy-rsa/keys/crl.pem
 	Reload the OpenVPN server to activate the revoke setting onle once.
-	/etc/init.d/openvpn reload
+	service openvpn@server restart
 ```
+> 按照此种方式进行账户的吊销后,30天后所有的客户端即连接不上了。原因是在生成的crl.pem文件中有一个
+>
+> ```
+> Next Update: May 30 02:26:22 2020 GMT
+> ```
+>
+> 所以在30天后，需要重新吊销证书
+>
+> 可以将30天修改成10年，修改方式是
+>
+> ```
+> vi /etc/openvpn/easy-rsa/openssl.conf
+> default_crl_days= 3650                  # how long before next CRL
+> ```
+>
+> 之后重新吊销任何一个证书，即可更新crl.pem文件
+
 ### 问题处理
-1. 
-	Failed to start OpenVPN Robust And Highly Flexible Tunneling Application On server.
-	注释掉#tls-auth ta.key 0 # This file is secret
+
+1. Failed to start OpenVPN Robust And Highly Flexible Tunneling Application On server.
+	注释掉
+	
+	`#tls-auth ta.key 0 # This file is secret`
+	
+	
+	
 2. 

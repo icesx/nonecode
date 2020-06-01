@@ -150,7 +150,7 @@ Ota update is a normal way for system app updating.
 
 # adb
 
-## 基本命令
+### 基本命令
 
 ```
 $adb connect 192.168.31.158
@@ -167,7 +167,43 @@ adb uninstall <app package name>
 
 adb shell am set-debug-app -w com.example.jishuxiaoheiwu.appdebugsample
 ```
+
+
+
+### 问题处理
+
+```java
+no permissions (user in plugdev group; are your udev rules wrong?);
+```
+
+```
+ lsusb 
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 004: ID 138a:0090 Validity Sensors, Inc. VFS7500 Touch Fingerprint Sensor
+Bus 001 Device 003: ID 04f2:b531 Chicony Electronics Co., Ltd Integrated Camera
+Bus 001 Device 006: ID ***2717:ff08*** Xiaomi Inc. Redmi Note 3 (ADB Interface)
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+```
+
+```
+sudo vi /etc/udev/rules.d/51-android.rules
+SUBSYSTEM=="usb", ATTR{idVendor}=="2717", ATTR{idProduct}=="ff08", MODE="0666", GROUP="plugdev"
+```
+
+```
+sudo udevadm control --reload-rules
+```
+
+```
+adb devices
+If it still doesn't work, unplug/replug the device.
+```
+
+
+
 ### logcat
+
 `adb logcat`
 $ adb shell
 ```

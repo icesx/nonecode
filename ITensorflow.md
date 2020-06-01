@@ -10,7 +10,7 @@ pip3 install tensorflow
 ```
 ### 模型训练
 
-#### 
+
 
 ## on raspberry
 
@@ -76,3 +76,63 @@ libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
 1. Do you want to use clang as CUDA compiler? [y/N] choose y, here you use clang as the backend cuda code compiler, then you can use command: bazel build --config=opt --config=cuda_clang //tensorflow/tools/pip_package:build_pip_package.
 
 2. Do you want to use clang as CUDA compiler? [y/N] choose N, here you use nvcc as the backend cuda code compiler, then you can use command: bazel build --config=opt --config=cuda //tensorflow/tools/pip_package:build_pip_package.
+
+## pip 安装
+
+```
+
+```
+
+
+
+## Tensorflow2.x
+
+tf2的版本去掉了session，另外还有较大的改动。官方推荐使用keras进行开发。
+
+### 常用层
+
+1. Flatten层
+
+> Flatten层用来将输入“压平”，即把多维的输入一维化，常用在从卷积层到全连接层的过渡。Flatten不影响batch的大小。
+
+2. Dense
+
+> Dense就是常用的全连接层，所实现的运算是`output = activation(dot(input, kernel)+bias)`。其中`activation`是逐元素计算的激活函数，`kernel`是本层的权值矩阵，`bias`为偏置向量，只有当`use_bias=True`才会添加。
+
+3. Activation层
+
+> 激活层对一个层的输出施加激活函数
+
+4. Dropout
+
+> Dropout将在训练过程中每次更新参数时按一定概率（rate）随机断开输入神经元，Dropout层用于防止过拟合
+
+5. Reshape
+
+> Reshape层用来将输入shape转换为特定的shape
+
+6. Permute
+>Permute层将输入的维度按照给定模式进行重排，例如，当需要将RNN和CNN网络连接时，可能会用到该层。
+
+### 卷积层
+
+1. Conv1D
+
+> 一维卷积层（即时域卷积），用以在一维输入信号上进行邻域滤波
+
+2. Conv2D
+
+> 二维卷积层，即对图像的空域卷积
+
+3. ​	
+
+### 几个模型训练的参数
+
+batchsize：中文翻译为批大小（批尺寸）。在深度学习中，一般采用SGD训练，即每次训练在训练集中取batchsize个样本训练；
+iteration：中文翻译为迭代，1个iteration等于使用batchsize个样本训练一次；
+一个迭代 = 一个正向通过+一个反向通过
+epoch：迭代次数，1个epoch等于使用训练集中的全部样本训练一次；
+一个epoch = 所有训练样本的一个正向传递和一个反向传递
+举个例子，训练集有1000个样本，batchsize=10，那么：
+训练完整个样本集需要：
+100次iteration，1次epoch。

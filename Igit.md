@@ -1,6 +1,6 @@
 git
 ==================
-# git client
+# how to use git command ? 
 
 ### clone
 ```

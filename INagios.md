@@ -429,15 +429,49 @@ echo "This is really cool!" | mailx -s "我正在使用postfix给自己发送邮
 
 
 
+### check mysql
+
+1. 使用端口监控的方式，会在mysql中产生connetct_error,当sum_connect_error达到最大值后，会让mysl拒绝该服务器的链接（如果该服务器部署其他的应用，则会出现异常）
+
+2. 使用github上一个check_mysql的脚本进行检查
+
+   > https://raw.github.com/tart/tart-monitoring/master/checkMySQLProcesslist.sh
+
+   ```
+   vi /objects/commands
+   define command{
+   
+          command_name    check_mysql
+          command_line    $USER1$/check_mysql.sh $ARG1$
+   }
+   ```
+
+   ```
+   vi /servers/bjrdc227
+   
+   define service{
+          use                             local-service
+          host_name                       bjrdcp227
+          service_description             Mysql
+          check_command                   check_mysql!"-H bjrdcp227 -P3306 -u bjrdc -p xxxxxx -s 0 -s 60 -w 50 -c 80"
+          }
+   
+   ```
+
+   
+
 ## 问题处理
 
 1. NRPE: Command 'check_swap!20%!10%' not defined 
 
    此问题可能是在被监控主机上的nrpe/etc/nrpe.cfg中的check_swap command没有设置
 
-2. 注意：在xxx.cfg 中的配置，如果service_description 不修改，重启nagios，不会让nagios重新加载该配置文件的修改。
+2. NRPE: Command 'check_swap!20%!10%' not defined
 
-3. Error: Could not open command file '/usr/local/nagios/var/rw
+
+
+1. 注意：在xxx.cfg 中的配置，如果service_description 不修改，重启nagios，不会让nagios重新加载该配置文件的修改。
+2. Error: Could not open command file '/usr/local/nagios/var/rw
 
 让www-data账户有bjrdc的权限
 

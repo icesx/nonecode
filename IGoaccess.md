@@ -47,6 +47,14 @@ goaccess -f access_log.log --log-format='%h %l %^ [%d %t] "%m %U %H" %s %b "%R" 
 
 下载report.html到本地就可以查看报告
 
+### nginx 日志
+
+```
+goaccess /logs/nginx/access.log  --log-format=COMBINED --output=report.html
+```
+
+
+
 ##  Goaccess 格式规范
 
 `%x` A date and time field matching the time-format and date-format variables. This is used when a timestamp is given instead of the date and time being in two separate variables.
