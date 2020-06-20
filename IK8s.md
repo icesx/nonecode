@@ -80,8 +80,10 @@ sudo apt-mark hold kubelet kubeadm kubectl
    EOF
    ```
    
+### 镜像搜索
 
-   
+[https://cr.console.aliyun.com/cn-hangzhou/instances/images](https://links.jianshu.com/go?to=https%3A%2F%2Fcr.console.aliyun.com%2Fcn-hangzhou%2Finstances%2Fimages)
+
 ## 配置
 
 ### master
@@ -132,7 +134,7 @@ sudo vi /etc/fstab
       kubeadm init \
       --apiserver-advertise-address=172.16.15.17 \
       --image-repository registry.aliyuncs.com/google_containers \
-      --pod-network-cidr=10.244.0.0/16
+      --pod-network-cidr=10.244.0.0/16 \
       --kubernetes-version=v1.18.0
       #如果无法下载，需要设置--kubernetes-version为当然registry服务器上有的版本
       ```
@@ -271,7 +273,7 @@ kubectl apply -f recommended.yaml
 
 3. 访问
 
-forbidden
+   forbidden
 
 ```
 # 生成client-certificate-data
@@ -291,10 +293,184 @@ openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.
 >
 > https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
 
-## 常用命令
+4. 绑定角色
+
+> 但是此时还有权限的问题，无法访问资源，还需要绑定角色
+>
+> 创建角色admin-user.rbac.yaml
+>
+> ```
+> apiVersion: v1
+> kind: ServiceAccount
+> metadata:
+>   name: admin-user
+>   namespace: kube-system
+> ---
+> # Create ClusterRoleBinding
+> apiVersion: rbac.authorization.k8s.io/v1
+> kind: ClusterRoleBinding
+> metadata:
+>   name: admin-user
+> roleRef:
+>   apiGroup: rbac.authorization.k8s.io
+>   kind: ClusterRole
+>   name: cluster-admin
+> subjects:
+> - kind: ServiceAccount
+>   name: admin-user
+>   namespace: kube-system
+> ```
+>
+> ```
+> kubectl  create -f admin-user.rbac.yaml 
+> ```
+>
+> 查看token
+>
+> ```
+> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+> 
+> ')
+> Name:         admin-user-token-w4knf
+> Namespace:    kube-system
+> Labels:       <none>
+> Annotations:  kubernetes.io/service-account.name: admin-user
+>               kubernetes.io/service-account.uid: 65323ead-467f-448d-b7ee-1c52a002f3c2
+> 
+> Type:  kubernetes.io/service-account-token
+> 
+> Data
+> ====
+> token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhZbkI0S001RXlYbXV5UHgwZVBKYzBYMUFUQnF2NFhGUW1iLTlRNW45ZFkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXc0a25mIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NTMyM2VhZC00NjdmLTQ0OGQtYjdlZS0xYzUyYTAwMmYzYzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.g4zufIj7ZUUrv9BgtPCd6djE5z7APV6bhE_OchKzczULdbuSkMBrLWwwbHm-0Jg5cUN37fTS-lFsMPxrt2Uw2_m0omx7N47qU-3LBdYxAwiBS-OBUDq6qfyWZoYsQizqdAf1y9kaxUZNbQ1iRMFqyH9-xgp-gk2rbixlOr0ToCOiDC0_FNjJ9bRnhjzQVCXoKQ0XefLuEv21AqeOpaN0U0lP8txziRIOI83grhtbF4RqDHxF0ZoiIakJ5KhKozff29am9lUYScNJpNc6ooqU2wvoNgXHeyODWohXOi9Q1cFPETpA_6kjKYxwpcqsMfJ85lTVPMOCadLV4YJq_h4Kfg
+> ca.crt:     1025 bytes
+> namespace:  11 bytes
+> ```
+>
+> 使用此token登录dashboard
+
+### heapster
+
+> Heapster was initially [deprecated](https://github.com/kubernetes-retired/heapster/blob/master/docs/deprecation.md) in 1.11; users were encouraged to move to the `metrics-server` for similar functionality. With 1.18, the `cluster-monitoring` addons (Heapster, InfluxDB, and Grafana) have been removed from the Kubernetes source tree and therefore removed from the `cdk-addons` snap as well. Customers relying on these addons should migrate to a `metrics-server` solution prior to upgrading. Note: these removals do not affect the Kubernetes Dashboard nor the methods described in
+
+### metrics-server
+
+1. 下载最新版本
 
 ```
- kubeadm token list
+wget https://github.com/kubernetes-sigs/metrics-server/archive/v0.3.6.tar.gz
+tar -xzvf v0.3.6.tar.gz
+cd metrics-server-0.3.6/deploy/1.8+
+```
+
+2. 修改配置文件
+
+```
+vi metrics-server-deployment.yaml
+```
+
+```
+      containers:
+      - name: metrics-server
+        image: mirrorgooglecontainers/metrics-server-amd64:v0.3.6
+        imagePullPolicy: Always
+        command:
+            - /metrics-server
+            - --kubelet-preferred-address-types=InternalDNS,InternalIP,ExternalDNS,ExternalIP,Hostname
+            - --kubelet-insecure-tls
+```
+
+3. 安装
+
+```
+kubectl apply -f .
+```
+
+4. 验证
+
+```
+kubectl top node
+NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+bjrdc17    188m         2%     1629Mi          16%       
+bjrdc205   41m          0%     944Mi           9%        
+bjrdc81    63m          0%     825Mi           8%  
+```
+
+```
+kubectl top pods -n kube-system
+NAME                              CPU(cores)   MEMORY(bytes)   
+coredns-7ff77c879f-26gn7          5m           8Mi             
+coredns-7ff77c879f-26j8v          4m           7Mi             
+etcd-bjrdc17                      28m          28Mi            
+kube-apiserver-bjrdc17            62m          276Mi           
+kube-controller-manager-bjrdc17   21m          42Mi            
+kube-flannel-ds-amd64-bd5j9       2m           13Mi            
+kube-flannel-ds-amd64-chvrj       5m           14Mi            
+kube-flannel-ds-amd64-zht42       2m           12Mi            
+kube-proxy-6vllz                  1m           17Mi            
+kube-proxy-7zlh2                  1m           12Mi            
+kube-proxy-tn7rg                  1m           12Mi            
+kube-scheduler-bjrdc17            5m           12Mi            
+metrics-server-85b7f6dc48-fnrsw   1m           13Mi   
+```
+
+
+
+
+
+
+## IP与网络 
+
+service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+### Node IP
+
+可以是物理机的IP（也可能是虚拟机IP）。
+
+每个Service都会在Node节点上开通一个端口，外部可以通过NodeIP:NodePort即可访问Service里的Pod,和我们访问服务器部署的项目一样，IP:端口/项目名
+
+```
+kubectl describe node nodeName
+```
+
+
+
+### Pod IP
+Pod IP是每个Pod的IP地址，他是Docker Engine根据docker网桥的IP地址段进行分配的，通常是一个虚拟的二层网络
+
+同Service下的pod可以直接根据PodIP相互通信，不同Service下的pod在集群间pod通信要借助于 cluster ip
+pod和集群外通信，要借助于node ip
+
+```
+kubectl get pods
+kubectl describe pod podName
+```
+
+
+
+### Cluster IP
+
+Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有kubernetes集群内部访问使用。
+
+在kubernetes查询Cluster IP
+
+kubectl -n 命名空间 get Service即可看到ClusterIP
+
+### 三种IP网络间的通信
+
+service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+
+
+## 常用命令
+
+> 命令模式
+>
+> kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs]
+>
+> kubectl   create -f ..yaml
+
+```
+kubeadm token list
 ```
 
 ```
@@ -314,6 +490,10 @@ kubectl get cs
 kubectl get all --all-namespaces
 kubectl get roles --all-namespaces
 kubectl get service --all-namespaces
+kubectl describe pods monitoring-influxdb-7f474cc79-cslt5 -n kube-system
+
+kubectl describe clusterrole system:heapster
+kubectl get --raw "/"
 ```
 
 ```
@@ -408,6 +588,12 @@ kubectl  get pods -n kube-system
 
 ```
 journalctl -f -u kubelet
+```
+
+### pod
+
+```
+kubectl logs pod xxxx -n kube-system -f
 ```
 
 
