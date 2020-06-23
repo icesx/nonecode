@@ -295,7 +295,7 @@ openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.
 
 4. 绑定角色
 
-> 但是此时还有权限的问题，无法访问资源，还需要绑定角色
+> 可以使用token登录，但是此时还有权限的问题，无法访问资源，还需要绑定角色
 >
 > 创建角色admin-user.rbac.yaml
 >
@@ -453,7 +453,9 @@ Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有ku
 
 在kubernetes查询Cluster IP
 
+```
 kubectl -n 命名空间 get Service即可看到ClusterIP
+```
 
 ### 三种IP网络间的通信
 
@@ -463,40 +465,11 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 ## 常用命令
 
-> 命令模式
->
-> kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs]
->
-> kubectl   create -f ..yaml
+### kubeadm
 
 ```
 kubeadm token list
-```
 
-```
-sudo kubeadm token create
-kubeadm token list
-kubeadm token create --print-join-command
-kubectl cluster-info
-```
-```
-kubectl describe node bjrdc81
-kubectl get nodes
-kubectl get namespace
-kubectl get pod
-kubectl describe namespaces kube-system
-kubectl get pods --all-namespaces
-kubectl get cs
-kubectl get all --all-namespaces
-kubectl get roles --all-namespaces
-kubectl get service --all-namespaces
-kubectl describe pods monitoring-influxdb-7f474cc79-cslt5 -n kube-system
-
-kubectl describe clusterrole system:heapster
-kubectl get --raw "/"
-```
-
-```
 kubeadm join \
   <control-plane-host>:<control-plane-port> \
   --token <token> \
@@ -508,13 +481,404 @@ kubeadm join \
   --discovery-token-ca-cert-hash sha256:c6de85f6c862c0d58cc3d10fd199064ff25c4021b6e88475822d6163a25b4a6c
 ```
 
+```
+kubeadm token create
+kubeadm token list
+kubeadm token create --print-join-command
+```
+### kubectl
+
+kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs]
 
 
-### uninstall
+
+```
+kubectl cluster-info
+```
+
+```
+kubectl create -f xx.yaml
+```
+
+
+
+```
+kubectl get nodes
+kubectl get namespace
+kubectl get pod
+kubectl get pods --all-namespaces
+kubectl get cs
+kubectl get svc
+kubectl get all --all-namespaces
+kubectl get roles --all-namespaces
+kubectl get service --all-namespaces
+kubectl get serivce xxx --url
+kubectl get --raw "/"
+kubectl get events
+kubectl get secret regcred --output=yaml
+kubectl get deployment metrics-server -n kube-system --output=yaml
+```
+
+```
+kubectl describe namespaces kube-system
+kubectl describe pods monitoring-influxdb-7f474cc79-cslt5 -n kube-system
+kubectl describe clusterrole system:heapster
+kubectl describe node bjrdc81
+```
+
+```
+kubectl logs pod xxxx -n kube-system -f
+```
+
+```
+kubectl label node/10.47.136.60 role=entry
+```
 
 ```
 kubectl delete -f recommended.yaml
+kubectl delete clusterrole system:heapster
+kubectl delete pod hello-node
 ```
+
+```
+kubectl config view
+```
+
+```
+kubectl edit deployment kubernetes-hello-world
+```
+
+
+
+```
+kubectl run hello-node --image=hello-node:v1 --port=3000
+```
+
+
+
+## hardor
+
+>Harbor 是 Vmwar 公司开源的 企业级的 Docker Registry 管理项目
+>
+>它主要 提供 Dcoker Registry 管理UI，可基于角色访问控制, AD/LDAP 集成，日志审核等功能，完全的支持中文。
+
+### 安装
+
+Generate a CA certificate private key
+
+```
+openssl genrsa  -out ca.key 4096
+```
+Generate the CA certificate.
+```
+openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206"  -key ca.key -out ca.crt
+o
+
+```
+Generate a Server Certificate
+```
+penssl genrsa -out bjrdc206.key 4096
+
+```
+Generate a certificate signing request (CSR).
+```
+openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206"     -key bjrdc206.key -out bjrdc206.csr
+```
+
+> I had the same issue as you on Ubuntu 18.04.x. Removing (or commenting out) `RANDFILE = $ENV::HOME/.rnd` from `/etc/ssl/openssl.cnf` worked for me.
+
+Generate an x509 v3 extension file
+
+```
+cat > v3.ext <<-EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1=yourdomain.com
+DNS.2=yourdomain
+DNS.3=hostname
+EOF
+```
+
+Use the `v3.ext` file to generate a certificate for your Harbor host.
+
+```
+openssl x509 -req -sha512 -days 3650 \
+    -extfile v3.ext \
+    -CA ca.crt -CAkey ca.key -CAcreateserial \
+    -in bjrdc206.csr \
+    -out bjrdc206.crt
+```
+
+Copy the server certificate and key into the certficates folder on your Harbor host
+
+```
+cp bjrdc206.crt /docker/cert/
+cp bjrdc206.key /docker/cert/
+```
+
+Convert `yourdomain.com.crt` to `yourdomain.com.cert`, for use by Docker.
+
+```
+openssl x509 -inform PEM -in bjrdc206.crt -out bjrdc206.cert
+```
+
+Copy the server certificate, key and CA files into the Docker certificates folder on the Harbor host. You must create the appropriate folders first
+
+```
+mkdir /etc/docker/certs.d/bjrdc206 -p
+cp bjrdc206.cert /etc/docker/certs.d/bjrdc206/
+cp bjrdc206.key /etc/docker/certs.d/bjrdc206/
+cp ca.crt /etc/docker/certs.d/bjrdc206/
+```
+
+
+
+```
+cp bjrdc206.crt /usr/local/share/ca-certificates/bjrdc206.crt 
+update-ca-certificates
+```
+
+
+
+```
+systemctl enable docker.service
+systemctl restart docker
+```
+
+install docker-compose
+
+```
+sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+
+
+vi harbor.yml
+
+```
+hostname: bjrdc206
+
+# http related config
+http:
+  # port for http, default is 80. If https enabled, this port will redirect to https port
+  port: 80
+
+# https related config
+https:
+  # https port for harbor, default is 443
+  port: 443
+  # The path of cert and key files for nginx
+  certificate: /docker/cert/bjrdc206.crt
+  private_key: /docker/cert/bjrdc206.key
+  ...
+```
+
+
+
+```
+./install.sh
+```
+
+### push
+
+修改docker配置，让https生效
+
+```
+cat /etc/docker/daemon.json 
+{
+  "graph": "/docker",
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2",
+  "insecure-registries":["bjrdc206:443"] 
+}
+```
+
+> 一定要带上443,否则在打tag的时候，docker可能认为不是远程的资源
+
+```
+ docker login bjrdc206:443
+ docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+ sudo docker push bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+```
+
+
+
+## YAML
+
+### namespace
+
+```
+apiVersion: v1
+kind: Namespace
+metadata:
+   name: bjrdc-dev
+   labels:
+     name: bjrdc-dev
+```
+
+
+
+### image
+
+```
+cat >Dockerfile <<EOF
+FROM node:8.10.0
+EXPOSE 8080
+COPY server.js .
+CMD [ "node", "server.js" ]
+EOF
+```
+
+
+
+```
+sudo docker build -t hello-node:v1 .
+```
+
+
+
+```
+sudo docker tag hello-node:v1 bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
+sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
+```
+
+
+
+### deployment
+
+
+
+```
+cat >deloyment<<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-node
+  namespace: bjrdc-dev 
+spec:
+  selector:
+    matchLabels:
+      app: hello-node
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello-node
+    spec:     # pod spec
+      containers: 
+      - name: hello-node
+        image: bjrdc206:443/bjrdc-dev/hello-node:v1.0.0 # image we pushed
+        ports:
+        - containerPort: 8080 # 容器的服务端口
+EOF
+```
+
+```
+kubectl create -f deployment.yaml
+```
+
+
+
+### service(svc)
+
+
+
+```
+cat >service.yaml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-node
+  namespace: bjrdc-dev
+  labels:
+    app: hello-node
+spec:
+  ports:
+  - port: 3000  #对外暴露的端口
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: hello-node
+EOF
+```
+
+```
+kubectl create -f service.yaml
+```
+
+```
+kubectl get services -n bjrdc-dev
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+hello-node   ClusterIP   10.102.118.239   <none>        3000/TCP   39m
+
+curl 10.102.118.239:3000
+```
+
+
+
+#### targetPort port 
+
+**注意：** 需要注意的是， `Service` 能够将一个接收 `port` 映射到任意的 `targetPort`。 默认情况下，`targetPort` 将被设置为与 `port` 字段相同的值。
+
+targetPort:pod 的服务端口
+
+port：service将pod的端口映射为集群的端口。
+
+```
+kubectl get services --all-namespaces
+NAMESPACE              NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
+bjrdc-dev              hello-node                  ClusterIP   10.102.118.239   <none>        3000/TCP                 12m
+curl 10.102.118.239:3000
+```
+
+
+
+#### apiversion
+
+> Deployment
+> 1.6版本之前 apiVsersion：extensions/v1beta1
+>
+> 1.6版本到1.9版本之间：apps/v1beta1
+>
+> 1.9版本之后:apps/v1
+
+> 1. v1 
+>
+> Kubernetes API的稳定版本，包含很多核心对象：pod、service等
+
+
+
+> 2. app/v1 
+>
+> ​	在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
+
+
+
+> apps/v1代表：包含一些通用的应用层的api组合，如：Deployments, RollingUpdates, and ReplicaSets
+
+#### Label
+
+
+
+## 应用
+
+### spring-cloud
+
+
+
+### node.js
+
+
 
 ## 问题处理
 
@@ -523,77 +887,8 @@ netstat -lntup|grep kube-sche
 kubectl  get pods -n kube-system
 ```
 
-
-
-### kubectl
-
-- [kubectl run（创建容器镜像）](http://docs.kubernetes.org.cn/468.html)
-- [kubectl expose（将资源暴露为新的 Service）](http://docs.kubernetes.org.cn/475.html)
-- [kubectl annotate（更新资源的Annotations信息）](http://docs.kubernetes.org.cn/477.html)
-- [kubectl autoscale（Pod水平自动伸缩）](http://docs.kubernetes.org.cn/486.html)
-- [kubectl convert（转换配置文件为不同的API版本）](http://docs.kubernetes.org.cn/488.html)
-
-- [kubectl create（创建一个集群资源对象](http://docs.kubernetes.org.cn/490.html)
-- [kubectl create clusterrole（创建ClusterRole）](http://docs.kubernetes.org.cn/492.html)
-- [kubectl create clusterrolebinding（为特定的ClusterRole创建ClusterRoleBinding）](http://docs.kubernetes.org.cn/494.html)
-- [kubectl create configmap（创建configmap）](http://docs.kubernetes.org.cn/533.html)
-- [kubectl create deployment（创建deployment）](http://docs.kubernetes.org.cn/535.html)
-- [kubectl create namespace（创建namespace）](http://docs.kubernetes.org.cn/537.html)
-- [kubectl create poddisruptionbudget（创建poddisruptionbudget）](http://docs.kubernetes.org.cn/539.html)
-- [kubectl create quota（创建resourcequota）](http://docs.kubernetes.org.cn/541.html)
-- [kubectl create role（创建role）](http://docs.kubernetes.org.cn/543.html)
-- [kubectl create rolebinding（为特定Role或ClusterRole创建RoleBinding）](http://docs.kubernetes.org.cn/545.html)
-
-- [kubectl create service（使用指定的子命令创建 Service服务）](http://docs.kubernetes.org.cn/564.html)
-- [kubectl create service clusterip](http://docs.kubernetes.org.cn/566.html)
-- [kubectl create service externalname](http://docs.kubernetes.org.cn/568.html)
-- [kubectl create service loadbalancer](http://docs.kubernetes.org.cn/570.html)
-- [kubectl create service nodeport](http://docs.kubernetes.org.cn/572.html)
-- [kubectl create serviceaccount](http://docs.kubernetes.org.cn/574.html)
-
-- [kubectl create secret（使用指定的子命令创建 secret）](http://docs.kubernetes.org.cn/548.html)
-- [kubectl create secret tls](http://docs.kubernetes.org.cn/558.html)
-- [kubectl create secret generic](http://docs.kubernetes.org.cn/556.html)
-- [kubectl create secret docker-registry](http://docs.kubernetes.org.cn/554.html)
-
-- [kubectl delete（删除资源对象）](http://docs.kubernetes.org.cn/618.html)
-- [kubectl edit（编辑服务器上定义的资源对象）](http://docs.kubernetes.org.cn/623.html)
-- [kubectl get（获取资源信息）](http://docs.kubernetes.org.cn/626.html)
-- [kubectl label（更新资源对象的label）](http://docs.kubernetes.org.cn/628.html)
-- [kubectl patch（使用patch更新资源对象字段）](http://docs.kubernetes.org.cn/632.html)
-- [kubectl replace（替换资源对象）](http://docs.kubernetes.org.cn/635.html)
-- [kubectl rolling-update（使用RC进行滚动更新）](http://docs.kubernetes.org.cn/638.html)
-- [kubectl scale（扩缩Pod数量）](http://docs.kubernetes.org.cn/664.html)
-
-- [kubectl rollout（对资源对象进行管理）](http://docs.kubernetes.org.cn/643.html)
-- [kubectl rollout history（查看历史版本）](http://docs.kubernetes.org.cn/645.html)
-- [kubectl rollout pause（标记资源对象为暂停状态）](http://docs.kubernetes.org.cn/647.html)
-- [kubectl rollout resume（恢复已暂停资源）](http://docs.kubernetes.org.cn/650.html)
-- [kubectl rollout status（查看资源状态）](http://docs.kubernetes.org.cn/652.html)
-- [kubectl rollout undo（回滚版本）](http://docs.kubernetes.org.cn/654.html)
-
-- [kubectl set（配置应用资源）](http://docs.kubernetes.org.cn/669.html)
-- [kubectl set resources（指定Pod的计算资源需求）](http://docs.kubernetes.org.cn/671.html)
-- [kubectl set selector（设置资源对象selector）](http://docs.kubernetes.org.cn/672.html)
-- [kubectl set image（更新已有资源对象中的容器镜像）](http://docs.kubernetes.org.cn/670.html)
-- [kubectl set subject（更新RoleBinding / ClusterRoleBinding中User、Group 或 ServiceAccount）](http://docs.kubernetes.org.cn/681.html)
-
-### kubadm
-
-
-
-## log
-
-### node
-
 ```
 journalctl -f -u kubelet
-```
-
-### pod
-
-```
-kubectl logs pod xxxx -n kube-system -f
 ```
 
 
@@ -704,11 +999,62 @@ kubectl logs pod xxxx -n kube-system -f
 
 这里我们抛出一个我们自己的理解：云原生代表着原生为云设计。详细的解释是：应用原生被设计为在云上以最佳方式运行，充分发挥云的优势。
 
-# Creating a single control-plane cluster with kubeadm
+
+
+## 附件
 
 
 
-## 相关命令
+### kubectl
 
-1. sudo kubeadm token create --print-join-command
-2. 
+- [kubectl run（创建容器镜像）](http://docs.kubernetes.org.cn/468.html)
+- [kubectl expose（将资源暴露为新的 Service）](http://docs.kubernetes.org.cn/475.html)
+- [kubectl annotate（更新资源的Annotations信息）](http://docs.kubernetes.org.cn/477.html)
+- [kubectl autoscale（Pod水平自动伸缩）](http://docs.kubernetes.org.cn/486.html)
+- [kubectl convert（转换配置文件为不同的API版本）](http://docs.kubernetes.org.cn/488.html)
+
+- [kubectl create（创建一个集群资源对象](http://docs.kubernetes.org.cn/490.html)
+- [kubectl create clusterrole（创建ClusterRole）](http://docs.kubernetes.org.cn/492.html)
+- [kubectl create clusterrolebinding（为特定的ClusterRole创建ClusterRoleBinding）](http://docs.kubernetes.org.cn/494.html)
+- [kubectl create configmap（创建configmap）](http://docs.kubernetes.org.cn/533.html)
+- [kubectl create deployment（创建deployment）](http://docs.kubernetes.org.cn/535.html)
+- [kubectl create namespace（创建namespace）](http://docs.kubernetes.org.cn/537.html)
+- [kubectl create poddisruptionbudget（创建poddisruptionbudget）](http://docs.kubernetes.org.cn/539.html)
+- [kubectl create quota（创建resourcequota）](http://docs.kubernetes.org.cn/541.html)
+- [kubectl create role（创建role）](http://docs.kubernetes.org.cn/543.html)
+- [kubectl create rolebinding（为特定Role或ClusterRole创建RoleBinding）](http://docs.kubernetes.org.cn/545.html)
+
+- [kubectl create service（使用指定的子命令创建 Service服务）](http://docs.kubernetes.org.cn/564.html)
+- [kubectl create service clusterip](http://docs.kubernetes.org.cn/566.html)
+- [kubectl create service externalname](http://docs.kubernetes.org.cn/568.html)
+- [kubectl create service loadbalancer](http://docs.kubernetes.org.cn/570.html)
+- [kubectl create service nodeport](http://docs.kubernetes.org.cn/572.html)
+- [kubectl create serviceaccount](http://docs.kubernetes.org.cn/574.html)
+
+- [kubectl create secret（使用指定的子命令创建 secret）](http://docs.kubernetes.org.cn/548.html)
+- [kubectl create secret tls](http://docs.kubernetes.org.cn/558.html)
+- [kubectl create secret generic](http://docs.kubernetes.org.cn/556.html)
+- [kubectl create secret docker-registry](http://docs.kubernetes.org.cn/554.html)
+
+- [kubectl delete（删除资源对象）](http://docs.kubernetes.org.cn/618.html)
+- [kubectl edit（编辑服务器上定义的资源对象）](http://docs.kubernetes.org.cn/623.html)
+- [kubectl get（获取资源信息）](http://docs.kubernetes.org.cn/626.html)
+- [kubectl label（更新资源对象的label）](http://docs.kubernetes.org.cn/628.html)
+- [kubectl patch（使用patch更新资源对象字段）](http://docs.kubernetes.org.cn/632.html)
+- [kubectl replace（替换资源对象）](http://docs.kubernetes.org.cn/635.html)
+- [kubectl rolling-update（使用RC进行滚动更新）](http://docs.kubernetes.org.cn/638.html)
+- [kubectl scale（扩缩Pod数量）](http://docs.kubernetes.org.cn/664.html)
+
+- [kubectl rollout（对资源对象进行管理）](http://docs.kubernetes.org.cn/643.html)
+- [kubectl rollout history（查看历史版本）](http://docs.kubernetes.org.cn/645.html)
+- [kubectl rollout pause（标记资源对象为暂停状态）](http://docs.kubernetes.org.cn/647.html)
+- [kubectl rollout resume（恢复已暂停资源）](http://docs.kubernetes.org.cn/650.html)
+- [kubectl rollout status（查看资源状态）](http://docs.kubernetes.org.cn/652.html)
+- [kubectl rollout undo（回滚版本）](http://docs.kubernetes.org.cn/654.html)
+
+- [kubectl set（配置应用资源）](http://docs.kubernetes.org.cn/669.html)
+- [kubectl set resources（指定Pod的计算资源需求）](http://docs.kubernetes.org.cn/671.html)
+- [kubectl set selector（设置资源对象selector）](http://docs.kubernetes.org.cn/672.html)
+- [kubectl set image（更新已有资源对象中的容器镜像）](http://docs.kubernetes.org.cn/670.html)
+- [kubectl set subject（更新RoleBinding / ClusterRoleBinding中User、Group 或 ServiceAccount）](http://docs.kubernetes.org.cn/681.html)
+

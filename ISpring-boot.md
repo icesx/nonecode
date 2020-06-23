@@ -22,11 +22,11 @@ mvn clean package
 #### 依赖
 
 ```
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-			<optional>true</optional>
-		</dependency>
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-actuator</artifactId>
+	<optional>true</optional>
+</dependency>
 
 ```
 #### Endpoint：
@@ -92,5 +92,5 @@ public class Application {
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-### Spring-cloud
+
 

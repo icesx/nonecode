@@ -11,9 +11,19 @@ docker inspect hadoop-name0
 docker rmi 7b7bbf4afbf0
 docker rm b5b7ead8f2fc
 #删除ps
+```
+
 
 ```
+docker login bjrdc206:443
+docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+docker push bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+```
+
+
+
 ### Docker的特点
+
 	和LXC相比，对container的是隔离的，image是不会发生变化的。而lxc则是改动都会变化到image中。
 	可以通过commit一个image，而之后的container使用这个image来创建的方式，实现对image修改的保留。
 	sudo docker commit --author="i" --message="ssh docker software hadoop " hadoop-data00 xjgz/ubuntu:v9
@@ -113,5 +123,358 @@ EOF
 
 ```
 docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 --link=hadoop-name00:hadoop-name00 --volume=/home/docker/software:/home/docker/software:rw --volume=/home/docker/volume/data00:/home/docker/volume:rw  xjgz/ubuntu:v9
+```
+
+### 乱码
+
+在开发项目的时候用到了docker，当系统部署到docker上，发现有乱码的现象，所有的汉字都变成了？，经过对比测试发现
+
+> 第一、本机的linux操作系统上是OK的
+> 第二、本机的linux的lcale是LANG=zh_CN.UTF-8，docker上的ubuntu也是LANG=zh_CN.UTF-8
+> 第三、讲docker上的LANG修改为LANG=en_US.UTF-8后依旧
+> 第四、此时可以肯定的是环境的问题，那是什么环境的问题呢？
+> 第五、将java的所有的properties打印出来后发现，字符的默认编码是US-ASCII，这个非常的异常
+> 第六、经过多种转发后仍然不行，但是getbutes(UTF-8)后的byte[]直接写到文件后，是中文的。
+> 第七、试着修改Java的默认编码使用 java -Dencode.file=UTF-8,发现问题解决
+> 第八、最终解决办法，在catalina.sh中增加JAVA_OPTS="-Dfile.encoding=UTF-8"
+
+## Dockerfile
+
+
+
+
+
+## docker with hadoop
+
+```
+#!/bin/bash
+dockers_hadoop="hadoop-name01 hadoop-data00 hadoop-data01 hadoop-data02 hadoop-data03 hadoop-data04 hadoop-data05 hadoop-data06"
+dockers_hbase="hbase00 hbase01"
+dockers_zookeeper="zookeeper00 zookeeper01"
+docker_image="xjgz/ubuntu:v9"
+
+###### common start
+function run_docker(){
+	docker=$1
+	_docker=$(sudo docker ps|grep $docker)
+	if [ $(echo $_docker|wc -L) -eq 0 ] ; then
+		echo ":::docker "$docker" is not started, and check is it created"
+		docker_created=$(sudo docker ps -a|grep $docker)
+		if [ $(echo $docker_created|wc -L) -eq 0 ];then
+			echo ":::docker "$docker" is not created so to run it"
+			sudo docker run -i -t -d --hostname=$docker --name=$docker --volume=/home/docker/software:/home/docker/software:rw --volume=/home/docker/volume/$docker:/home/docker/volume:rw  $docker_image
+			sleep 1s
+		else
+			echo ":::docker "$docker" is created so to start it!"
+			sudo docker start $docker
+			sleep 1s
+		fi
+		change_host $docker
+		start_service $docker
+	else
+		echo ":::docker "$docker" is started !"
+	fi	
+}
+function change_host(){
+	docker=$1;
+	ip=$(sudo docker inspect $docker |grep IPAddress|awk -F "\"" '{print $4}')
+	echo ":::docker "$docker" ip is "$ip
+	change_host_ip $docker $ip
+}
+function change_host_ip(){
+	docker=$1
+	ip=$2
+	_hosts=$(grep -e "[0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}.[0-9]\{1,3\}[     | ]"$docker /etc/hosts)
+	if [ $(echo $_hosts|wc -L) -eq 0 ];then
+			echo ":::echo $ip	$docker to/etc/hosts"
+			sudo sh -c "echo $ip	$docker>>/etc/hosts"
+	else
+		old_ip=$(echo $_hosts|awk '{print $1}')
+		echo ":::host "$docker" old ip is "$old_ip" change to "$ip
+		sudo sed -i "s/"$old_ip"/"$ip"/g" /etc/hosts
+	fi
+}
+function start_service(){
+	docker=$1
+	echo ":::to start "$docker "'s service by /etc/local"
+	sudo docker exec $docker /etc/rc.local
+}
+function stop_docker(){
+	docker=$1
+	sudo docker stop $docker
+}
+
+function delete_docker(){
+	docker=$1
+	echo ":::to delete docker"
+	stop_docker $docker
+	sudo docker rm $docker
+}
+function start_dockers_by_array(){
+	docker_array=$1
+	for docker in $docker_array
+		do 
+			echo ":::start "$docker
+			run_docker $docker
+		done
+}
+function stop_dockers_by_array(){
+	docker_array=$1
+	for docker in $docker_array
+		do 
+			echo ":::stop "$docker
+			stop_docker $docker
+		done
+}
+function delete_dockers_by_array(){
+	docker_array=$1
+	for docker in $docker_array
+		do 
+			echo ":::delete "$docker
+			delete_docker $docker
+		done
+}
+function run_dockers_shell(){
+	docker_array=$1
+	shell=$2
+	for docker in $docker_array
+		do 
+			echo ":::run shell "$shell" on" $docker
+			sudo docker exec $docker $shell
+		done
+}
+function run_ssh_shell(){
+	docker_array=$1
+	shell=$2
+	for docker in $docker_array
+		do 
+			echo ":::run shell by ssh "$shell" on" $docker
+			ssh "docker@"$docker "'$shell'"
+		done
+}
+function rsync_hosts(){
+	docker_array=$1
+	for docker in $docker_array
+		do 
+			echo ":::scp /etc/hosts to "$docker
+			scp /etc/hosts "docker@"$docker:/home/docker
+		done
+	run_dockers_shell "$docker_array" /home/docker/shell/rc.sh
+}
+######## common end
+######## for hadoop start
+function start_hadoop_docker(){
+	start_dockers_by_array "$dockers_hadoop"
+}
+function delete_hadoop_docker(){
+	delete_dockers_by_array "$dockers_hadoop"
+}
+function stop_hadoop_docker(){
+	stop_hadoop_service
+	stop_dockers_by_array "$dockers_hadoop"
+}
+function start_hadoop_service(){
+	echo ":::to start hadoop"
+	/home/docker/software/hadoop-2.6.0/sbin/start-dfs.sh
+	/home/docker/software/hadoop-2.6.0/sbin/start-yarn.sh
+}
+function stop_hadoop_service(){
+	echo ":::to stop hadoop"
+	/home/docker/software/hadoop-2.6.0/sbin/stop-dfs.sh
+	/home/docker/software/hadoop-2.6.0/sbin/stop-yarn.sh
+}
+function start_hadoop(){
+	start_hadoop_docker
+	start_hadoop_service
+}
+function stop_hadoop(){
+	stop_hadoop_service
+	stop_hadoop_docker
+}
+######### for hadoop end
+######### for hbase start
+function start_hbase_docker(){
+	start_dockers_by_array "$dockers_hbase"
+	rsync_hosts "$dockers_hbase"
+}
+function stop_hbase_docker(){
+	stop_dockers_by_array "$dockers_hbase"
+}
+function delete_hbase_docker(){
+	delete_dockers_by_array "$dockers_hbase"
+}
+function start_hbase_service(){
+	echo ":::to start hbase"
+	/home/docker/software/hbase-0.98.12/bin/start-hbase.sh
+}
+function stop_hbase_service(){
+	echo ":::to stop hbase"
+	/home/docker/software/hbase-0.98.12/bin/stop-hbase.sh
+}
+function start_hbase(){
+	start_zookeeper
+	start_hbase_docker
+	start_hbase_service
+}
+function stop_hbase(){
+	stop_hbase_service
+	stop_hbase_docker
+}
+######### for hbase end
+######### for zookeeper start
+function start_zookeeper_service(){
+	echo ":::to start zookeeper"
+	run_ssh_shell "$dockers_zookeeper" /home/docker/shell/zookeeper_start.sh
+}
+function stop_zookeeper_service(){
+	echo ":::to stop zookeeper"
+	run_ssh_shell "$dockers_zookeeper" /home/docker/shell/zookeeper_stop.sh
+}
+function start_zookeeper_docker(){
+	start_dockers_by_array "$dockers_zookeeper"
+	rsync_hosts "$dockers_zookeeper"
+}
+function stop_zookeeper_docker(){
+	stop_dockers_by_array "$dockers_zookeeper"
+}
+function delete_zookeeper_docker(){
+	delete_dockers_by_array "$dockers_zookeeper"
+}
+function start_zookeeper(){
+	start_zookeeper_docker
+	start_zookeeper_service
+}
+function stop_zookeeper(){
+	stop_zookeeper_service
+	stop_zookeeper_docker
+}
+######### for zookeeper end
+######### for all docker
+function start_all_docker(){
+	start_hadoop_docker
+	start_hbase_docker
+	start_zookeeper_docker
+}
+function stop_all_docker(){
+	stop_hadoop_docker
+	stop_hbase_docker
+	stop_zookeeper_docker
+}
+function delete_all_docker(){
+	delete_hadoop_docker
+	delete_hbase_docker
+	delete_zookeeper_docker
+}
+#########
+######### main
+function show_usage(){
+	echo "Usage: auto_docker.sh COMMAND ARG"
+	echo "COMMAND:"
+	echo "	all		will stop or start all hadoop hbase zookeeper docker"
+	echo "	hadoop		will stop or start hadoop service"
+	echo "	hbase		will stop or start hadoop service,zookeeper service then start hbase service"
+	echo "	zookeeper	will stop or start zookeeper service only"
+	echo "	docker_ha	will stop or start docker for hadoop"
+	echo "	docker_hb	will stop or start docker for hbase"
+	echo "	docker_zo	will stop or start docker for zookeeper"
+	echo "	docker_al	will stop or start docker for hadoop hbase zookeeper"	
+	echo "ARG:"
+	echo "	start		start service or docker"
+	echo "	stop 		stop service or docker"
+	echo "	delete		delete docker command must by docker_xx"
+}
+function main(){
+	command=$1
+	arg=$2
+	sudo echo "command is "$command" arg is "$arg
+	if [ $(echo $command|wc -L) -eq 0 ];then
+		show_usage
+	elif [ $(echo $arg|wc -L) -eq 0 ];then
+		show_usage	
+	else
+		if [ $command = "all" ];then
+			if [ $arg = "start" ];then
+				start_dockers
+				start_hadoop
+				start_zookeeper
+				start_hbase
+			elif [ $arg = "stop" ];then
+				stop_hbase
+				stop_zookeeper
+				stop_hadoop
+				stop_dockers
+			else
+				show_usage
+			fi
+		elif [ $command = "hadoop" ];then
+			if [ $arg = "start" ];then
+				start_hadoop
+			elif [ $arg = "stop" ];then
+				stop_hadoop
+			else
+				show_usage
+			fi
+		elif [ $command = "hbase" ];then
+			if [ $arg = "start" ];then
+				start_hbase
+			elif [ $arg = "stop" ];then
+				stop_hbase
+			else
+				show_usage
+			fi
+		elif [ $command = "zookeeper" ];then
+			if [ $arg = "start" ];then
+				start_zookeeper
+			elif [ $arg = "stop" ];then
+				stop_zookeeper
+			else
+				show_usage
+			fi
+		elif [ $command = "docker_ha" ];then
+			if [ $arg = "start" ];then
+				start_hadoop_docker
+			elif [ $arg = "stop" ];then
+				stop_hadoop_docker
+			elif [ $arg = "delete" ];then
+				delete_hadoop_docker
+			else
+				show_usage
+			fi
+		elif [ $command = "docker_hb" ];then
+			if [ $arg = "start" ];then
+				start_hbase_docker
+			elif [ $arg = "stop" ];then
+				stop_hbase_docker
+			elif [ $arg = "delete" ];then
+				delete_hbase_docker
+			else
+				show_usage
+			fi
+		elif [ $command = "docker_zo" ];then
+			if [ $arg = "start" ];then
+				start_zookeeper_docker
+			elif [ $arg = "stop" ];then
+				stop_zookeeper_docker
+			elif [ $arg = "delete" ];then
+				delete_zookeeper_docker
+			else
+				show_usage
+			fi
+		elif [ $command = "docker_al" ];then
+			if [ $arg = "start" ];then
+				start_all_docker
+			elif [ $arg = "stop" ];then
+				stop_all_docker
+			elif [ $arg = "delete" ];then
+				delete_all_docker
+			else
+				show_usage
+			fi
+		else
+			show_usage
+		fi
+	fi
+}
+main $1 $2
 ```
 
