@@ -106,6 +106,7 @@ service docker restart
 ```
 cat > /etc/docker/daemon.json <<EOF
 {
+  "registry-mirrors": ["https://registry.docker-cn.com"],
   "graph": "/docker",
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",

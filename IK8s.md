@@ -413,14 +413,173 @@ kube-scheduler-bjrdc17            5m           12Mi
 metrics-server-85b7f6dc48-fnrsw   1m           13Mi   
 ```
 
+### Ingress
 
+> An API object that manages external access to the services in a cluster, typically HTTP.
+>
+> Ingress may provide load balancing, SSL termination and name-based virtual hosting.
 
+> 一般在生产环境中使用。推荐使用ingress。
+>
+> Load balancer的问题是每一个服务都要有一个Load balancer，服务多了之后会很麻烦，这时就会用Ingress，它的缺点是配置起来比较复杂。
 
+> 默认安装中并没有ingress的controller，需要另行安装。
+
+#### 安装Ingress
+
+1. 下载yaml，不需要进行修改可以直接使用
+
+   ```
+   wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml
+   
+   ```
+
+2. 准备image
+
+   由于默认使用的镜像是`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`这个镜像在k8s中无法下载，但是不知道为何在docker中可以。
+
+   ```
+   docker pull quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
+   docker tag quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0 bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
+   docker login bjrdc206:443
+   sudo docker push bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
+   ```
+
+   修改deploy.yaml 将其中的`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`替换为`bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0`
+
+3. 安装ingress-nginx
+
+   ```
+   kubectl create -f deploy.yaml
+   ```
+
+4. 配置ingress
+
+   安装了ingrss后，需要为服务配置ingress，假设已将安装了hello-node的服务，使用如下yaml，为该服务增加ingress
+
+   ```
+   cat > hello-node-ingress.yaml <<EOF
+   apiVersion: extensions/v1beta1
+   kind: Ingress
+   metadata:
+     name: hello-node-ingress
+     namespace: bjrdc-dev
+     annotations:
+       nginx.ingress.kubernetes.io/proxy-body-size: "20M"
+   spec:
+     rules:
+     - host: ingress.bjrdc17
+       http:
+         paths:
+         - path: /
+           backend:
+             serviceName: hello-node
+             servicePort: 3000
+   EOF
+   ```
+
+5. 验证
+
+   ```
+   sudo sh -c "echo 172.16.10.17 ingress.bjrdc17 >> /etc/hosts"
+   ```
+
+   查看ingress端口
+
+   ```
+   kubectl get service -n ingress-nginx        
+   NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+   ingress-nginx-controller             LoadBalancer   10.103.204.188   <pending>     80:32628/TCP,443:31687/TCP   3h50m
+   ingress-nginx-controller-admission   ClusterIP      10.101.7.151     <none>        443/TCP 
+   ```
+
+   访问
+
+   ```
+   curl ingress.bjrdc17:32628
+   ```
+
+6. 配置固定端口
+
+   将ingress的service的type设置为NodePort即可
+
+   ```
+   spec:
+     type: NodePort
+     ports:
+       - name: http
+         port: 80
+         protocol: TCP
+         targetPort: http
+         nodePort: 30080
+   ```
+
+7. **Ingress**的理解
+
+   > ingress其实也是一个service，当然可以配置为loadbanlace或者nodeport两种方式。
+   >
+   > ingress的意义在于被ingress的service可以设置为clusterip，这样就省去了大连的nodeport，而只需要一个配置给ingress的nodeport。
+   >
+   > 理论上讲，可以在集群外部搭建一个nginx作为loadbanlce为所有的ingress的nodeip作负载均衡。
 
 
 ## IP与网络 
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+### 服务暴露（expose）
+
+有三种方式暴露服务，NodePort,Loadbanlace,ingress
+
+> ClusterIP 服务是 Kubernetes 的默认服务。它给你一个集群内的服务，集群内的其它应用都可以访问该服务。集群外部无法访问它.
+>
+> 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
+>
+> ```
+> apiVersion: v1
+> kind: Service
+> metadata:  
+>   name: my-internal-service
+> selector:    
+>   app: my-app
+> spec:
+>   type: ClusterIP
+> ```
+
+
+
+> NodePort 服务是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
+>
+> **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
+>
+> ```
+> apiVersion: v1
+> kind: Service
+> metadata:  
+>   name: my-nodeport-service
+> selector:    
+>   app: my-app
+> spec:
+>   type: NodePort
+>   ports:  
+>   - name: http
+>     port: 80
+>     targetPort: 80
+>     nodePort: 30036
+>     protocol: TCP
+> ```
+
+
+
+> Ingress
+>
+> 参见上文
+
+
+
+> Loadbanlace
+>
+> 
 
 ### Node IP
 
@@ -460,6 +619,8 @@ kubectl -n 命名空间 get Service即可看到ClusterIP
 ### 三种IP网络间的通信
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+
 
 
 
@@ -571,9 +732,7 @@ openssl genrsa  -out ca.key 4096
 ```
 Generate the CA certificate.
 ```
-openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206"  -key ca.key -out ca.crt
-o
-
+openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"  -key ca.key -out ca.crt
 ```
 Generate a Server Certificate
 ```
@@ -582,7 +741,7 @@ penssl genrsa -out bjrdc206.key 4096
 ```
 Generate a certificate signing request (CSR).
 ```
-openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206"     -key bjrdc206.key -out bjrdc206.csr
+openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"     -key bjrdc206.reg.key -out bjrdc206.reg.csr
 ```
 
 > I had the same issue as you on Ubuntu 18.04.x. Removing (or commenting out) `RANDFILE = $ENV::HOME/.rnd` from `/etc/ssl/openssl.cnf` worked for me.
@@ -590,7 +749,7 @@ openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Pers
 Generate an x509 v3 extension file
 
 ```
-cat > v3.ext <<-EOF
+cat > v3.ext <<EOF
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -598,9 +757,7 @@ extendedKeyUsage = serverAuth
 subjectAltName = @alt_names
 
 [alt_names]
-DNS.1=yourdomain.com
-DNS.2=yourdomain
-DNS.3=hostname
+DNS.1=bjrdc206.reg
 EOF
 ```
 
@@ -610,36 +767,36 @@ Use the `v3.ext` file to generate a certificate for your Harbor host.
 openssl x509 -req -sha512 -days 3650 \
     -extfile v3.ext \
     -CA ca.crt -CAkey ca.key -CAcreateserial \
-    -in bjrdc206.csr \
-    -out bjrdc206.crt
+    -in bjrdc206.reg.csr \
+    -out bjrdc206.reg.crt
 ```
 
 Copy the server certificate and key into the certficates folder on your Harbor host
 
 ```
-cp bjrdc206.crt /docker/cert/
-cp bjrdc206.key /docker/cert/
+cp bjrdc206.reg.crt /docker/cert/
+cp bjrdc206.reg.key /docker/cert/
 ```
 
 Convert `yourdomain.com.crt` to `yourdomain.com.cert`, for use by Docker.
 
 ```
-openssl x509 -inform PEM -in bjrdc206.crt -out bjrdc206.cert
+openssl x509 -inform PEM -in bjrdc206.reg.crt -out bjrdc206.reg.cert
 ```
 
 Copy the server certificate, key and CA files into the Docker certificates folder on the Harbor host. You must create the appropriate folders first
 
 ```
-mkdir /etc/docker/certs.d/bjrdc206 -p
-cp bjrdc206.cert /etc/docker/certs.d/bjrdc206/
-cp bjrdc206.key /etc/docker/certs.d/bjrdc206/
-cp ca.crt /etc/docker/certs.d/bjrdc206/
+mkdir /etc/docker/certs.d/bjrdc206.reg -p
+cp bjrdc206.reg.cert /etc/docker/certs.d/bjrdc206.reg/
+cp bjrdc206.reg.key /etc/docker/certs.d/bjrdc206.reg/
+cp ca.crt /etc/docker/certs.d/bjrdc206.reg/
 ```
 
 
 
 ```
-cp bjrdc206.crt /usr/local/share/ca-certificates/bjrdc206.crt 
+cp bjrdc206.reg.crt /usr/local/share/ca-certificates/
 update-ca-certificates
 ```
 
@@ -674,8 +831,8 @@ https:
   # https port for harbor, default is 443
   port: 443
   # The path of cert and key files for nginx
-  certificate: /docker/cert/bjrdc206.crt
-  private_key: /docker/cert/bjrdc206.key
+  certificate: /docker/cert/bjrdc206.reg.crt
+  private_key: /docker/cert/bjrdc206.reg.key
   ...
 ```
 
@@ -690,7 +847,7 @@ https:
 修改docker配置，让https生效
 
 ```
-cat /etc/docker/daemon.json 
+cat > /etc/docker/daemon.json <<EOF
 {
   "graph": "/docker",
   "exec-opts": ["native.cgroupdriver=systemd"],
@@ -699,16 +856,31 @@ cat /etc/docker/daemon.json
     "max-size": "100m"
   },
   "storage-driver": "overlay2",
-  "insecure-registries":["bjrdc206:443"] 
+  "insecure-registries":["bjrdc206.reg"] 
 }
+EOF
+sudo service docker restart
 ```
 
-> 一定要带上443,否则在打tag的时候，docker可能认为不是远程的资源
+>  "insecure-registries":["bjrdc206.reg"],用于告知客户端信任该证书
 
 ```
- docker login bjrdc206:443
+ docker login bjrdc206.reg
  docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
- sudo docker push bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+ sudo docker push bjrdc206.reg/bjrdc-dev/hello-world:v1.0.0
+```
+
+### register
+
+为harbo增加远程源
+
+在harbor的管理界面中，的“registries”中增加`https://registry-1.docker.io`
+
+### 重启
+
+```
+sudo docker-compose down
+sudo docker-compose up -d
 ```
 
 
@@ -934,6 +1106,14 @@ journalctl -f -u kubelet
 > 在 K8 集群中，客户端需要访问的服务就是 Service 对象。每个 Service 会对应一个集群内部有效的虚拟 IP，集群内部通过虚拟 IP 访问一个服务。
 >
 > 在 Kubernetes 集群中微服务的负载均衡是由 Kube-proxy 实现的。Kube-proxy 是 Kubernetes 集群内部的负载均衡器。它是一个分布式代理服务器，在 Kubernetes 的每个节点上都有一个；这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的 Kube-proxy 就越多，高可用节点也随之增多。与之相比，我们平时在服务器端做个反向代理做负载均衡，还要进一步解决反向代理的负载均衡和高可用问题。
+
+
+
+> Service有三种类型：
+>
+> - ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP
+>- NodePort：在ClusterIP基础上为Service在每台机器上绑定一个端口，这样就可以通过`<NodeIP>:NodePort`来访问该服务
+> - LoadBalancer：在NodePort的基础上，借助cloud provider创建一个外部的负载均衡器，并将请求转发到`<NodeIP>:NodePort`
 
 ### 任务（Job）
 
