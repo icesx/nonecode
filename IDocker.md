@@ -139,7 +139,29 @@ docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 --link=hadoop-nam
 > 第七、试着修改Java的默认编码使用 java -Dencode.file=UTF-8,发现问题解决
 > 第八、最终解决办法，在catalina.sh中增加JAVA_OPTS="-Dfile.encoding=UTF-8"
 
+### 非sudo执行
+
+> docker默认需要sudo执行，可通过如下命令使其非sudo执行
+>
+> ```
+> sudo usermod -a -G docker jenkins
+> newgrp docker
+> docker run hello-world
+> ```
+>
+> 
+
 ## Dockerfile
+
+```
+cat > Dockerfile <<EOF
+FROM java:8-jdk
+ARG JAR_FILE
+ADD target/${JAR_FILE} app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+EOF
+docker build -t xx:v1 .
+```
 
 
 

@@ -1,7 +1,19 @@
 openvpn
 ========
 ## 安装
+### 操作系统配置
+
+```
+cat >> /etc/sysctl.conf <<EOF
+	net.ipv4.ip_forward = 1
+EOF
+sysctl -p
+```
+
+
+
 ### centos
+
 ​	centos7上yum里没有openvpn的源，需要安装readhead的源，使用如下命令
 
 ```
@@ -10,7 +22,12 @@ yum install openvpn easy-rsa -y
 yum install 
 ```
 
+### 关闭 selinux 
 
+```
+setenforce 0 
+vi /etc/sysconfig/selinux
+```
 
 ### ubuntu
 
@@ -46,38 +63,15 @@ vi /etc/openvpn/server.conf
 		#tls-auth ta.key 0 # This file is secret
 ```
 
-### 关闭 selinux 
-```
-setenforce 0 
-vi /etc/sysconfig/selinux
-```
-
 
 ### key on easy-rsa2
 ```
 mkdir -p /etc/openvpn/easy-rsa/keys
 cp -rf /usr/share/easy-rsa/2.0/* /etc/openvpn/easy-rsa
 ```
-```
-vi /etc/openvpn/easy-rsa/vars
-​		export KEY_NAME="server"
-​		【KEY_NAME: You should enter server here; you could enter something else, but then you would also have to update the configuration files that reference server.key and server.crt】
-​		【KEY_CN: Enter the domain or subdomain that resolves to your server】
-​		export KEY_CN=openvpn.xjgz
-​		export KEY_ALTNAMES="xjgz.cn"
-​	#cp /etc/openvpn/easy-rsa/openssl-1.0.0.cnf /etc/openvpn/easy-rsa/openssl.cnf
-​	#cd /etc/openvpn/easy-rsa
-​	#source ./vars
-​	#./clean-all
-​	#./build-ca
-​	#./build-key-server server
-​	#./build-dh
-​	#cd /etc/openvpn/easy-rsa/keys
-​	#cp dh2048.pem ca.crt server.crt server.key /etc/openvpn
-​	#cd /etc/openvpn/easy-rsa
-​	#./build-key client	【client是你需要授权的账户，可以多次执行该命令来生成多个客户端的账户授权文件，如./build-key langk】
-```
+
 ### key on easy-rsa3
+
 ```
 wget https://github.com/OpenVPN/easy-rsa/archive/master.zip
 unzip master.zip
@@ -92,13 +86,38 @@ cp pki/private/server.key /etc/openvpn/
 cp pki/issued/server.crt /etc/openvpn/                          
 cp pki/dh.pem /etc/openvpn/
 ```
-### 操作系统配置
+
+### vars
+
 ```
-vi /etc/sysctl.conf
-	net.ipv4.ip_forward = 1
-sysctl -p
+vi /etc/openvpn/easy-rsa/vars
+​		export KEY_NAME="server"
+​		【KEY_NAME: You should enter server here; you could enter something else, but then you would also have to update the configuration files that reference server.key and server.crt】
+​		【KEY_CN: Enter the domain or subdomain that resolves to your server】
+​		export KEY_CN=openvpn.xjgz
+​		export KEY_ALTNAMES="xjgz.cn"
 ```
-### 服务器配置
+
+### 生成证书
+
+```
+cp /etc/openvpn/easy-rsa/openssl-1.0.0.cnf /etc/openvpn/easy-rsa/openssl.cnf
+cd /etc/openvpn/easy-rsa
+source ./vars
+./clean-all
+./build-ca
+./build-key-server server
+./build-dh
+cd /etc/openvpn/easy-rsa/keys
+cp dh2048.pem ca.crt server.crt server.key /etc/openvpn
+cd /etc/openvpn/easy-rsa
+./build-key client	【client是你需要授权的账户，可以多次执行该命令来生成多个客户端的账户授权文件，如./build-key langk】
+```
+
+
+
+### 服务配置
+
 ```
 systemctl -f enable openvpn@server.service
 systemctl start openvpn@server.service
@@ -106,15 +125,19 @@ systemctl start openvpn@server.service
 openvpn --config /etc/openvpn/server.cnf
 ifconfig p4p1:0 172.16.1.200 up	【增加一个虚拟网卡，用于链接到172.16.1.0/24网段】
 ```
+
+
 ### 客户端配置
+
 ​	A、将如下三个文件发布给客户端机器
+
+> /etc/openvpn/easy-rsa/keys/ca.crt
+> /etc/openvpn/easy-rsa/keys/client.crt
+> /etc/openvpn/easy-rsa/keys/client.key
+
+
 ```
-		/etc/openvpn/easy-rsa/keys/ca.crt
-​		/etc/openvpn/easy-rsa/keys/client.crt
-​		/etc/openvpn/easy-rsa/keys/client.key
-```
-```
-B、cat /etc/openvpn/client.ovpn << EOF
+cat >/etc/openvpn/client.ovpn << EOF
 client
 dev tun
 proto udp
@@ -139,11 +162,11 @@ ping 10.0.88.40	【应该ping不通】
 ### 防火墙配置
 #### centos7 
 ```
-#systemctl stop firewalld
-#systemctl mask firewalld
-#yum install iptables-services -y
-#systemctl enable iptables
-#iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o p4p1 -j MASQUERADE【将来源于10.8.0.0/24的网段转发到 p4p1网卡——即讲客户端的请求转发到10.0.88.0/24这个网卡上】
+systemctl stop firewalld
+systemctl mask firewalld
+yum install iptables-services -y
+systemctl enable iptables
+iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o p4p1 -j MASQUERADE【将来源于10.8.0.0/24的网段转发到 p4p1网卡——即讲客户端的请求转发到10.0.88.0/24这个网卡上】
 ping 10.0.88.40	【应该ping通】
 ```
 记得在10.0.88.70上增加指向172.16.1.0/24的路由
@@ -187,18 +210,18 @@ ufw reload
 ```
 ### 多客户端
 ```
-	source ./vars
-	./build-key langk
-	./build-key jinwl
+source ./vars
+./build-key langk
+./build-key jinwl
 ```
 ### 注销账户
 ```
-	source ./vars
-	./revoke-full client1
-	vim /etc/openvpn/server.conf
-	crl-verify /etc/openvpn/easy-rsa/keys/crl.pem
-	Reload the OpenVPN server to activate the revoke setting onle once.
-	service openvpn@server restart
+source ./vars
+./revoke-full client1
+vim /etc/openvpn/server.conf
+crl-verify /etc/openvpn/easy-rsa/keys/crl.pem
+Reload the OpenVPN server to activate the revoke setting onle once.
+service openvpn@server restart
 ```
 > 按照此种方式进行账户的吊销后,30天后所有的客户端即连接不上了。原因是在生成的crl.pem文件中有一个
 >

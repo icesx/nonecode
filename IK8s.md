@@ -622,6 +622,19 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 
 
+## DNS
+
+> This tells dnsmasq that queries for anything in the `cluster.local` domain should be forwarded to the DNS server at 10.96.0.10. This happens to be the default IP address of the `kube-dns` service in the `kube-system` namespace. If your cluster’s DNS service has a different IP address, you’ll need to specify it instead
+
+>kubernetes安装的时候，会自动的安装一个kube-dns的服务，该服务用于对service设置域名（因为service的clusterIp是会变化的，在service重启，或者故障的时候），建议使用域名进行service的访问，域名的格式如下
+
+> \${servicename}.\${namespace}.svc.cluster.local
+
+```
+ping hello-node.bjrdc-dev.svc.cluster.local
+ping mysql.bjrdc-dev.svc.cluster.local
+```
+
 
 
 ## 常用命令
