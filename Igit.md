@@ -1,6 +1,6 @@
 git
 ==================
-# how to use git command ? 
+# command 
 
 ### clone
 ```
@@ -43,11 +43,18 @@ error: Cannot access URL http://solar27/spring-cloud-config.git/, return code 22
 fatal: git-http-push failed
 error: failed to push some refs to 'http://solar27/spring-cloud-config.git'
 ```
+## Config
+
 ### 保持密码
-`git config --global credential.helper cache`
+
+```
+git config --global credential.helper cache
+git config --global credential.helper 'cache --timeout=360000'
+```
 
 ### 换行符^M忽略
 `git config --global core.whitespace cr-at-eol`
+
 ## branch
 ### 比较本地和远程
 `git diff master origin/master`
