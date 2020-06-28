@@ -1,7 +1,67 @@
 Maven
 ========
 
+### goal
+
+> 将当前插件的resource、build、deploy阶段 绑定到deploy阶段
+
+```
+<execution>
+    <phase>deploy</phase>
+    <id>default</id>
+    <goals>
+        <goal>resource</goal>
+        <goal>build</goal>
+        <goal>deploy</goal>
+    </goals>
+</execution>
+```
+
+
+
+### phase
+
+
+
+| `process-resources`      | `resources:resources`     |
+| ------------------------ | ------------------------- |
+| `compile`                | `compiler:compile`        |
+| `process-test-resources` | `resources:testResources` |
+| `test-compile`           | `compiler:testCompile`    |
+| `test`                   | `surefire:test`           |
+| `package`                | `jar:jar`                 |
+| `install`                | `install:install`         |
+| `deploy`                 | `deploy:deploy`           |
+
+## 自定义插件
+
+
+
+```
+<execution>
+	<phase>process-sources</phase>
+    <goals>
+    	<goal>modifyCode</goal>
+    </goals>
+</execution>
+```
+
+modifyCode 将关联到MavenModleCodeModifyPlugin
+
+```
+@Mojo(name = "modifyCode", requiresDependencyResolution = ResolutionScope.COMPILE)
+public class MavenModleCodeModifyPlugin extends AbstractMojo {
+...
+	@Override
+	public void execute() throws MojoExecutionException, MojoFailureException {
+	}
+}
+```
+
+
+
 # nexus about 
+
 ## 安装
 1. 官网下载最新版本，解压缩
 	https://www.sonatype.com/download-oss-sonatype

@@ -3,6 +3,10 @@ Docker
 ### 基本命令
 ```
 docker run -i -t --name hadoop-name0 ubuntu /bin/bash
+docker run -p 8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
+docker run -p 127.0.0.1:8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
+#坑点：-p参数不能放后面，必须放到run后面
+
 docker rm hadoop-name0
 docker start hadoop-name0
 docker attach hadoop-name0
@@ -149,7 +153,16 @@ docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 --link=hadoop-nam
 > docker run hello-world
 > ```
 >
-> 
+
+### Error response from daemon: Get https://bjrdc206.reg/v2/: x509: certificate signed by unknown authority
+
+> add code to /etc/docker/daemon.json
+>
+> `"insecure-registries":["bjrdc206.reg"]`
+>
+> ```
+> sudo service docker restart
+> ```
 
 ## Dockerfile
 

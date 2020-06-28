@@ -171,6 +171,8 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
       *但是这个网络是做什么的呢？*
 
+      
+
    3. 查看pod
 
 ```
@@ -712,6 +714,10 @@ kubectl label node/10.47.136.60 role=entry
 kubectl delete -f recommended.yaml
 kubectl delete clusterrole system:heapster
 kubectl delete pod hello-node
+kubectl delete service spring-cloud-eureka -n bjrdc-dev
+# cannot delete pod
+kubectl delete deploment spring-cloud-eureka -n bjrdc-dev
+# delete service with pod
 ```
 
 ```
