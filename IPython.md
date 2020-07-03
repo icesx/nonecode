@@ -69,3 +69,21 @@ Python不像C++、Java、C#等有明确的公共、私有或受保护的关键�
 ### pip
 	pip show tensorflow
 	pip list
+
+
+
+## virtualenv
+
+> install
+>
+> ```
+> sudo apt install virtualenv
+> ```
+>
+> 创建虚拟环境
+>
+> ```
+> virtualenv --no-site-packages --python=python3.6 venv
+> ```
+>
+> `--no-site-packages`，这样，已经安装到系统Python环境中的所有第三方包都不会复制过来

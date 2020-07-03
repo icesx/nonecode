@@ -85,14 +85,30 @@ hostname	：172.17.42.1
 name		:
 磁盘		:
 内存		:
-### 关于模板
-1. 提交模板：
+### 模板更新
+> 启动contariner后，修改其中的内容，之后可以提交该contrainer到新的tag	
+>
+> 注：此种方法如果删除根镜像的时候，子镜像会被删除。稳妥的做法是，将镜像导出，再导入
+
 ```
-docker commit --message="add rabbitmq" cdc xjgz/cdc:v1
+docker run -it java:8-jdk  /bin/bash
+## 修改镜像文件
+docker commit 880a64a4b26d --message="add rabbitmq" java:jdk-8-bjrdc-v1.0.0
+docker tag java:jdk-8-bjrdc-v1.0.1 bjrdc206.reg/java:jdk-8-bjrdc-v1.0.1
+docker loging bjrdc206.reg
+docker login bjrdc206.reg
+docker push bjrdc206.reg/java:jdk-8-bjrdc-v1.0.1
+```
+### 模板导出
+
+```
 docker save -o ubuntu_cdc_add_rabbit.tar xjgz/cdc:v1
 docker rmi xjgz/cdc:v1
 docker load -i images/ubuntu_cdc_v1_add_rabbit.tar
 ```
+
+
+
 ### 修改docker的image的路径的方法
 
 ### 17.09-ce之前

@@ -5,7 +5,11 @@ Locust
 
 ## install
 
+> 使用virtualenv安装
+
 ```
+virtualenv --no-site-packages --python=python3.6 venv
+source ./venv/bin/activate
 pip3 install locust
 locust --help
 ```

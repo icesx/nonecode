@@ -294,6 +294,14 @@ openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.
 > 使用浏览器打开
 >
 > https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+>
+> 登录用token使用如下命令获取
+>
+> ```
+> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+> ```
+>
+> 
 
 4. 绑定角色
 
@@ -527,7 +535,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 ## IP与网络 
 
-service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+> service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
 ### 服务暴露（expose）
 
@@ -639,6 +647,34 @@ ping mysql.bjrdc-dev.svc.cluster.local
 
 
 
+## 集群重启
+
+1. master 重启
+
+   > 如果因为操作系统更新需要重启，直接重启host,重启前检查系统的ip配置以及网络配置是否正常
+
+   ```
+   sudo reboot
+   ```
+
+   > 如果重启后k8s未启动通过如下命令查看状态
+   >
+   > ```
+   > journalctl -xe kubelet
+   > ```
+
+   
+
+   > 确保kubelet开机自启动了
+   >
+   > ```
+   > systemctl enable kubelet
+   > ```
+
+2. node 重启
+
+   与master类似
+
 ## 常用命令
 
 ### kubeadm
@@ -732,6 +768,12 @@ kubectl edit deployment kubernetes-hello-world
 
 ```
 kubectl run hello-node --image=hello-node:v1 --port=3000
+```
+
+
+
+```
+kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/bash
 ```
 
 
@@ -902,7 +944,43 @@ sudo docker-compose down
 sudo docker-compose up -d
 ```
 
+## 本地开发
 
+> kubernets虽然提供了强大的平台，但是本地开发调试却比较麻烦，就像开发大数据系统一样，需要当前开发主机与所有节点能够通信
+
+### 打通虚拟网络
+
+> 1. 配置路由
+>
+>    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
+>
+>    ```
+>    route add -net 10.0.0.0/8 gw 172.16.15.17
+>    ```
+>
+>    172.16.15.17为k8s的master的ip
+>
+>    但是打通IP由有什么用呢？能够发现service吗？
+>
+> 2. 配置dns
+>
+>    只能通过`resolvconf`来实现更新，相关方法如下
+>
+>    ```
+>    sudo apt install resolvconf
+>    cat > /etc/resolvconf/resolv.conf.d/head <<EOF
+>    nameserver 10.0.96.10
+>    EOF
+>    resolvconf -u
+>    ```
+
+### 测试开发（Eclipse）
+
+> 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
+>
+> 在spring-cloud in k8s的模式下，尚未测试。
+>
+> TODO
 
 ## YAML
 
@@ -947,7 +1025,7 @@ sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 
 ### deployment
 
-
+> deployment 创建pod
 
 ```
 cat >deloyment<<EOF

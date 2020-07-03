@@ -67,7 +67,29 @@ network:
         nameservers:
               addresses: [192.168.31.1]
 ```
+netplan 相关命令
+
+```
+netplan apply
+netplan generate
+```
+
+DNS
+
+> 只能通过`resolvconf`来实现更新，相关方法如下
+>
+> ```
+> sudo apt install resolvconf
+> cat > /etc/resolvconf/resolv.conf.d/head <<EOF
+> nameserver 10.0.96.10
+> EOF
+> resolvconf -u
+> ```
+>
+> 
+
 ### 多网卡配置
+
 ```
 $ip link
 ```
@@ -285,11 +307,15 @@ net.ipv4.tcp_max_tw_buckets = 5000表示系统同时保持TIME_WAIT套接字的�
 
 ```
 	sudo netstat -ap | grep :<port_number>
-​	Also you can try this to close the socket connection
-​	tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
-​	Replace X with the IP address, and Y with the port number.
-​	example
-​	#tcpkill -i eth1 -9 host 183.129.145.18
+```
+
+Also you can try this to close the socket connection
+```
+	tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
+```
+Replace X with the IP address, and Y with the port number.
+```
+tcpkill -i eth1 -9 host 183.129.145.18
 ```
 
 ### tcpdump
