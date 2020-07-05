@@ -14,6 +14,18 @@ IK8S
 - kube-proxy负责为Service提供cluster内部的服务发现和负载均衡；
 
 ![架构图](https://jimmysong.io/kubernetes-handbook/images/kubernetes-high-level-component-archtecture.jpg)
+## 云原生
+
+这里我们抛出一个我们自己的理解：云原生代表着原生为云设计。
+
+详细的解释是：应用原生被设计为在云上以最佳方式运行，充分发挥云的优势。
+
+CNCF，全称Cloud Native Computing Foundation（云原生计算基金会），成立于 2015 年7月21日（[于美国波特兰OSCON 2015上宣布](https://www.cncf.io/announcement/2015/06/21/new-cloud-native-computing-foundation-to-drive-alignment-among-container-technologies/)），其最初的口号是**坚持和整合开源技术来让编排容器作为微服务架构的一部分**，其作为致力于云原生应用推广和普及的一支重要力量，不论您是云原生应用的开发者、管理者还是研究人员都有必要了解
+
+https://github.com/cncf/landscape
+
+![](https://landscape.cncf.io/images/serverless.png)
+
 ## install
 
 1. 准备工作
@@ -39,29 +51,37 @@ IK8S
 
 2. 安装官方教程
 
-```
-sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-```
+   ```
+   sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+   cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+   deb https://apt.kubernetes.io/ kubernetes-xenial main
+   EOF
+   sudo apt-get update
+   sudo apt-get install -y kubelet kubeadm kubectl
+   sudo apt-mark hold kubelet kubeadm kubectl
+   ```
 
-2. 手动
+3. 手动
 
    官方教程中无法访问google，需要手动安装
-	1. 本地下载gpg
+
+4. 本地下载gpg
+
    ```
    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
    ```
-	2. 增加source 
+
+5. 增加source 
+
+   ```
    cat <<EOF | sudo  /etc/apt/sources.list.d/kubernetes.list
    deb https://apt.kubernetes.io/ kubernetes-xenial main
    EOF
-	3. 安装on ipv6
+   ```
+
+6. 安装on ipv6
+
    ```
    sudo apt install miredo
    sudo service miredo start
@@ -69,7 +89,7 @@ sudo apt-mark hold kubelet kubeadm kubectl
    sudo apt-get install -y kubelet kubeadm kubectl
    ```
 
-3. 或者切换aliyun
+7. 或者切换aliyun
 
    ```
    sudo su root
@@ -79,7 +99,9 @@ sudo apt-mark hold kubelet kubeadm kubectl
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
    ```
+
    
+
 ### 镜像搜索
 
 [https://cr.console.aliyun.com/cn-hangzhou/instances/images](https://links.jianshu.com/go?to=https%3A%2F%2Fcr.console.aliyun.com%2Fcn-hangzhou%2Finstances%2Fimages)
@@ -106,24 +128,24 @@ sudo vi /etc/fstab
       EOF
       sudo sysctl --system
       ```
-   ```
-   
+      
    3. enable docker
 
-      sudo apt install docker.io
-      systemctl enable docker.service
-      cat > /etc/docker/daemon.json <<EOF
-      {
-        "graph": "/docker",
-        "exec-opts": ["native.cgroupdriver=systemd"],
-        "log-driver": "json-file",
-        "log-opts": {
-          "max-size": "100m"
-        },
-        "storage-driver": "overlay2"
-      }
-      EOF
-   ```
+      ```
+          sudo apt install docker.io
+            systemctl enable docker.service
+            cat > /etc/docker/daemon.json <<EOF
+            {
+              "graph": "/docker",
+              "exec-opts": ["native.cgroupdriver=systemd"],
+              "log-driver": "json-file",
+              "log-opts": {
+                "max-size": "100m"
+              },
+              "storage-driver": "overlay2"
+            }
+            EOF
+      ```
 
 
 ​      
@@ -145,46 +167,44 @@ sudo vi /etc/fstab
 
       
 
-      执行完成后，回有内容，在slaver节点执行。
+      执行完成后，返回内容如下，在slaver节点执行。
 
       kubeadm join 172.16.15.17:6443 --token 1cx9wb.3bkuu2eq5qh8vn9k  --discovery-token-ca-cert-hash sha256:f680fe2f1575db37e653e2879ded96efc40e5104acd69aa66947b350ec3d35ce
 
       
 
-   5. .kube
+   5. .kube/config
 
-```
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-```
+      ```
+      mkdir -p $HOME/.kube
+      sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      ```
 
-
-
-   2. 部署 flannel 网络
+   6. 部署 flannel 网络
 
       > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
+      >
+      > ```
+      > kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      > ```
+      >
+      > *但是这个网络是做什么的呢？*
+      >
+      > 打通pod与集群
+
+   7. 查看pod
 
       ```
-      kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      kubectl get pod --all-namespaces
       ```
-
-      *但是这个网络是做什么的呢？*
-
-      
-
-   3. 查看pod
-
-```
-kubectl get pod --all-namespaces
-```
 
 9. 安装dashborad
 
-```
-wget  https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc7/aio/deploy/recommended.yaml
-kubectl create -f recommended.yaml 
-```
+   ```
+   wget  https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc7/aio/deploy/recommended.yaml
+   kubectl create -f recommended.yaml 
+   ```
 
 
 
@@ -273,96 +293,114 @@ wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/re
 kubectl apply -f recommended.yaml
 ````
 
-3. 访问
+3. 生成浏览器证书
 
-   forbidden
+   此时直接访问dasnboradr，使用如下地址，会forbidden
+   
+   ```
+   https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
+   ```
+   
+   需要生成证书
+   
+   ```
+   # 生成client-certificate-data
+   grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.crt
+   
+   # 生成client-key-data
+   grep 'client-key-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.key
+   
+   # 生成p12
+   openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.p12 -name "kubernetes-client"
+   
+   ```
+   
+4. 访问
 
-```
-# 生成client-certificate-data
-grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.crt
+   >下载生成的kubecfg.p12文件，并导入浏览器
+   >
+   >使用浏览器打开
+   >
+   >```
+   >https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+   >```
+   >
+   >在master上通过如下命令获取token
+   >
+   >```
+   >kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+   >```
+   >
+   >在登录界面输入token完成登录
 
-# 生成client-key-data
-grep 'client-key-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.key
+5. 角色绑定
 
-# 生成p12
-openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.p12 -name "kubernetes-client"
+   > 此时登录将会没有权限看到resources，使用如下方式为admin-user用户绑定权限
+   >
+   > 创建角色admin-user.rbac.yaml
+   >
+   > **创建名为admin-user的serviceaccount，放到kube-system namespace下，并将用户绑定到名称为cluster-admin的ClusterRole下**
+   >
+   > ```
+   > apiVersion: v1
+   > kind: ServiceAccount
+   > metadata:
+   > name: admin-user
+   > namespace: kube-system
+   > ---
+   > # Create ClusterRoleBinding
+   > apiVersion: rbac.authorization.k8s.io/v1
+   > kind: ClusterRoleBinding
+   > metadata:
+   > 	name: admin-user
+   > roleRef:
+   > apiGroup: rbac.authorization.k8s.io
+   > kind: ClusterRole
+   > name: cluster-admin
+   > subjects:
+   > - kind: ServiceAccount
+   >   name: admin-user
+   >   namespace: kube-system
+   > ```
+   >
+   > 执行该权限
+   >
+   > ```
+   > kubectl  create -f admin-user.rbac.yaml 
+   > ```
+   >
+   > 查询token
+   >
+   > ```
+   > kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+   > 
+   > ')
+   > Name:         admin-user-token-w4knf
+   > Namespace:    kube-system
+   > Labels:       <none>
+   > Annotations:  kubernetes.io/service-account.name: admin-user
+   >               kubernetes.io/service-account.uid: 65323ead-467f-448d-b7ee-1c52a002f3c2
+   > 
+   > Type:  kubernetes.io/service-account-token
+   > 
+   > Data
+   > ====
+   > token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhZbkI0S001RXlYbXV5UHgwZVBKYzBYMUFUQnF2NFhGUW1iLTlRNW45ZFkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXc0a25mIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NTMyM2VhZC00NjdmLTQ0OGQtYjdlZS0xYzUyYTAwMmYzYzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.g4zufIj7ZUUrv9BgtPCd6djE5z7APV6bhE_OchKzczULdbuSkMBrLWwwbHm-0Jg5cUN37fTS-lFsMPxrt2Uw2_m0omx7N47qU-3LBdYxAwiBS-OBUDq6qfyWZoYsQizqdAf1y9kaxUZNbQ1iRMFqyH9-xgp-gk2rbixlOr0ToCOiDC0_FNjJ9bRnhjzQVCXoKQ0XefLuEv21AqeOpaN0U0lP8txziRIOI83grhtbF4RqDHxF0ZoiIakJ5KhKozff29am9lUYScNJpNc6ooqU2wvoNgXHeyODWohXOi9Q1cFPETpA_6kjKYxwpcqsMfJ85lTVPMOCadLV4YJq_h4Kfg
+   > ca.crt:     1025 bytes
+   > namespace:  11 bytes
+   > ```
+   >
+   > 使用该token登录
 
-```
 
-> 下载生成的kubecfg.p12文件，并导入浏览器
->
-> 使用浏览器打开
->
-> https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
->
-> 登录用token使用如下命令获取
->
-> ```
-> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-> ```
->
-> 
 
-4. 绑定角色
-
-> 可以使用token登录，但是此时还有权限的问题，无法访问资源，还需要绑定角色
->
-> 创建角色admin-user.rbac.yaml
->
-> ```
-> apiVersion: v1
-> kind: ServiceAccount
-> metadata:
->   name: admin-user
->   namespace: kube-system
-> ---
-> # Create ClusterRoleBinding
-> apiVersion: rbac.authorization.k8s.io/v1
-> kind: ClusterRoleBinding
-> metadata:
->   name: admin-user
-> roleRef:
->   apiGroup: rbac.authorization.k8s.io
->   kind: ClusterRole
->   name: cluster-admin
-> subjects:
-> - kind: ServiceAccount
->   name: admin-user
->   namespace: kube-system
-> ```
->
-> ```
-> kubectl  create -f admin-user.rbac.yaml 
-> ```
->
-> 查看token
->
-> ```
-> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-> 
-> ')
-> Name:         admin-user-token-w4knf
-> Namespace:    kube-system
-> Labels:       <none>
-> Annotations:  kubernetes.io/service-account.name: admin-user
->               kubernetes.io/service-account.uid: 65323ead-467f-448d-b7ee-1c52a002f3c2
-> 
-> Type:  kubernetes.io/service-account-token
-> 
-> Data
-> ====
-> token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhZbkI0S001RXlYbXV5UHgwZVBKYzBYMUFUQnF2NFhGUW1iLTlRNW45ZFkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXc0a25mIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NTMyM2VhZC00NjdmLTQ0OGQtYjdlZS0xYzUyYTAwMmYzYzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.g4zufIj7ZUUrv9BgtPCd6djE5z7APV6bhE_OchKzczULdbuSkMBrLWwwbHm-0Jg5cUN37fTS-lFsMPxrt2Uw2_m0omx7N47qU-3LBdYxAwiBS-OBUDq6qfyWZoYsQizqdAf1y9kaxUZNbQ1iRMFqyH9-xgp-gk2rbixlOr0ToCOiDC0_FNjJ9bRnhjzQVCXoKQ0XefLuEv21AqeOpaN0U0lP8txziRIOI83grhtbF4RqDHxF0ZoiIakJ5KhKozff29am9lUYScNJpNc6ooqU2wvoNgXHeyODWohXOi9Q1cFPETpA_6kjKYxwpcqsMfJ85lTVPMOCadLV4YJq_h4Kfg
-> ca.crt:     1025 bytes
-> namespace:  11 bytes
-> ```
->
-> 使用此token登录dashboard
-
-### heapster
+### *heapster*
 
 > Heapster was initially [deprecated](https://github.com/kubernetes-retired/heapster/blob/master/docs/deprecation.md) in 1.11; users were encouraged to move to the `metrics-server` for similar functionality. With 1.18, the `cluster-monitoring` addons (Heapster, InfluxDB, and Grafana) have been removed from the Kubernetes source tree and therefore removed from the `cdk-addons` snap as well. Customers relying on these addons should migrate to a `metrics-server` solution prior to upgrading. Note: these removals do not affect the Kubernetes Dashboard nor the methods described in
 
 ### metrics-server
+
+> 目前官方推荐的是metrics-server
 
 1. 下载最新版本
 
@@ -448,6 +486,8 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    由于默认使用的镜像是`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`这个镜像在k8s中无法下载，但是不知道为何在docker中可以。
 
+   > 使用如下命令，将该image下载并推送到harbor中
+
    ```
    docker pull quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
    docker tag quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0 bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
@@ -481,14 +521,44 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
      - host: ingress.bjrdc17
        http:
          paths:
-         - path: /
+         - path: /hello
            backend:
              serviceName: hello-node
              servicePort: 3000
    EOF
    ```
 
-5. 验证
+5. ingress rewrite
+
+   > ingree 支持rewrite，从而可以将指定的路径映射到目标目录。特别是在和spring-boot进行整合的时候，可以将一个path，映射到/下
+   >
+   > 如下的配置可以将所有的/sc-gateway开头的路径映射到spring-cloud-k8s-gateway服务8097端口的/下
+   >
+   > 如`curl ingress.bjrdc17:30080/sc-gateway/consumer/feign/list`请求到达`curl spring-cloud-k8s-gateway.bjrdc-dev.svc.cluster.local:8097/consumer/feign/list`
+   >
+   > ```
+   > apiVersion: extensions/v1beta1
+   > kind: Ingress
+   > metadata:
+   >   name: sc-gateway-ingress
+   >   namespace: bjrdc-dev
+   >   annotations:
+   >     nginx.ingress.kubernetes.io/proxy-body-size: "20M"
+   >     nginx.ingress.kubernetes.io/rewrite-target: /$1
+   > spec:
+   >   rules:
+   >   - host: ingress.bjrdc17
+   >     http:
+   >       paths:
+   >       - path: /sc-gateway/(.*)
+   >         backend:
+   >           serviceName: spring-cloud-k8s-gateway
+   >           servicePort: 8097
+   > ```
+   >
+   > 
+
+6. 验证
 
    ```
    sudo sh -c "echo 172.16.10.17 ingress.bjrdc17 >> /etc/hosts"
@@ -509,9 +579,9 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
    curl ingress.bjrdc17:32628
    ```
 
-6. 配置固定端口
+7. 配置固定端口
 
-   将ingress的service的type设置为NodePort即可
+   将ingress的service的type设置为NodePort即可**但是不推荐使用这种方式，因为如此会有大量的nodeport暴露出来，并且nodeport的数量有限**
 
    ```
    spec:
@@ -524,13 +594,17 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
          nodePort: 30080
    ```
 
-7. **Ingress**的理解
+8. **Ingress**的理解
 
    > ingress其实也是一个service，当然可以配置为loadbanlace或者nodeport两种方式。
    >
    > ingress的意义在于被ingress的service可以设置为clusterip，这样就省去了大连的nodeport，而只需要一个配置给ingress的nodeport。
    >
    > 理论上讲，可以在集群外部搭建一个nginx作为loadbanlce为所有的ingress的nodeip作负载均衡。
+
+9. ingress vs spring-cloud-gateway/zuul
+
+   > **ingress 和spring-cloud-gateway/zuul均可以实现网管的作用。gateway的功能更加强大，ingress如果能够满足需求，那么最好使用ingress（满足云原生架构理念）**
 
 
 ## IP与网络 
@@ -541,7 +615,9 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 有三种方式暴露服务，NodePort,Loadbanlace,ingress
 
-> ClusterIP 服务是 Kubernetes 的默认服务。它给你一个集群内的服务，集群内的其它应用都可以访问该服务。集群外部无法访问它.
+> **ClusterIP **模式
+>
+> 群内的其它应用都可以访问该服务。集群外部无法访问它.
 >
 > 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
 >
@@ -549,16 +625,18 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 > apiVersion: v1
 > kind: Service
 > metadata:  
->   name: my-internal-service
+> 	name: my-internal-service
 > selector:    
->   app: my-app
+> 	app: my-app
 > spec:
->   type: ClusterIP
+> 	type: ClusterIP
 > ```
 
 
 
-> NodePort 服务是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
+> **NodePort**
+>
+>  是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
 >
 > **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
 >
@@ -566,12 +644,12 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 > apiVersion: v1
 > kind: Service
 > metadata:  
->   name: my-nodeport-service
+> 	name: my-nodeport-service
 > selector:    
->   app: my-app
+> 	app: my-app
 > spec:
->   type: NodePort
->   ports:  
+> 	type: NodePort
+> ports:  
 >   - name: http
 >     port: 80
 >     targetPort: 80
@@ -581,15 +659,19 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 
 
-> Ingress
+> **Ingress**
 >
-> 参见上文
-
-
-
-> Loadbanlace
+> 通过类似反向代理的方式将集群内service暴露出去，需要咱装ingress-control，本文中安装的是ingress-nginx
 >
-> 
+> 详细参见上文
+
+
+
+> **Loadbanlace**
+>
+> 一般是云服务商提供的服务，具体功能尚未明确
+>
+> TODO
 
 ### Node IP
 
@@ -630,6 +712,65 @@ kubectl -n 命名空间 get Service即可看到ClusterIP
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
+## RBAC
+
+> k8s提供的基于角色的权限管理。和RBAC相关的资源有如下三个
+
+ **ServiceAccount**
+
+>每个 namespace 中都有一个默认的叫做 `default` 的 service account 资源.
+>
+>当您（真人用户）访问集群（例如使用`kubectl`命令）时，apiserver 会将您认证为一个特定的 User Account（目前通常是`admin`，除非您的系统管理员自定义了集群配置）
+>
+>Pod 容器中的进程也可以与 apiserver 联系。 当它们在联系 apiserver 的时候，它们会被认证为一个特定的 Service Account（例如`default`）。
+>
+>运行在pod里的进程需要调用Kubernetes API以及非Kubernetes API的其它服务。Service Account它并不是给kubernetes集群的用户使用的，而是给pod里面的进程使用的，它为pod提供必要的身份认证
+>
+>往往出现权限的问题就是这个default捣的鬼，建议自建serviceaccount，并绑定service。
+
+> serviceaccount
+>
+> 创建一个serviceaccount
+>
+> ```
+> apiVersion: v1
+> kind: ServiceAccount
+> metadata:
+> name: admin-user
+> namespace: kube-system
+> ```
+>
+> 查看serviceaccount
+>
+> ```
+> kubectl get serviceaccounts -n bjrdc-dev
+> ```
+
+>  **Role**
+
+>
+
+ **ClusterRole**
+
+>创建clusterRole
+>
+>```
+>apiVersion: rbac.authorization.k8s.io/v1
+>kind: ClusterRole
+>metadata:
+>  name: aggregate-cron-tabs-edit
+>  labels:
+>    # 将这些权限添加到默认角色 "admin" 和 "edit" 中。
+>    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+>    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+>rules:
+>- apiGroups: ["stable.example.com"]
+>  resources: ["crontabs"]
+>  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+>
+>```
+>
+>
 
 
 ## DNS
@@ -729,6 +870,8 @@ kubectl get --raw "/"
 kubectl get events
 kubectl get secret regcred --output=yaml
 kubectl get deployment metrics-server -n kube-system --output=yaml
+kubectl get serviceaccounts -n bjrdc-dev
+kubectl get serviceaccounts -n bjrdc-dev -o yaml
 ```
 
 ```
@@ -785,6 +928,8 @@ kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/bash
 >它主要 提供 Dcoker Registry 管理UI，可基于角色访问控制, AD/LDAP 集成，日志审核等功能，完全的支持中文。
 
 ### 安装
+
+#### 证书
 
 Generate a CA certificate private key
 
@@ -861,7 +1006,7 @@ cp bjrdc206.reg.crt /usr/local/share/ca-certificates/
 update-ca-certificates
 ```
 
-
+#### 使用docker安装
 
 ```
 systemctl enable docker.service
@@ -877,7 +1022,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 
 
-vi harbor.yml
+修改 harbor.yml
 
 ```
 hostname: bjrdc206
@@ -905,7 +1050,7 @@ https:
 
 ### push
 
-修改docker配置，让https生效
+修改host 的docker配置，让https生效
 
 ```
 cat > /etc/docker/daemon.json <<EOF
@@ -939,10 +1084,14 @@ sudo service docker restart
 
 ### 重启
 
+使用docker-compose
+
 ```
 sudo docker-compose down
 sudo docker-compose up -d
 ```
+
+或者直接重启host
 
 ## 本地开发
 
@@ -976,28 +1125,120 @@ sudo docker-compose up -d
 
 ### 测试开发（Eclipse）
 
+> **spring-cloud on k8s**
+>
 > 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
+>
+> 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
+>
+> 从原理上说，使用网络打通的方式应该只适合spring-cloud on k8s
+
+
+
+> **spring-cloud in k8s**
 >
 > 在spring-cloud in k8s的模式下，尚未测试。
 >
+> 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
+>
+> ```
+> 	@Autowired
+> 	private DiscoveryClient discoveryClient;
+> 
+> 	@GetMapping("/services")
+> 	public List<String> services() {
+> 		return this.discoveryClient.getServices();
+> 	}
+> ```
+>
+> 需要在pom.xml中配置如下
+>
+> ```
+> <dependency>
+>  <groupId>org.springframework.cloud</groupId>
+>  <artifactId>spring-cloud-kubernetes-core</artifactId>
+> </dependency>
+> <dependency>
+>  <groupId>org.springframework.cloud</groupId>
+>  <artifactId>spring-cloud-kubernetes-discovery</artifactId>
+> </dependency>
+> <dependency>
+>  <groupId>org.springframework.cloud</groupId>
+>  <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
+> </dependency>
+> ```
+>
+> 使用如下方法测试
+>
+> service发现
+>
+> ```
+> curl localhost:8086/sc-k8s-consumer/services
+> ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
+> ```
+>
+> 调用provider方法
+>
+> ```
+> curl localhost:8086/sc-k8s-provider/index/list
+> ```
+>
+> 将consumer也部署到k8s后，报如下错误
+>
+> ```
+> io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
+> ```
+> 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
+>
+> ```
+> apiVersion: rbac.authorization.k8s.io/v1
+> kind: ClusterRole
+> metadata:
+>   name: bjrdc-cr
+>   namespace: bjrdc-dev
+> rules:
+> - apiGroups: [""]
+>   resources: ["services", "endpoints", "pods"]
+>   verbs: ["get", "list", "watch"]
+> ---
+> apiVersion: rbac.authorization.k8s.io/v1
+> kind: ClusterRoleBinding
+> metadata:
+>   name: bjrdc-rb
+>   namespace: bjrdc-dev
+> roleRef:
+>   apiGroup: rbac.authorization.k8s.io
+>   kind: ClusterRole
+>   name: bjrdc-cr
+> subjects:
+> - kind: ServiceAccount
+>   name: default
+>   namespace: bjrdc-dev
+> ```
+>
+> 
+>
+> 在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
+>
+> 
+
+### 使用 telepresence
+
+> telepresence为k8s提供的一个开发客户端-服务端程序，类是vpn，将服务器和客户端打通
+>
+> 具体使用方法尚未验证
+>
 > TODO
+
+## 关于jkube插件
+
+
 
 ## YAML
 
-### namespace
-
-```
-apiVersion: v1
-kind: Namespace
-metadata:
-   name: bjrdc-dev
-   labels:
-     name: bjrdc-dev
-```
-
-
-
 ### image
+
+创建Dockerfile
 
 ```
 cat >Dockerfile <<EOF
@@ -1008,17 +1249,28 @@ CMD [ "node", "server.js" ]
 EOF
 ```
 
-
+构建docker镜像
 
 ```
 sudo docker build -t hello-node:v1 .
 ```
 
-
+镜像推送到harbor
 
 ```
 sudo docker tag hello-node:v1 bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
+```
+
+### namespace
+
+```
+apiVersion: v1
+kind: Namespace
+metadata:
+   name: bjrdc-dev
+   labels:
+     name: bjrdc-dev
 ```
 
 
@@ -1097,7 +1349,7 @@ curl 10.102.118.239:3000
 
 #### targetPort port 
 
-**注意：** 需要注意的是， `Service` 能够将一个接收 `port` 映射到任意的 `targetPort`。 默认情况下，`targetPort` 将被设置为与 `port` 字段相同的值。
+**注意：**  `Service` 能够将一个接收 `port` 映射到任意的 `targetPort`。 默认情况下，`targetPort` 将被设置为与 `port` 字段相同的值。
 
 targetPort:pod 的服务端口
 
@@ -1107,10 +1359,13 @@ port：service将pod的端口映射为集群的端口。
 kubectl get services --all-namespaces
 NAMESPACE              NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
 bjrdc-dev              hello-node                  ClusterIP   10.102.118.239   <none>        3000/TCP                 12m
+
 curl 10.102.118.239:3000
 ```
 
+### configmap
 
+>TODO
 
 #### apiversion
 
@@ -1129,7 +1384,7 @@ curl 10.102.118.239:3000
 
 > 2. app/v1 
 >
-> ​	在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
+> 在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
 
 
 
@@ -1137,7 +1392,7 @@ curl 10.102.118.239:3000
 
 #### Label
 
-
+> TODO
 
 ## 应用
 
@@ -1163,6 +1418,19 @@ journalctl -f -u kubelet
 
 
 ## 基本概念
+
+### 资源
+
+> k8s中有大量的资源对象，比较重要的有service、deployment、pod、namespace、ingress、role、clusterrole、serviceaccount
+>
+> 
+
+| 类别     | 名称                                                         |
+| :------- | ------------------------------------------------------------ |
+| 资源对象 | Pod、ReplicaSet、ReplicationController、Deployment、StatefulSet、DaemonSet、Job、CronJob、HorizontalPodAutoscaling、Node、Namespace、Service、Ingress、Label、CustomResourceDefinition |
+| 存储对象 | Volume、PersistentVolume、Secret、ConfigMap                  |
+| 策略对象 | SecurityContext、ResourceQuota、LimitRange                   |
+| 身份对象 | ServiceAccount、Role、ClusterRole                            |
 
 ### pod
 
@@ -1272,9 +1540,7 @@ journalctl -f -u kubelet
 
 > Kubernetes 在 1.3 版本中发布了 alpha 版的基于角色的访问控制（Role-based Access Control，RBAC）的授权模式。相对于基于属性的访问控制（Attribute-based Access Control，ABAC），RBAC 主要是引入了角色（Role）和角色绑定（RoleBinding）的抽象概念。在 ABAC 中，Kubernetes 集群中的访问策略只能跟用户直接关联；而在 RBAC 中，访问策略可以跟某个角色关联，具体的用户在跟一个或多个角色相关联。显然，RBAC 像其他新功能一样，每次引入新功能，都会引入新的 API 对象，从而引入新的概念抽象，而这一新的概念抽象一定会使集群服务管理和使用更容易扩展和重用。
 
-## 云原生
 
-这里我们抛出一个我们自己的理解：云原生代表着原生为云设计。详细的解释是：应用原生被设计为在云上以最佳方式运行，充分发挥云的优势。
 
 
 

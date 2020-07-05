@@ -50,9 +50,9 @@ LXC
   >
 
 4. container设备等配置
-  A. cd rootfs.ubuntu.utopic/
-  B. sh home/ilxc/iLxc-config.sh
-  	#如上A-B的设置业可以不用做，具体有什么问题尚未验证。
+    A. cd rootfs.ubuntu.utopic/
+    B. sh home/ilxc/iLxc-config.sh
+    	#如上A-B的设置业可以不用做，具体有什么问题尚未验证。
 
 ### 设置网络【重点】
 
@@ -74,18 +74,18 @@ B. 在虚拟机上运行如下命令，修改网桥配置
 	V. ping baidu.com,正常情况下，网络可以通，如果不同试试直接ping外网地址。
 
 1. 运行container
-  A. lxc-execute -n ubuntu -f config.ubuntu -- /bin/bash
-  B. 通过ifconfig查看container网络
-  	10.0.4.101，为config.ubuntu中设置的ip地址
-  C. 为container增加默认路由
-  	route add  -net default gw 10.0.4.15
-  		#10.0.4.15为虚拟机的网桥的地址
-  D. 设置DNS
-  	I. /etc/resolv.conf 中增加
-  		nameserver 10.0.4.15【理论上说，可以通过10.0.4.15解析域名，但是实地测试不生效】
-  		nameserver 8.8.8.8【增加google的DNS】
-  	II. ping baidu.com,OK
-  E. 由于没有进行系统设备的设置，可能无法进行远程登录等动作，需要后续安装相关的资料再进行设置即可
+    A. lxc-execute -n ubuntu -f config.ubuntu -- /bin/bash
+    B. 通过ifconfig查看container网络
+    	10.0.4.101，为config.ubuntu中设置的ip地址
+    C. 为container增加默认路由
+    	route add  -net default gw 10.0.4.15
+    		#10.0.4.15为虚拟机的网桥的地址
+    D. 设置DNS
+    	I. /etc/resolv.conf 中增加
+    		nameserver 10.0.4.15【理论上说，可以通过10.0.4.15解析域名，但是实地测试不生效】
+    		nameserver 8.8.8.8【增加google的DNS】
+    	II. ping baidu.com,OK
+    E. 由于没有进行系统设备的设置，可能无法进行远程登录等动作，需要后续安装相关的资料再进行设置即可
 2. 进行享受吧,但是发现有时可以，有时不行，不知道是不是virtualbox的问题
 3. 试验了两天发现这种方式部署的container不是很稳定，偶发性的网络问题。
 4. 下一步试试lxc-create
@@ -93,53 +93,71 @@ B. 在虚拟机上运行如下命令，修改网桥配置
 
 ### lcx-create
 0. 之前经过debootstrap来创建container发现是可以的，但是发现总是不够稳定。下面将使用lxc-create试试
+
 1. 通过lxc-create命令创建的container就很简单，详细如下：
-	A. sudo lxc-create -t ubuntu -n ubuntu
-	B. sudo lxc-start -n ubuntu -d
-	C. sudo lxc-console -n ubuntu
+
+  ```
+  sudo lxc-create -t ubuntu -n ubuntu
+  sudo lxc-start -n ubuntu -d
+  sudo lxc-console -n ubuntu
+  ```
+
+  
+
 2. 经过测试发现lxc-create创建的container也可以移动到指定的目录，使用如下方法：
-	A. mv  /var/lib/lxc/ubuntu/ /DOING/LXC/
-	B. lxc-start -f config -n ubuntu -d
-	C. 以此推理，采用 sudo lxc-create -t ubuntu -n master --dir=/home/i/lxc/master，也可以。
-	D. 相关的配置文件在$(pwd)/lxc-ok/
+
+  ```
+  mv  /var/lib/lxc/ubuntu/ /DOING/LXC/
+  lxc-start -f config -n ubuntu -d
+  ```
+
+  以此推理，采用 `sudo lxc-create -t ubuntu -n master --dir=/home/i/lxc/master`，也可以。
+
+  相关的配置文件在$(pwd)/lxc-ok/
+
+  
+
 3. 基本的概念
-	A. 一个container可以创建多个实例，通过lxc-start 来启动实例
-	B. 如果container相同实例启动之后文件将相同，为了达到不同的实例不同的文件，则需要对不同的实例mount不同的目录
+
+  > 一个container可以创建多个实例，通过lxc-start 来启动实例
+  > 如果container相同实例启动之后文件将相同，为了达到不同的实例不同的文件，则需要对不同的实例mount不同的目录
+
 4. 配置IP地址
-	A. 默认启动的实例的IP地址为DHCP的
-	B. container实例配置
-		lxc.utsname=hadoop01【目前还没有发现有什么作用】
-		lxc.include=/DOING/LXC/ubuntu/config【公共的一些配置，网络参数】
-		lxc.network.hwaddr=00:16:3e:00:00:01【mac地址】
-		lxc.network.ipv4=10.0.3.101/24【静态IP地址，需要和lxcbr0在一个网段】
-		lxc.include=/DOING/LXC/ubuntu/fstab【需要mount的公共文件系统】
-		lxc.include=/DOING/LXC/hadoop01/fstab【需要mount的文件系统】
-	C. ubuntu/config【此congfig文件在lxc-create的时候自动创建，后需要修改网络等参数】
-		lxc.include=/usr/share/lxc/config/ubuntu.common.conf【引用公共的ubuntu的配置文件】
-		lxc.rootfs =/DOING/LXC/ubuntu/rootfs.ubuntu【container目录】
-		lxc.network.type = veth
-		lxc.network.flags = up
-		lxc.network.link = lxcbr0【网桥名称】
-		lxc.network.name = eth0
-		lxc.network.mtu = 1500
-		lxc.network.ipv4.gateway = auto【自动获得网管】
-	D. hadoop01/fstab
-		lxc.mount.entry=/TOOLS/hadoop 			home/ubuntu/hadoop 			none 	ro,bind 0 0
-		【源文件目录】					【需要挂载到的实例的目录，一定要存在】				
-	E. ubuntu/fstab
-		A. lxc.mount.entry=/TOOLS/jdk1.7.0_71_linux_x64 home/ubuntu/jdk1.7.0_71_linux_x64   none bind,ro 0 0
-	
+  A. 默认启动的实例的IP地址为DHCP的
+  B. container实例配置
+  	lxc.utsname=hadoop01【目前还没有发现有什么作用】
+  	lxc.include=/DOING/LXC/ubuntu/config【公共的一些配置，网络参数】
+  	lxc.network.hwaddr=00:16:3e:00:00:01【mac地址】
+  	lxc.network.ipv4=10.0.3.101/24【静态IP地址，需要和lxcbr0在一个网段】
+  	lxc.include=/DOING/LXC/ubuntu/fstab【需要mount的公共文件系统】
+  	lxc.include=/DOING/LXC/hadoop01/fstab【需要mount的文件系统】
+  C. ubuntu/config【此congfig文件在lxc-create的时候自动创建，后需要修改网络等参数】
+  	lxc.include=/usr/share/lxc/config/ubuntu.common.conf【引用公共的ubuntu的配置文件】
+  	lxc.rootfs =/DOING/LXC/ubuntu/rootfs.ubuntu【container目录】
+  	lxc.network.type = veth
+  	lxc.network.flags = up
+  	lxc.network.link = lxcbr0【网桥名称】
+  	lxc.network.name = eth0
+  	lxc.network.mtu = 1500
+  	lxc.network.ipv4.gateway = auto【自动获得网管】
+  D. hadoop01/fstab
+  	lxc.mount.entry=/TOOLS/hadoop 			home/ubuntu/hadoop 			none 	ro,bind 0 0
+  	【源文件目录】					【需要挂载到的实例的目录，一定要存在】				
+  E. ubuntu/fstab
+  	A. lxc.mount.entry=/TOOLS/jdk1.7.0_71_linux_x64 home/ubuntu/jdk1.7.0_71_linux_x64   none bind,ro 0 0
+
 5. 启动实例
-	A. 启动
-		cd /DOING/LXC/hadoop01/
-		sudo lxc-start -n hdoop01 -f config -d
-	B. 查看配置
-		A. 使用PAC或者 lxc-console登录到实例【账户密码为：ubuntu:ubuntu】
-		B. df查看分区，可能只能看到一个hadoop的挂载点，但是cd jdk1.7.0_71_linux_x64，却能看到内容——估计是一个bug
-		C. mount的代码默认使用ubuntu账户，需要的话，可以chmod -R i:i /TOOLS/hadoop修改hadoop的目录权限给i账户
-	C. 这样基本就配置好了，下一步就是将hadoop跑起来了。
-	
+  A. 启动
+  	cd /DOING/LXC/hadoop01/
+  	sudo lxc-start -n hdoop01 -f config -d
+  B. 查看配置
+  	A. 使用PAC或者 lxc-console登录到实例【账户密码为：ubuntu:ubuntu】
+  	B. df查看分区，可能只能看到一个hadoop的挂载点，但是cd jdk1.7.0_71_linux_x64，却能看到内容——估计是一个bug
+  	C. mount的代码默认使用ubuntu账户，需要的话，可以chmod -R i:i /TOOLS/hadoop修改hadoop的目录权限给i账户
+  C. 这样基本就配置好了，下一步就是将hadoop跑起来了。
+
 6. 修改root密码 $ sudo lxc-attach -n hadoop01
+
 7. 关于lxc.utsname=无法生效的问题，经过无意间的测试发现，将模板ubuntu的hostName修改为非ubuntu则外部的这个utsname就可以生效了，奇哉怪哉
 
 
