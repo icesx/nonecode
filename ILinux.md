@@ -3,6 +3,9 @@ Linux
 ubuntu
 -------------------
 ### 初始化安装
+
+> 安装linux推荐最小化安装，之后再通过命令安装需要的组件
+
 ```
 sudo apt install gcc make automake net-tools route zip unzip binutils
 ```
@@ -17,12 +20,12 @@ $gsettings set org.gnome.Vino require-encryption false
 ### 本地ISO软件源
 	Ubuntu的软件源文件为/etc/apt/sources.list，我们可以先备份一下该文件，直接执行mv命令，这样就没有sources.list文件了。下面挂载ISO镜像，一般放了DVD会自动挂载，我们也可以手动挂载到/media/cdcrom
 ```
-	$mount /dev/cdrom /media/cdrom 
-	apt-cdrom -m -d=/media/cdrom add 
-	保留 /etc/apt/sources.list中的第一行
-	deb cdrom:[....]
-	现在执行
-	$apt-get update 
+$mount /dev/cdrom /media/cdrom 
+apt-cdrom -m -d=/media/cdrom add 
+保留 /etc/apt/sources.list中的第一行
+deb cdrom:[....]
+现在执行
+$apt-get update 
 ```
 ### 修改IP地址
 
@@ -76,7 +79,9 @@ netplan generate
 
 DNS
 
-> 只能通过`resolvconf`来实现更新，相关方法如下
+> ubuntu18以后，dns服务器是127.0.0.1:53，本地有一个dns服务器，如果需要增加远程的dns服务器，
+>
+> 只能通过`resolvconf`来实现更新，（直接修改/etc/resolv.conf文件是会被系统自动覆盖的）相关方法如下
 >
 > ```
 > sudo apt install resolvconf
@@ -93,6 +98,78 @@ DNS
 ```
 $ip link
 ```
+## systemd service
+
+### systemd 基本命令
+
+```
+# 列出正在运行的 Unit
+$ systemctl list-units
+
+# 列出所有Unit，包括没有找到配置文件的或者启动失败的
+$ systemctl list-units --all
+
+# 列出所有没有运行的 Unit
+$ systemctl list-units --all --state=inactive
+
+# 列出所有加载失败的 Unit
+$ systemctl list-units --failed
+
+# 列出所有正在运行的、类型为 service 的 Unit
+$ systemctl list-units --type=service
+
+$ systemctl list-dependencies nginx.service
+```
+
+### service 文件格式
+
+> sshd 的service文件
+>
+> ```
+> systemctl cat sshd.service
+> 
+> # /usr/lib/systemd/system/sshd.service
+> [Unit]
+> Description=OpenSSH server daemon
+> Documentation=man:sshd(8) man:sshd_config(5)
+> After=network.target sshd-keygen.service
+> Wants=sshd-keygen.service
+> 
+> [Service]
+> Type=notify
+> EnvironmentFile=/etc/sysconfig/sshd
+> ExecStart=/usr/sbin/sshd -D $OPTIONS
+> ExecReload=/bin/kill -HUP $MAINPID
+> KillMode=process
+> Restart=on-failure
+> RestartSec=42s
+> 
+> [Install]
+> WantedBy=multi-user.target
+> ```
+>
+> 
+
+```
+[Unit]
+Description=描述
+Environment=环境变量或参数(系统环境变量此时无法使用)
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=所需环境变量文件或参数文件
+ExecStart=启动命令(需指定全路径)
+ExecStop=停止命令(需指定全路径)
+User=以什么用户执行命令
+
+[Install]
+# 常用的 Target 有两个：一个是 multi-user.target，表示多用户命令行状态；另一个是 graphical.target，表示图形用户状态，它依赖于 multi-user.target
+WantedBy=multi-user.target
+```
+
+
+
 ## ufw
 
 POSTROUTING是源地址转换，要把你的内网地址转换成公网地址才能让你上网。
@@ -117,21 +194,25 @@ ufw status numbered
 ufw delete 11
 ```
 ### 端口转发
-​	A、打开linux的ip转发
+> 打开linux的ip转发
+
 ```
 vi /etc/sysctl.cnf 
 net.ipv4.ip_forward=1
 ```
-​		【另外ufw也有一个类似的配置在/etc/ufw/sysctl.conf，最好这个也配置了】
-​	B、将ufw默认的转发功能打开
+【另外ufw也有一个类似的配置在/etc/ufw/sysctl.conf，最好这个也配置了】
+
+> 将ufw默认的转发功能打开
 
 ```
 vi /etc/default/ufw	
 #DEFAULT_FORWARD_POLICY="DROP"
 DEFAULT_FORWARD_POLICY="ACCEPT"
 ```
-​		【配置的时候出现多次配置不成功的情况，后来估计就是这个原因】
-​	C、端口转发【ufw没有端口转发的命令】
+【配置的时候出现多次配置不成功的情况，后来估计就是这个原因】
+​
+
+> 端口转发【ufw没有端口转发的命令】
 
 ```
 vi /etc/ufw/befor.rulers
@@ -153,19 +234,23 @@ vi /etc/ufw/befor.rulers
 COMMIT
 		
 ```
-	D、重启ufw
+
+> 重启ufw
+
 ```
 ufw disable 
 ufw enable
 ```
 [似乎reload不行]或者重启操作系统
-E、log
+
+> log
 
 ```
 ufw allow log 8400
 tail -f /var/log/ufw.log
 ```
-F、delete
+> delete
+
 ```
 ufw status numbered
 ufw delete 4
@@ -179,9 +264,11 @@ systemd默认读取/etc/systemd/system下的配置文件，该目录下的文件
 ```
 sudo ln -fs /lib/systemd/system/rc-local.service /etc/systemd/system/rc-local.service
 ```
-sudo vi  /etc/systemd/system/rc-local.service add content blow:
+
 
 ```
+sudo vi  /etc/systemd/system/rc-local.service 
+add content blow:
 [Install]  
 WantedBy=multi-user.target  
 Alias=rc-local.service
@@ -241,14 +328,13 @@ $ unar filename.zip
 
 ​	超过2T分区后 fdisk不支持，需要用parted
 ```
-	$parted /dev/sdc
-​	mklable gpt
-​	unit TB
-​	mkpart
-​	mkpart primary 0.00TB 4.00TB
-​	print
-​	quit
-​	
+$parted /dev/sdc
+mklable gpt
+unit TB
+mkpart
+mkpart primary 0.00TB 4.00TB
+print
+quit	
 ```
 
 ### 动态扫描硬盘
@@ -261,9 +347,9 @@ echo '- - -' >/sys/class/scsi_host/host0/scan
 
 ### dns
 
-```
-For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
+> For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
 
+```
 iface eth0 inet static
 address 192.168.3.3
 netmask 255.255.255.0
@@ -306,12 +392,12 @@ net.ipv4.tcp_max_tw_buckets = 5000表示系统同时保持TIME_WAIT套接字的�
 ### tcpkill
 
 ```
-	sudo netstat -ap | grep :<port_number>
+sudo netstat -ap | grep :<port_number>
 ```
 
 Also you can try this to close the socket connection
 ```
-	tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
+tcpkill -i eth0 host xxx.xxx.xxx.xxx port yyyy
 ```
 Replace X with the IP address, and Y with the port number.
 ```
@@ -347,18 +433,18 @@ sudo fc-cache  -fv
 
 ### sudoer
 ```
-	sudo usermod -a -G sudo username
+sudo usermod -a -G sudo username
 ```
 ### find
 ```
-	find ./*  -mtime +7 -type f -a  -exec rm -f {} \;
-​	find . -exec cat {} \;|grep workSpace
+find ./*  -mtime +7 -type f -a  -exec rm -f {} \;
+find . -exec cat {} \;|grep workSpace
 ```
 ### history
 ​	home/.bach_profile
 ```
-	export HISTTIMEFORMAT='%F %T '
-​	export HISTSIZE=45000
+export HISTTIMEFORMAT='%F %T '
+export HISTSIZE=45000
 ```
 ### expect
 
@@ -396,8 +482,8 @@ sudo fc-cache  -fv
  ```
 ### cu
 ```
-	#chown uucp /dev/ttyUSB0
-	#sudo cu -l /dev/ttyUSB0 -s 115200
+chown uucp /dev/ttyUSB0
+sudo cu -l /dev/ttyUSB0 -s 115200
 ```
 ### timezone
 	java 读取默认市区的时候，使用的可能是/etc/localtime。因为在centos7下出现的一个情况是，使用centos的命令tzselect。发现系统的时区修改了，但是java的时区未修改，解决办法是，修改/etc/localtime
@@ -441,9 +527,17 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
 ```
 ### network
 #### 显示网卡
-​	ip link show
+
+```
+ip link show
+```
+
+
 ### 串口
-​	cu -l ttyAMA0 -s 115200
+
+```
+cu -l ttyAMA0 -s 115200
+```
 
 ### bash
 
@@ -457,12 +551,15 @@ su - docker -c "/usr/local/mysql/bin/mysqld_safe --user=mysql&"
    scp -P 22 $project_path/target/board-gateway-0.0.1-SNAPSHOT-package.jar bjrdc@bjrdc23:/home/bjrdc/push
    
    ```
+   
 2. 通过如下命令可以实现for 循环 按照回车进行 换行，而不是 空格
-[参考地址](https://www.cnblogs.com/cocowool/archive/2013/01/15/2861904.html) 
-```cu
-	 IFS=$(echo -en "\n\b")
-        echo -en $IFS
-```
+    [参考地址](https://www.cnblogs.com/cocowool/archive/2013/01/15/2861904.html) 
+
+  ```
+  	 IFS=$(echo -en "\n\b")
+          echo -en $IFS
+  ```
+
 
 ## Samba
 1、关闭seliux

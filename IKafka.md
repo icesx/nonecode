@@ -1,11 +1,19 @@
 Kafka
 ===
 ### 安装
-​	A、单机安装
-​		解压后执行如下命令启动一个zookeeper
-​		#./bin/zookeeper-server-start.sh ../config/zookeeper.properties&	
-​		启动kafka
-​		#./bin/kafka-server-start.sh ../config/server.properties
+1. 单机安装
+
+   解压后执行如下命令启动一个zookeeper
+
+   ```
+   ./bin/zookeeper-server-start.sh ../config/zookeeper.properties&
+   ```
+
+   启动kafka
+
+   ```
+   ./bin/kafka-server-start.sh ../config/server.properties
+   ```
 
 ### 相关命令
 	#./bin/kafka-topics.sh --list --zookeeper localhost:2181

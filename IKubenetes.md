@@ -26,6 +26,70 @@ https://github.com/cncf/landscape
 
 ![](https://landscape.cncf.io/images/serverless.png)
 
+
+
+## 体验Docker
+
+1. hello-world
+
+   ```
+   docker run hello-world
+   ```
+
+2. node.js
+
+   > node.js 代码
+   >
+   > ```
+   > cat > server.js <<EOF 
+   > var http = require('http');
+   > 
+   > var handleRequest = function(request, response) {
+   >   console.log('Received request for URL: ' + request.url);
+   >   response.writeHead(200);
+   >   response.end('Hello World!');
+   > };
+   > var www = http.createServer(handleRequest);
+   > www.listen(8080);
+   > EOF
+   > ```
+   >
+   > 
+
+   > Dockerfile
+   >
+   > ```
+   > cat > Dockerfile <<EOF
+   > FROM bjrdc206.reg/library/node:8.10.0
+   > EXPOSE 8080
+   > COPY server.js .
+   > CMD [ "node", "server.js" ]
+   > EOF
+   > ```
+
+   > 制作镜像
+   >
+   > ```
+   > docker build -t bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1 .
+   > ```
+   >
+   > 执行
+   >
+   > ```
+   > docker run -p 8080:8080 bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+   > docker run -p 8080:8080 -d bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+   > ```
+   >
+   > 访问
+   >
+   > ```
+   > curl localhost:8080
+   > ```
+   >
+   > 
+
+
+
 ## install
 
 1. 准备工作
@@ -132,19 +196,19 @@ sudo vi /etc/fstab
    3. enable docker
 
       ```
-          sudo apt install docker.io
-            systemctl enable docker.service
-            cat > /etc/docker/daemon.json <<EOF
-            {
-              "graph": "/docker",
-              "exec-opts": ["native.cgroupdriver=systemd"],
-              "log-driver": "json-file",
-              "log-opts": {
-                "max-size": "100m"
-              },
-              "storage-driver": "overlay2"
-            }
-            EOF
+      sudo apt install docker.io
+      systemctl enable docker.service
+      cat > /etc/docker/daemon.json <<EOF
+      {
+          "graph": "/docker",
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+          "max-size": "100m"
+      },
+      "storage-driver": "overlay2"
+      }
+      EOF
       ```
 
 
@@ -281,28 +345,23 @@ sudo vi /etc/fstab
 
 ### dashborader
 
-1. yml
+1. install
 
-```
-wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
-```
-
-2. install
-
-````
-kubectl apply -f recommended.yaml
-````
+   ```
+   wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+   kubectl apply -f recommended.yaml
+   ```
 
 3. 生成浏览器证书
 
    此时直接访问dasnboradr，使用如下地址，会forbidden
-   
+
    ```
    https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
    ```
-   
+
    需要生成证书
-   
+
    ```
    # 生成client-certificate-data
    grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.crt
@@ -314,7 +373,7 @@ kubectl apply -f recommended.yaml
    openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.p12 -name "kubernetes-client"
    
    ```
-   
+
 4. 访问
 
    >下载生成的kubecfg.p12文件，并导入浏览器
@@ -400,7 +459,7 @@ kubectl apply -f recommended.yaml
 
 ### metrics-server
 
-> 目前官方推荐的是metrics-server
+> 资源监控，目前官方推荐的是metrics-server，安装方式如下：
 
 1. 下载最新版本
 
@@ -605,6 +664,13 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 9. ingress vs spring-cloud-gateway/zuul
 
    > **ingress 和spring-cloud-gateway/zuul均可以实现网管的作用。gateway的功能更加强大，ingress如果能够满足需求，那么最好使用ingress（满足云原生架构理念）**
+
+## 集群监控
+
+### Prometheus
+
+> IPrometheuse.md
+
 
 
 ## IP与网络 
@@ -1530,7 +1596,9 @@ journalctl -f -u kubelet
 
 ### 用户帐户（User Account）和服务帐户（Service Account）
 
-> 顾名思义，用户帐户为人提供账户标识，而服务账户为计算机进程和 Kubernetes 集群中运行的 Pod 提供账户标识。用户帐户和服务帐户的一个区别是作用范围；用户帐户对应的是人的身份，人的身份与服务的 namespace 无关，所以用户账户是跨 namespace 的；而服务帐户对应的是一个运行中程序的身份，与特定 namespace 是相关的。
+> 顾名思义，用户帐户为人提供账户标识，而服务账户为计算机进程和 Kubernetes 集群中运行的 Pod 提供账户标识。用户帐户和服务帐户的一个区别是作用范围；用户帐户对应的是人的身份，人的身份与服务的 namespace 无关，所以用户账户是跨 namespace 的
+>
+> 而服务帐户对应的是一个运行中程序的身份，与特定 namespace 是相关的。
 
 ### 命名空间（Namespace）
 

@@ -4,6 +4,7 @@ keepalived
 
 ### Configuration File for keepalived
 
+```
 global_defs {
    notification_email {
      #acassen@firewall.loc
@@ -42,6 +43,9 @@ vrrp_instance VI_1 {
 }
 
 }
+```
+
+
 ## mail
 
 keepalived提供了两个hook来支持扩展。
@@ -59,8 +63,10 @@ echo "$content"| mail -s "`date`:`hostname`:keepalived changed" $i >/dev/null &
 如果启用了iptables，需要在iptables中增加规则
  cat /etc/sysconfig/iptables
 
+```
 -A INPUT -i eth0 -p tcp --dport 25 -m state --state NEW,ESTABLISHED -j ACCEPT
 -A OUTPUT -o eth0 -p tcp --sport 25 -m state --state ESTABLISHED -j ACCEPT
+```
 
 
 如果无法发送的话，查看/var/log/maillog。有可能是域名的问题，很多邮箱已经屏蔽了localhost.localdomain域名，故需要修改系统的域名

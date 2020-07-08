@@ -1,20 +1,46 @@
 Docker
 ========
-### 基本命令
-```
-docker run -i -t --name hadoop-name0 ubuntu /bin/bash
-docker run -p 8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
-docker run -p 127.0.0.1:8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
-#坑点：-p参数不能放后面，必须放到run后面
+###  安装
 
+```
+sudo apt install docker.io
+```
+
+修改国内镜像
+
+```
+cat > /etc/docker/daemon.json <<EOF
+{
+ 
+  "registry-mirrors": ["http://hub-mirror.c.163.com"],
+  "graph": "/TOOLS/DOCKER_REGISTRY",
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2",
+  "insecure-registries":["bjrdc206.reg"]
+}
+EOF
+```
+
+
+
+### 基本命令
+
+```
 docker rm hadoop-name0
-docker start hadoop-name0
-docker attach hadoop-name0
-docker run -i -t --memory=1024m --hostname=hadoop-name0 --name hadoop-name0 ubuntu /home/hadoop/docker/common/autostart.sh
-docker inspect hadoop-name0
 docker rmi 7b7bbf4afbf0
 docker rm b5b7ead8f2fc
 #删除ps
+```
+
+```
+docker start hadoop-name0
+docker attach hadoop-name0
+#attach到一个已经运行的容器的stdin，然后进行命令执行的动作。但是需要注意的是，如果从这个stdin中exit，会导致容器的停止,if you really need to attach to it you have to start it with the -it flags
+docker inspect hadoop-name0
 ```
 
 
@@ -24,15 +50,42 @@ docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
 docker push bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
 ```
 
+```
+docker exec -it containerID /bin/bash
+```
+
+```
+docker run -i -t --memory=1024m --hostname=hadoop-name0 --name hadoop-name0 ubuntu /home/hadoop/docker/common/autostart.sh
+docker run -i -t --name hadoop-name0 ubuntu /bin/bash
+#-i 交互模式；-t tty
+docker run -p 8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
+docker run -p 127.0.0.1:8080:8080 bjrdc-dev/spring-cloud-eureka:0.0.1-SNAPSHOT
+#坑点：-p参数不能放后面，必须放到run后面
+```
+
+```
+docker search node
+```
+
+```
+docker logs -f -t --tail 10 redis
+```
+
 
 
 ### Docker的特点
 
 	和LXC相比，对container的是隔离的，image是不会发生变化的。而lxc则是改动都会变化到image中。
 	可以通过commit一个image，而之后的container使用这个image来创建的方式，实现对image修改的保留。
-	sudo docker commit --author="i" --message="ssh docker software hadoop " hadoop-data00 xjgz/ubuntu:v9
-	docker stop hadoop-data00
+```
+sudo docker commit --author="i" --message="ssh docker software hadoop " hadoop-data00 xjgz/ubuntu:v9
+docker stop hadoop-data00
+```
+
+
+
 ### 安装
+
 0. docker安装
 ```
 sudo curl -sSL https://get.docker.com/ | sh
