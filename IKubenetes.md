@@ -92,79 +92,87 @@ https://github.com/cncf/landscape
 
 ## install
 
-1. 准备工作
+#### 准备工作
 
-   1. 确保mac和uuid唯一
+1. 确保mac和uuid唯一
 
-   您可以使用命令 `ip link` 或 `ifconfig -a` 来获取网络接口的 MAC 地址
+您可以使用命令 `ip link` 或 `ifconfig -a` 来获取网络接口的 MAC 地址
 
+```
+sudo cat /sys/class/dmi/id/product_uuid
+```
+
+2. 在 Linux 中，nftables 当前可以作为内核 iptables 子系统的替代品。 `iptables` 工具可以充当兼容性层，其行为类似于 iptables 但实际上是在配置 nftables。 nftables 后端与当前的 kubeadm 软件包不兼容：它会导致重复防火墙规则并破坏 `kube-proxy`。
+
+   如果您系统的 `iptables` 工具使用 nftables 后端，则需要把 `iptables` 工具切换到“旧版”模式来避免这些问题。 默认情况下，至少在 Debian 10 (Buster)、Ubuntu 19.04、Fedora 29 和较新的发行版本中会出现这种问题。RHEL 8 不支持切换到旧版本模式，因此与当前的 kubeadm 软件包不兼容。
+   
    ```
-   sudo cat /sys/class/dmi/id/product_uuid
-   ```
-
-   2. 在 Linux 中，nftables 当前可以作为内核 iptables 子系统的替代品。 `iptables` 工具可以充当兼容性层，其行为类似于 iptables 但实际上是在配置 nftables。 nftables 后端与当前的 kubeadm 软件包不兼容：它会导致重复防火墙规则并破坏 `kube-proxy`。
-
-      如果您系统的 `iptables` 工具使用 nftables 后端，则需要把 `iptables` 工具切换到“旧版”模式来避免这些问题。 默认情况下，至少在 Debian 10 (Buster)、Ubuntu 19.04、Fedora 29 和较新的发行版本中会出现这种问题。RHEL 8 不支持切换到旧版本模式，因此与当前的 kubeadm 软件包不兼容。
-
-   ```bash
    update-alternatives --set iptables /usr/sbin/iptables-legacy
    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
    update-alternatives --set arptables /usr/sbin/arptables-legacy
    update-alternatives --set ebtables /usr/sbin/ebtables-legacy
    ```
-
-2. 安装官方教程
-
-   ```
-   sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-   cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-   deb https://apt.kubernetes.io/ kubernetes-xenial main
-   EOF
-   sudo apt-get update
-   sudo apt-get install -y kubelet kubeadm kubectl
-   sudo apt-mark hold kubelet kubeadm kubectl
-   ```
-
-3. 手动
-
-   官方教程中无法访问google，需要手动安装
-
-4. 本地下载gpg
-
-   ```
-   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
-   ```
-
-5. 增加source 
-
-   ```
-   cat <<EOF | sudo  /etc/apt/sources.list.d/kubernetes.list
-   deb https://apt.kubernetes.io/ kubernetes-xenial main
-   EOF
-   ```
-
-6. 安装on ipv6
-
-   ```
-   sudo apt install miredo
-   sudo service miredo start
-   sudo apt update
-   sudo apt-get install -y kubelet kubeadm kubectl
-   ```
-
-7. 或者切换aliyun
-
-   ```
-   sudo su root
-   curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
-   # 添加 k8s 镜像源
-   sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-   deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-   EOF
-   ```
-
    
+3. disable swap
+
+
+
+#### 安装官方教程
+
+```
+sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+#### 手动
+
+官方教程中无法访问google，需要手动安装
+
+```
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
+```
+
+增加source 
+
+```
+cat <<EOF | sudo  /etc/apt/sources.list.d/kubernetes.list
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+sudo apt-get install -y kubelet kubeadm kubectl
+```
+
+#### 通过aliyun安装
+
+```
+sudo su root
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
+sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+EOF
+sudo apt-get install -y kubelet kubeadm kubectl
+```
+
+> 注： node上不用安装kubelet
+
+### 启动服务
+
+```
+sudo systemctl start kubelet.service
+```
+
+#### 加入集群
+
+```
+
+```
+
+
 
 ### 镜像搜索
 
@@ -176,13 +184,16 @@ https://github.com/cncf/landscape
 
 1. disable swap
    
-```
-sudo vi /etc/fstab
-#/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
-```
-
-​         
-
+   ```
+   sudo vi /etc/fstab
+   #/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
+   ```
+   
+   ```
+   sudo reboot
+   ```
+   
+   ​        
    2. sysctl
    
       ```bash
@@ -1431,7 +1442,32 @@ curl 10.102.118.239:3000
 
 ### configmap
 
->TODO
+>configmap 是k8s的配置服务，一个简单的配置如下
+>
+>```
+>kind: ConfigMap
+>apiVersion: v1
+>metadata:
+>  name: spring-cloud-k8s-configmap
+>  namespace: bjrdc-dev
+>data:
+>  application.yaml: |-
+>    cn.xportal.cs.config.base: base 
+>    ---
+>    spring:
+>      profiles: k8s
+>    cn.xportal.cs.config.base: k8s 
+>    ---
+>    spring:
+>      profiles: local
+>    cn.xportal.cs.config.base: local 
+>```
+>
+>"application.yaml: |-"可以理解为一个文件段，当然也可以引用外部的文件。
+>
+>在spring-cloud中使用这个configmap需要
+>
+>
 
 #### apiversion
 
@@ -1466,7 +1502,23 @@ curl 10.102.118.239:3000
 
 
 
-### node.js
+
+
+## mysql
+
+> mysql cluster in k8s
+>
+> 1. ceph
+>
+>    经测试mysql在ceph性能较差，故放弃ceph的方式，参考
+>
+>    [mysql ce[h]: ./IMysql.md
+>
+> 2. 
+>
+> 
+
+## ES
 
 
 

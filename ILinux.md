@@ -235,6 +235,22 @@ COMMIT
 		
 ```
 
+> 本地端口转发
+
+```
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+-A PREROUTING  -p tcp -m tcp --dport 443 -j DNAT --to-destination 172.31.238.220:80
+-A POSTROUTING -s 172.31.238.0/24  -o eth0 -j MASQUERADE
+
+COMMIT
+```
+
+
+
 > 重启ufw
 
 ```
@@ -255,7 +271,10 @@ tail -f /var/log/ufw.log
 ufw status numbered
 ufw delete 4
 ```
+
+
 ### 自启动
+
 ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改：
 
 systemd默认读取/etc/systemd/system下的配置文件，该目录下的文件会链接/lib/systemd/system/下的文件。一般系统安装完/lib/systemd/system/下会有rc-local.service文件，即我们需要的配置文件。

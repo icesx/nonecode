@@ -19,7 +19,7 @@ prometheus
 > 下载
 >
 > ```
-> 
+> wget https://github.com/prometheus/prometheus/releases/download/v2.19.2/prometheus-2.19.2.linux-amd64.tar.gz
 > ```
 >
 > 配置service
@@ -55,9 +55,19 @@ prometheus
 > vi $prometheuse_home/prometheus.yml,add content as blow
 >
 > ```
+> scrape_configs:
+>   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+>   - job_name: 'prometheus'
+> 
+>     # metrics_path defaults to '/metrics'
+>     # scheme defaults to 'http'.
+> 
+>     static_configs:
+>     - targets: ['bjrdc25:9090']
+> 
 >   - job_name: 'node'
 >     static_configs:
->     - targets: ['bjrdc25:9100']
+>     - targets: ['bjrdc25:9100','bjrdc254:9100']
 > ```
 
 #### 验证
@@ -144,6 +154,33 @@ sudo systemctl enable grafana-server.service
 curl bjrdc25:3000
 ```
 
+admin:admin
+
+### 手动
+
+```
+sudo apt-get install -y adduser libfontconfig1
+wget https://dl.grafana.com/oss/release/grafana_7.0.6_amd64.deb
+sudo dpkg -i grafana_7.0.6_amd64.deb
+```
+
+出现异常
+
+```
+Failed to start grafana-server.service: The name org.freedesktop.PolicyKit1 was not provided by any
+```
+
+```
+sudo 
+```
+
+
+
 ### dashboard
 
 通过iimport的方式导入已有的dashborad，官方的dashboard在地址`https://grafana.com/grafana/dashboards`里
+
+
+
+### alert
+

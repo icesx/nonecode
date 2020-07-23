@@ -9,6 +9,22 @@ iptables
 	ESTABLISHED：该包属于某个已经建立的连接。
 	INVALID:该包不匹配于任何连接，通常这些包被DROP。
 ```
+### 删除规则
+
+```
+iptables -D INPUT 3  //删除input的第3条规则  
+  
+iptables -t nat -D POSTROUTING 1  //删除nat表中postrouting的第一条规则  
+  
+iptables -F INPUT   //清空 filter表INPUT所有规则  
+  
+iptables -F    //清空所有规则  
+  
+iptables -t nat -F POSTROUTING   //清空nat表POSTROUTING所有规则  
+```
+
+
+
 ### 相关命令
 
  1. Delete all existing rules
@@ -20,8 +36,16 @@ iptables
 	iptables -P INPUT DROP
 	iptables -P FORWARD DROP
 	iptables -P OUTPUT DROP
-```
- 3. Block a specific ip-address
+ ```
+ 3. list nat
+
+    ```
+    sudo iptables -t nat -L --line-numbers
+    ```
+
+    
+
+ 4. Block a specific ip-address
 ```
 	BLOCK_THIS_IP="x.x.x.x"
 	iptables -A INPUT -s "$BLOCK_THIS_IP" -j DROP

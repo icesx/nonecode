@@ -10,11 +10,19 @@ sudo apt-get install libpcre3 libpcre3-dev zlib1g-dev gcc make
 ./configure --prefix=/home/docker/software/nginx-1.10.0-proxy --with-pcre --with-http_sub_module
 ```
 ### 查看模块
+
 ```
 ./sbin/nginx -V
 ```
+### Server
+
+> Change the Nginx server name in source file(src/http/ngx_http_header_filter_module.c) to " My-Server". After that, compiled the nginx. But its not working when I load the url. Strange here is I can see my updated Signature when I use curl command. But this same is not updated in browser.
+
 ### sub_filter
+
 ```	
+location / {
+    proxy_set_header Accept-Encoding "";#防止压缩引起的无法过滤
 	sub_filter '52.4.1.145:8090' '58.42.241.252:8000';#将页面上的所有的52.4.1.145:8090 替换为 58.42.241.252:8000
 	sub_filter '52.4.1.145:8089' '58.42.241.252:8000';
 	sub_filter '52.4.1.188:6080' '58.42.241.252:6080';
@@ -22,6 +30,7 @@ sudo apt-get install libpcre3 libpcre3-dev zlib1g-dev gcc make
 	sub_filter '52.4.1.145:18567' '58.42.241.252:8000';
 	sub_filter_once off;
 	sub_filter_types application/json application/javascript text/javascript;#针对这三总mime，这些mime需要通过抓包或者浏览器的调试工具获取
+
 ```
 ### proxy
 ```

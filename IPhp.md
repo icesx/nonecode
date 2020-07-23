@@ -53,3 +53,8 @@ SetHandler application/x-httpd-php
 </FilesMatch>
 ```
 #### test
+
+
+
+## nginx with php
+

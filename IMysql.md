@@ -44,9 +44,9 @@ default-character-set=utf8
 
 1. 安装curses
 
-```
-sudo apt install libncurses5-dev
-```
+   ```
+   sudo apt install libncurses5-dev
+   ```
 
 3. ssl
 
@@ -231,6 +231,19 @@ You must reset your password using ALTER USER statement before executing this st
 set password=password('zgjx@321');
 ```
 
+## 密码权限
+
+```
+create database cdc default charset uft8;
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xjgz@123';
+```
+
+
+
+```
+GRANT ALL PRIVILEGES ON dbt2.* TO 'bjrdc'@'%';
+```
+
 
 
 ## 基准测试
@@ -259,64 +272,181 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 使用的过程中发现使用无法跑过去
 
-### sysbench
+### Sysbench
 
-1. download
+[参考]: ./ISysbench.md
 
-```
-wget https://github.com/akopytov/sysbench/archive/1.0.19.tar.gz
-```
+### 性能测试
 
-2. 安装
+### mysql base
 
-```
-sudo apt install automake pkg-config libmysqlclient-dev
+> 测试脚本
+>
+> ```
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ```
+>
+> 测试结果
+>
+> ```
+> SQL statistics:
+>     queries performed:
+>         read:                            2093994
+>         write:                           598284
+>         other:                           299142
+>         total:                           2991420
+>     transactions:                        149571 (1245.12 per sec.)
+>     queries:                             2991420 (24902.44 per sec.)
+>     ignored errors:                      0      (0.00 per sec.)
+>     reconnects:                          0      (0.00 per sec.)
+> 
+> General statistics:
+>     total time:                          120.1238s
+>     total number of events:              149571
+> 
+> Latency (ms):
+>          min:                                    2.81
+>          avg:                                  102.75
+>          max:                                  712.80
+>          95th percentile:                      231.53
+>          sum:                             15368439.04
+> 
+> Threads fairness:
+>     events (avg/stddev):           1168.5234/17.44
+>     execution time (avg/stddev):   120.0659/0.04
+> ```
 
-```
+#### mysql 8 编译安装
 
+> 测试脚本
+>
+> ```
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ```
+>
+> 测试结果
+>
+> ```
+> SQL statistics:
+>        queries performed:
+>            read:                            2025968
+>            write:                           578845
+>            other:                           289423
+>            total:                           2894236
+>        transactions:                        144711 (1204.96 per sec.)
+>        queries:                             2894236 (24099.30 per sec.)
+>        ignored errors:                      1      (0.01 per sec.)
+>        reconnects:                          0      (0.00 per sec.)
+> 
+> General statistics:
+>        total time:                          120.0944s
+>        total number of events:              144711
+> 
+> Latency (ms):
+>             min:                                    2.77
+>             avg:                                  106.17
+>             max:                                  808.00
+>             95th percentile:                      248.83
+>             sum:                             15363556.38
+> 
+> Threads fairness:
+>        events (avg/stddev):           1130.5547/17.31
+>        execution time (avg/stddev):   120.0278/0.03
+> 
+> ```
 
+#### on ceph
 
-2. 测试
+> 测试脚本
+>
+> ```
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ```
+>
+> 测试结果
+>
+> ```
+> SQL statistics:
+>     queries performed:
+>         read:                            420882
+>         write:                           120252
+>         other:                           60126
+>         total:                           601260
+>     transactions:                        30063  (250.04 per sec.)
+>     queries:                             601260 (5000.82 per sec.)
+>     ignored errors:                      0      (0.00 per sec.)
+>     reconnects:                          0      (0.00 per sec.)
+> 
+> General statistics:
+>     total time:                          120.2306s
+>     total number of events:              30063
+> 
+> Latency (ms):
+>          min:                                    8.96
+>          avg:                                  511.43
+>          max:                                 6588.60
+>          95th percentile:                     1561.52
+>          sum:                             15375224.85
+> 
+> Threads fairness:
+>     events (avg/stddev):           234.8672/10.39
+>     execution time (avg/stddev):   120.1189/0.04
+> 
+> ```
 
-```
-./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
-./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
-```
+### on ceph localhost
 
-结果
+> 测试脚本
+>
+> ```
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ```
+>
+> 测试结果
+>
+> ```
+> SQL statistics:
+>     queries performed:
+>         read:                            2069970
+>         write:                           591420
+>         other:                           295710
+>         total:                           2957100
+>     transactions:                        147855 (1231.25 per sec.)
+>     queries:                             2957100 (24625.05 per sec.)
+>     ignored errors:                      0      (0.00 per sec.)
+>     reconnects:                          0      (0.00 per sec.)
+> 
+> General statistics:
+>     total time:                          120.0831s
+>     total number of events:              147855
+> 
+> Latency (ms):
+>          min:                                    2.95
+>          avg:                                  103.92
+>          max:                                  676.48
+>          95th percentile:                      235.74
+>          sum:                             15364726.46
+> 
+> Threads fairness:
+>     events (avg/stddev):           1155.1172/16.43
+>     execution time (avg/stddev):   120.0369/0.02
+> 
+> ```
+>
+> 
 
-```
-SQL statistics:
-    queries performed:
-        read:                            5662552
-        write:                           0
-        other:                           808936
-        total:                           6471488
-    transactions:                        404468 (3369.13 per sec.)
-    queries:                             6471488 (53906.09 per sec.)
-    ignored errors:                      0      (0.00 per sec.)
-    reconnects:                          0      (0.00 per sec.)
+### 测试结论
 
-General statistics:
-    total time:                          120.0493s
-    total number of events:              404468
+1. 自己编译的版本没有发行版本性能好，1/2（原因是发行版本测试使用的localhost）
 
-Latency (ms):
-         min:                                    1.29
-         avg:                                   37.98
-         max:                                  520.82
-         95th percentile:                      106.75
-         sum:                             15360963.93
+2. ceph的性能最差，是发行版本的1/5（原因是发行版本测试使用的localhost）
 
-Threads fairness:
-    events (avg/stddev):           3159.9062/24.32
-    execution time (avg/stddev):   120.0075/0.02
+3. 但是如果将测试脚本中的`--mysql-host=bjrdc100`都修改为`--mysql-host=localhost`，则性能基本相同都是1200左右的tps
 
-```
-
-
-
-
+   ​	
 
 ## 使用
 
@@ -508,7 +638,12 @@ do
 done
 exit 0;
 ```
+#### xtrabackup
+
+> TODO
+
 ### 查询链接
+
 `./mysqladmin -uadmin -p -h10.140.1.1 processlist`
 
 ### 查看链接状态

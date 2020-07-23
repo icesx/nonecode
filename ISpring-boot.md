@@ -93,4 +93,45 @@ public class Application {
 		</dependencies>
 	</dependencyManagement>
 
+## swagger
 
+### 配置
+
+1. 增加config类
+
+   ```
+   @Configuration
+   @EnableSwagger2
+   public class SpringFoxConfig {
+   	@Bean
+   	public Docket api() {
+   		return new Docket(DocumentationType.SWAGGER_2).select()
+   				.apis(RequestHandlerSelectors.any())
+   				.paths(PathSelectors.any())
+   				.build();
+   	}
+   }
+   ```
+
+2. 增加依赖
+
+   ```
+   		<dependency>
+   			<groupId>io.springfox</groupId>
+   			<artifactId>springfox-swagger2</artifactId>
+   			<version>2.9.2</version>
+   		</dependency>
+   		<dependency>
+   			<groupId>io.springfox</groupId>
+   			<artifactId>springfox-swagger-ui</artifactId>
+   			<version>2.9.2</version>
+   		</dependency>
+   ```
+
+3. 启动spring-boot应用后访问
+
+   ```
+   http://localhost:8093/sc-k8s-provider/swagger-ui.html
+   ```
+
+   
