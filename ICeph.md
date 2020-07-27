@@ -140,7 +140,7 @@ ceph
 >    ceph-deploy mon add bjrdc210
 >    ```
 
-### and now node
+### and new node
 
 > 1. installl to node
 >
@@ -208,17 +208,87 @@ ceph
 >
 >`http://bjrdc208:7000`
 
-### pool
 
+
+## RBD
+
+Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Ceph FS。 RBD即RADOS Block Device的简称，RBD块存储是最稳定且最常用的存储类型。RBD块设备类似磁盘可以被挂载。 RBD块设备具有快照、多副本、克隆和一致性等特性，数据以条带化的方式存储在Ceph集群的多个OSD中。
+
+> 创建rbd
+>
+> ```
+> sudo ceph osd pool create rdb_pool_01 128 128
+> sudo rbd pool init rbd_pool_01
+> sudo ceph osd pool set-quota rdb_pool_01 max_bytes $((10 * 1024 * 1024 * 1024))
+> ```
+>
+> 创建块存储
+>
+> ```
+> sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
+> sudo rbd --image rdb_pool_01/volume01 info
+> sudo rados -p rdb_pool_01 ls
+> sudo rbd info rdb_pool_01/volume01
+> ```
+>
+> 挂载
+>
+> 1. 准备工作
+>
+>    ```
+>    cat >/etc/ceph/ceph.conf <<EOF 
+>    [global]
+>    fsid = d84f5d5b-f8d5-42c6-ab8f-e1240e9bcf78
+>    mon_initial_members = bjrdc208
+>    mon_host = 172.16.15.208
+>    auth_cluster_required = cephx
+>    auth_service_required = cephx
+>    auth_client_required = cephx
+>    public network=172.16.15.0/24
+>    
+>    [mgr]
+>    debug mgr balancer = 1/20
+>    
+>    EOF
+>    ```
+>
+>    copy keyring
+>
+>    ```
+>    scp **/ceph.client.admin.keyring xxx:/home/bjrdc/
+>    sudo mv ceph.client.admin.keyring  /etc/ceph/
+>    ```
+>
+>    
+>
+> 2. 挂载
+>
+>    ```
+>    sudo rbd map rdb_pool_01/volume01
+>    sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
+> ```
+>    
+>    
+>
 > 
 
-## client
+## cephfs
 
 ceph application not enabled，toenable cephfs
 
 ```
 sudo ceph osd pool application enable bjrdc-pool cephfs
 ```
+
+create cephfs
+
+```
+sudo ceph osd pool create bjrdc-pool 128
+sudo ceph osd pool create bjrdc-pool-metadata 128
+sudo ceph fs new cephfs bjrdc-pool-metadata bjrdc-pool
+```
+
+
 
 mount
 
@@ -246,6 +316,16 @@ cat ceph.client.admin.keyring
        caps osd = "allow *"
 ```
 
+mount on fstab
+
+ceph_secretfile 为secret内容保存成的文件
+
+```
+bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/ceph_secretfile,noatime,_netdev    0       2
+```
+
+
+
 
 
 ## 基本命令
@@ -254,7 +334,11 @@ cat ceph.client.admin.keyring
 >sudo ceph health detail
 >```
 >
+>**rbd** 
 >
+>
+>
+>**osd** objrdc storage daemon
 >
 >```
 >ceph osd lspools
@@ -268,7 +352,7 @@ cat ceph.client.admin.keyring
 >sudo ceph osd tree
 >```
 >
->文件操作
+>**文件操作**
 >
 >```
 >rados -p bjrdc-pool put testfile /etc/hosts

@@ -98,6 +98,28 @@ DNS
 ```
 $ip link
 ```
+### 带宽评估
+
+准备server和client两台机器并分别安装ipref
+
+```
+sudo apt install iperf
+```
+
+在server上启动
+
+```
+iperf -s
+```
+
+在client上启动
+
+```
+iperf -c server
+```
+
+
+
 ## systemd service
 
 ### systemd 基本命令

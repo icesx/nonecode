@@ -676,6 +676,42 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    > **ingress 和spring-cloud-gateway/zuul均可以实现网管的作用。gateway的功能更加强大，ingress如果能够满足需求，那么最好使用ingress（满足云原生架构理念）**
 
+### StorageClass
+
+A StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, or to backup policies, or to arbitrary policies determined by the cluster administrators. Kubernetes itself is unopinionated about what classes represent. This concept is sometimes called "profiles" in other storage systems.
+
+sample of **ceph** of strorageclass yaml
+
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: kubernetes.io/rbd
+parameters:
+  monitors: 10.16.153.105:6789
+  adminId: admin
+  adminSecretName: ceph-secret
+  adminSecretNamespace: kube-system
+  pool: kube
+  userId: admin
+  userSecretName: ceph-secret-user
+  userSecretNamespace: default
+  fsType: ext4
+  imageFormat: "2"
+  imageFeatures: "layering"
+```
+
+> - `monitors`: Ceph monitors, comma delimited. This parameter is required.
+> - `adminId`: Ceph client ID that is capable of creating images in the pool. Default is "admin".
+> - `adminSecretName`: Secret Name for `adminId`. This parameter is required. The provided secret must have type "kubernetes.io/rbd".
+> - `adminSecretNamespace`: The namespace for `adminSecretName`. Default is "default".
+> - `pool`: Ceph RBD pool. Default is "rbd".
+> - `userId`: Ceph client ID that is used to map the RBD image. Default is the same as `adminId`.
+> - `userSecretName`: The name of Ceph Secret for `userId` to map RBD image. It must exist in the same namespace as PVCs. This parameter is required. The provided secret must have type "kubernetes.io/rbd", for example created in this way:
+
+
+
 ## 集群监控
 
 ### Prometheus

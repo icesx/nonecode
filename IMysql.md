@@ -33,7 +33,26 @@ default-character-set=utf8
 
 ```
 
-#### 编译安装
+### systemd
+
+```
+cat >mysql.service <<EOF
+[Unit]
+Description=mysql
+After=network.target
+[Service]
+ExecStart=TODO....
+KillMode=process
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+Alias=mysql.service
+EOF
+```
+
+
+
+### 编译安装
 
 1. 安装 boost_1_59_0
 
@@ -235,7 +254,7 @@ set password=password('zgjx@321');
 
 ```
 create database cdc default charset uft8;
-GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xjgz@123';
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'bjrdc'@'%' IDENTIFIED BY  'xxxx@123';
 ```
 
 
@@ -277,6 +296,16 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 [参考]: ./ISysbench.md
 
 ### 性能测试
+
+#### 准备工作
+
+```
+create database dbt2
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON dbt2.* TO 'bjrdc'@'%' IDENTIFIED BY  'zgjx@321';
+flush privileges;
+```
+
+
 
 ### mysql base
 
@@ -357,7 +386,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 > 
 > ```
 
-#### on ceph
+#### on ceph(cephfs)
 
 > 测试脚本
 >
@@ -397,7 +426,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 > 
 > ```
 
-### on ceph localhost
+### on ceph(cephfs) localhost
 
 > 测试脚本
 >
@@ -438,6 +467,48 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 >
 > 
 
+#### on ceph (rbd)
+
+>首先挂在ceph-rdb卷
+>
+>测试脚本
+>
+>```
+>./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3309 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+>```
+>
+>测试结果
+>
+>```
+>SQL statistics:
+>    queries performed:
+>        read:                            1998164
+>        write:                           570902
+>        other:                           285451
+>        total:                           2854517
+>    transactions:                        142725 (1188.39 per sec.)
+>    queries:                             2854517 (23767.96 per sec.)
+>    ignored errors:                      1      (0.01 per sec.)
+>    reconnects:                          0      (0.00 per sec.)
+>
+>General statistics:
+>    total time:                          120.0975s
+>    total number of events:              142725
+>
+>Latency (ms):
+>         min:                                    2.80
+>         avg:                                  107.66
+>         max:                                  712.90
+>         95th percentile:                      235.74
+>         sum:                             15365546.17
+>
+>Threads fairness:
+>    events (avg/stddev):           1115.0391/16.93
+>    execution time (avg/stddev):   120.0433/0.02
+>```
+>
+>
+
 ### 测试结论
 
 1. 自己编译的版本没有发行版本性能好，1/2（原因是发行版本测试使用的localhost）
@@ -446,7 +517,81 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 3. 但是如果将测试脚本中的`--mysql-host=bjrdc100`都修改为`--mysql-host=localhost`，则性能基本相同都是1200左右的tps
 
+4. ceph的cephfs和rbd良种模式差别不大
+
    ​	
+
+## Master-Slaver
+
+### master
+
+1. my.cnf,add config as blow
+
+   ```
+   server-id = 1
+   log_bin = /usr/local/mysql/data/mysql-bin.log
+   log_bin_index =/usr/local/mysql/data/mysql-bin.log.index
+   relay_log = /usr/local/mysql/data/mysql-relay-bin
+   relay_log_index = /usr/local/mysql/data/mysql-relay-bin.index
+   
+   ```
+
+2. 重启mysql
+
+3. set privileges
+
+   ```
+   create user 'replication_user'@'%' identified by 'PASSWORD';
+   GRANT REPLICATION SLAVE ON *.* TO 'replication_user'@'%';
+   FLUSH PRIVILEGES;
+   ```
+
+4. 查看master状态
+
+   ```
+   mysql> show master status;
+   +------------------+-----------+--------------+------------------+-------------------+
+   | File             | Position  | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
+   +------------------+-----------+--------------+------------------+-------------------+
+   | mysql-bin.000011 | 959803933 |              |                  |                   |
+   +------------------+-----------+--------------+------------------+-------------------+
+   1 row in set (0.00 sec)
+   
+   ```
+
+   
+
+### slaver
+
+1. my.cnfg
+
+   ```
+   server-id = 2
+   log_bin = /usr/local/mysql/data/mysql-bin.log
+   log_bin_index =/usr/local/mysql/data/mysql-bin.log.index
+   relay_log = /usr/local/mysql/data/mysql-relay-bin
+   relay_log_index = /usr/local/mysql/data/mysql-relay-bin.index
+   ```
+
+2. 重启mysql
+
+3. set privielges
+
+   ```
+   stop slave
+   CHANGE MASTER TO MASTER_HOST = 'bjrdc100', MASTER_USER = 'replication_user', MASTER_LOG_FILE = 'mysql-bin.000010', MASTER_LOG_POS =82985581 , MASTER_PASSWORD = 'PASSWORD';
+   start slave
+   ```
+
+4. 注意事项
+
+   > 可以使用`reset slave`来恢复slave配置，在出现`Slave failed to initialize relay log info structure from the repositor`错误的时候
+
+   > 如果slaver断开，重新配置，要在master上重新查询master的状态。
+
+### 测试
+
+​	此时从master上创建表，在slaver上可以看到表自动创建了。
 
 ## 使用
 
@@ -455,9 +600,9 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 1. 第一种
 
 ```
-GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xjgz@123';
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xxxx@123';
 
-GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON bdp.* TO 'bjrdc'@'%' IDENTIFIED BY  'xjgz@123';
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON bdp.* TO 'bjrdc'@'%' IDENTIFIED BY  'xxxx@123';
 ```
 2. 第二种
 
@@ -583,6 +728,8 @@ mysql> show variables like '%sort_buffer_size%';
 +---------------------------+------------+
 1 rows in set (0.00 sec)
 ```
+
+
 ### 自动备份
 
 #### imysql_backup[mine].sh
