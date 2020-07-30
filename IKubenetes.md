@@ -324,7 +324,7 @@ sudo systemctl start kubelet.service
 >
 > 
 
-1. 安装kubctl
+1. 安装kubectl
 
    ```
    sudo su root
@@ -334,7 +334,7 @@ sudo systemctl start kubelet.service
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
    sudo apt update
-   sudo apt-get install -y  kubectl kubeadm
+   sudo apt-get install -y kubectl kubeadm
    ```
 
 2. join
@@ -680,37 +680,138 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 A StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, or to backup policies, or to arbitrary policies determined by the cluster administrators. Kubernetes itself is unopinionated about what classes represent. This concept is sometimes called "profiles" in other storage systems.
 
-sample of **ceph** of strorageclass yaml
+TODO
 
-```
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast
-provisioner: kubernetes.io/rbd
-parameters:
-  monitors: 10.16.153.105:6789
-  adminId: admin
-  adminSecretName: ceph-secret
-  adminSecretNamespace: kube-system
-  pool: kube
-  userId: admin
-  userSecretName: ceph-secret-user
-  userSecretNamespace: default
-  fsType: ext4
-  imageFormat: "2"
-  imageFeatures: "layering"
-```
+## ceph
 
-> - `monitors`: Ceph monitors, comma delimited. This parameter is required.
-> - `adminId`: Ceph client ID that is capable of creating images in the pool. Default is "admin".
-> - `adminSecretName`: Secret Name for `adminId`. This parameter is required. The provided secret must have type "kubernetes.io/rbd".
-> - `adminSecretNamespace`: The namespace for `adminSecretName`. Default is "default".
-> - `pool`: Ceph RBD pool. Default is "rbd".
-> - `userId`: Ceph client ID that is used to map the RBD image. Default is the same as `adminId`.
-> - `userSecretName`: The name of Ceph Secret for `userId` to map RBD image. It must exist in the same namespace as PVCs. This parameter is required. The provided secret must have type "kubernetes.io/rbd", for example created in this way:
+### RBD
 
-
+> RBD 模式下可以使用storageclass 和普通的pvc两种模式
+>
+> 1. **storageclass**
+>
+>    在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 
+>
+>    [$PATH问题]: https://github.com/kubernetes/kubernetes/issues/38923
+>    
+> 2. **pvc**
+>
+>    *采用pvc的方式*
+>
+>    1. 创建cecret,key密码为base64后的值
+>
+>       ```
+>       cat >1-ceph-secret.yaml <<EOF
+>       apiVersion: v1
+>       kind: Secret
+>       metadata:
+>         name: ceph-normal-secret
+>         namespace: bjrdc-dev
+>       data:
+>         key: QVFCYUZCUmZPVndHQkJBQWJKQ2ZENTZrbGpMaHJ1aURmSW1odlE9PQ==
+>       EOF
+>       ```
+>
+>       其中key通过如下命令获取
+>
+>       ```
+>       ceph auth get-key client.admin | base64
+>       ```
+>
+>    2. 创建pv
+>
+>       ```
+>       cat >2-pv.yaml <<EOF
+>       apiVersion: v1
+>       kind: PersistentVolume
+>       metadata:
+>         name: ceph-normal-pv
+>         namespace: bjrdc-dev
+>         labels:
+>           pv: ceph-normal-pv
+>       spec:
+>         capacity:
+>           storage: 2Gi
+>         accessModes:
+>           - ReadWriteOnce 
+>         rbd:
+>           monitors:
+>             - 172.16.15.208:6789
+>           pool: k8s_pool_01
+>           image: k8s-v1
+>           user: admin
+>           secretRef:
+>             name: ceph-normal-secret
+>           fsType: ext4
+>           readOnly: false
+>         persistentVolumeReclaimPolicy: Recycle
+>       EOF
+>       ```
+>
+>    3. 创建vpc
+>
+>       ```
+>       cat >3-pvc.yaml <<EOF
+>       kind: PersistentVolumeClaim
+>       apiVersion: v1
+>       metadata:
+>         name: ceph-normal-pvc
+>         namespace: bjrdc-dev
+>       spec:
+>         selector:
+>           matchLabels:
+>             pv: ceph-normal-pv
+>         accessModes:
+>           - ReadWriteOnce
+>         resources:
+>           requests:
+>             storage: 2Gi
+>       EOF
+>       ```
+>
+>    4. 创建deployment
+>
+>       ```
+>       cat >4-deploy.yaml <<EOF
+>       apiVersion: apps/v1
+>       kind: Deployment
+>       metadata:
+>         name: ceph-normal-demo
+>         namespace: bjrdc-dev
+>       spec:
+>         replicas: 1
+>         selector:
+>           matchLabels:
+>             app: ceph-normal-demo
+>         template:
+>           metadata:
+>             labels:
+>               app: ceph-normal-demo
+>           spec:
+>             containers:
+>             - name: ceph-normal-demo
+>               image: bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+>               ports:
+>               - containerPort: 8080
+>               volumeMounts:
+>                 - mountPath: "/data"
+>                   name: ceph-normal-pvc-name
+>             volumes:
+>               - name: ceph-normal-pvc-name
+>                 persistentVolumeClaim:
+>                   claimName: ceph-normal-pvc
+>       EOF
+>       ```
+>
+>    5. 执行
+>
+>       ```
+>       kubectl apply -f .
+>       ```
+>
+>       
+>
+>    
 
 ## 集群监控
 
@@ -786,7 +887,7 @@ parameters:
 >
 > TODO
 
-### Node IP
+**Node IP**
 
 可以是物理机的IP（也可能是虚拟机IP）。
 
@@ -798,7 +899,7 @@ kubectl describe node nodeName
 
 
 
-### Pod IP
+**Pod IP**
 Pod IP是每个Pod的IP地址，他是Docker Engine根据docker网桥的IP地址段进行分配的，通常是一个虚拟的二层网络
 
 同Service下的pod可以直接根据PodIP相互通信，不同Service下的pod在集群间pod通信要借助于 cluster ip
@@ -899,7 +1000,15 @@ ping hello-node.bjrdc-dev.svc.cluster.local
 ping mysql.bjrdc-dev.svc.cluster.local
 ```
 
-
+> dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
+>
+> ```
+> clusterDNS:
+> - 10.96.0.10
+> clusterDomain: cluster.local
+> ```
+>
+> 
 
 ## 集群重启
 
@@ -966,6 +1075,10 @@ kubectl cluster-info
 kubectl create -f xx.yaml
 ```
 
+```
+kubectl get ep kube-dns --namespace=kube-system
+```
+
 
 
 ```
@@ -1008,6 +1121,7 @@ kubectl delete clusterrole system:heapster
 kubectl delete pod hello-node
 kubectl delete service spring-cloud-eureka -n bjrdc-dev
 # cannot delete pod
+
 kubectl delete deploment spring-cloud-eureka -n bjrdc-dev
 # delete service with pod
 ```
@@ -1030,6 +1144,21 @@ kubectl run hello-node --image=hello-node:v1 --port=3000
 
 ```
 kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/bash
+```
+
+
+
+```
+kubectl diff -f ./my-manifest.yaml
+```
+
+
+
+```
+kubectl scale --replicas=3 rs/foo                                 # Scale a replicaset named 'foo' to 3
+kubectl scale --replicas=3 -f foo.yaml                            # Scale a resource specified in "foo.yaml" to 3
+kubectl scale --current-replicas=2 --replicas=3 deployment/mysql  # If the deployment named mysql's current size is 2, scale mysql to 3
+kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 ```
 
 
@@ -1345,9 +1474,9 @@ sudo docker-compose up -d
 
 ## 关于jkube插件
 
+TODO
 
-
-## YAML
+## 概念与YAML
 
 ### image
 
@@ -1391,6 +1520,10 @@ metadata:
 ### deployment
 
 > deployment 创建pod
+>
+> spec.template.metadata.lables.xxx中描述的就是pod的lable
+>
+> spec.template.描述的是pod的信息
 
 ```
 cat >deloyment<<EOF
@@ -1402,12 +1535,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: hello-node
+      app: hello-node-pod 
   replicas: 2
   template:
     metadata:
       labels:
-        app: hello-node
+        app: hello-node-pod #used by service 
     spec:     # pod spec
       containers: 
       - name: hello-node
@@ -1425,7 +1558,9 @@ kubectl create -f deployment.yaml
 
 ### service(svc)
 
+Deployment和Service关联起来只需要Label标签相同就可以关联起来形成负载均衡.
 
+.spec.selector:xxx lable下描述的就是关联的deployment中声明的pod的lable
 
 ```
 cat >service.yaml <<EOF
@@ -1442,7 +1577,8 @@ spec:
     targetPort: 8080
     protocol: TCP
   selector:
-    app: hello-node
+    app: hello-node-pod
+    
 EOF
 ```
 
@@ -1530,7 +1666,57 @@ curl 10.102.118.239:3000
 
 #### Label
 
-> TODO
+> *Labels* are key/value pairs that are attached to objects, such as pods. Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users, but do not directly imply semantics to the core system.
+>
+>  labels do not provide uniqueness. In general, we expect many objects to carry the same label(s)
+
+### selector
+
+>service选择pod的时候，需要在service的spec.selector:xxx中描述pod的lable
+
+#### pod
+
+> pod 是container的更高抽象
+>
+> 1. 独立生命pod
+>
+>    ```
+>    
+>    ```
+>
+> 2. 重启pod
+>
+>    ```
+>    kubectl get pod mysql-on-ceph-01-yyy -o yaml -n bjrdc-dev|kubectl replace --force -f -
+>    ```
+>
+> 3. 迁移pod
+>
+>    先将node设置为不可调度
+>
+>    ```
+>    kubectl cordon bjrdc81
+>    ```
+>
+>    重启pod
+>
+>    ```
+>    kubectl get pod mysql-on-ceph-01-xxx -o yaml -n bjrdc-dev|kubectl replace --force -f -
+>    ```
+>
+>    恢复node
+>
+>    ```
+>    kubectl uncordon bjrdc81
+>    ```
+>
+> 4. 驱逐所有pod
+>
+>    TODO
+>
+> 
+>
+> 
 
 ## 应用
 
@@ -1544,13 +1730,129 @@ curl 10.102.118.239:3000
 
 > mysql cluster in k8s
 >
-> 1. ceph
+> 1. local
 >
->    经测试mysql在ceph性能较差，故放弃ceph的方式，参考
+>    TODO
 >
->    [mysql ce[h]: ./IMysql.md
+> 2. ceph
 >
-> 2. 
+>    > 首先需要一个部署好的ceph集群
+>
+>    1. 创建pv
+>
+>       ```
+>       cat 》0-mysql-pv.yaml <<EOF
+>       apiVersion: v1
+>       kind: PersistentVolume
+>       metadata:
+>         name: ceph-mysql-pv-01
+>         namespace: bjrdc-dev
+>         labels:
+>           pv: ceph-mysql-pv-01
+>       spec:
+>         capacity:
+>           storage: 5Gi
+>         accessModes:
+>           - ReadWriteOnce 
+>         rbd:
+>           monitors:
+>             - bjrdc208:6789 #ceph monitor
+>           pool: k8s_pool_01
+>           image: k8s-mysql-v1
+>           user: admin
+>           secretRef:
+>             name: ceph-normal-secret
+>           fsType: ext4
+>           readOnly: false
+>         persistentVolumeReclaimPolicy: Recycle
+>         EOF
+>       ```
+>
+>    2. 创建pvc
+>
+>       ```
+>       cat >1-mysql-pvc.yaml <EOF
+>       kind: PersistentVolumeClaim
+>       apiVersion: v1
+>       metadata:
+>         name: ceph-mysql-pvc-01
+>         namespace: bjrdc-dev
+>       spec:
+>         selector:
+>           matchLabels:
+>             pv: ceph-mysql-pv-01
+>         accessModes:
+>           - ReadWriteOnce
+>         resources:
+>           requests:
+>             storage: 3Gi
+>       EOF
+>       ```
+>
+>    3. deployment
+>
+>       ```
+>       cat >2-mysql-depoyment.yaml <<EOF
+>       apiVersion: apps/v1
+>       kind: Deployment
+>       metadata:
+>         name: mysql-on-ceph-01
+>         namespace: bjrdc-dev
+>       spec:
+>         selector:
+>           matchLabels:
+>             app: mysql-on-ceph-01
+>         strategy:
+>           type: Recreate
+>         template:
+>           metadata:
+>             labels:
+>               app: mysql-on-ceph-01
+>           spec:
+>             containers:
+>             - image: mysql:5.6
+>               name: mysql
+>               env:
+>                 # Use secret in real usage
+>               - name: MYSQL_ROOT_PASSWORD
+>                 value: xxxxx
+>               ports:
+>               - containerPort: 3306
+>                 name: mysql
+>               volumeMounts:
+>               - name: mysql-persistent-storage
+>                 mountPath: /var/lib/mysql
+>             volumes:
+>             - name: mysql-persistent-storage
+>               persistentVolumeClaim: 
+>                 claimName: ceph-mysql-pvc-01
+>       EOF
+>       ```
+>
+>    4. service
+>
+>       ```
+>       cat >3-mysql-service.yaml <<EOF
+>       apiVersion: v1
+>       kind: Service
+>       metadata:
+>         name: mysql-ceph-service-01
+>         namespace: bjrdc-dev
+>         labels:
+>           app: mysql-ceph-service-01
+>       spec:
+>         selector:
+>             app: mysql-on-ceph-01
+>         ports:
+>         - protocol : TCP
+>           port: 3306
+>           targetPort: 3306
+>       EOF
+>       ```
+>
+>       
+>
+>    
 >
 > 
 
@@ -1569,7 +1871,46 @@ kubectl  get pods -n kube-system
 journalctl -f -u kubelet
 ```
 
+2. kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
 
+   现象
+
+   ```
+   jouralctl -xe --no-page 
+   ...
+   failed to run Kubelet: misconfiguration: kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
+   ```
+
+   问题定位，k8s的cgrou-driver与docker的不同（daemon.json）
+
+   ```
+   cat /var/lib/kubelet/kubeadm-flags.env
+   KUBELET_KUBEADM_ARGS="--cgroup-driver=cgroupfs --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+   ```
+
+   修改为
+
+   ```
+   KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+   ```
+
+3. /run/flannel/subnet.env: no such file or directory
+
+   重新apply flannel
+
+   ```
+   kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+   ```
+
+4. coredns pod crash
+
+   ```
+   kubectl -n kube-system get deployment coredns -o yaml | \
+     sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
+     kubectl apply -f -
+   ```
+
+   
 
 ## 基本概念
 

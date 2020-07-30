@@ -266,11 +266,13 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 >    ```
 >    sudo rbd map rdb_pool_01/volume01
 >    sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
+>    ```
 > ```
 >    
 >    
->
 > 
+> 
+> ```
 
 ## cephfs
 
@@ -336,9 +338,20 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >**rbd** 
 >
+>```
+>sudo rbd create k8s_pool_01/volume01 --size $((5* 1024)) 
+>sudo rbd resize --size $((5*1024*1024)) k8s_pool_01/volume01
+>sduo rbd rm {pool-name}/{image-name}
+>sudo rbd list k8s_pool_01
+>sudo rbd map k8s_pool_01/k8s_v1
+>sudo rbd mv k8s_pool_01/k8s_v1 k8s_pool_01/k8s-v1
+>```
 >
 >
->**osd** objrdc storage daemon
+>
+>**osd** 
+>
+>objrdc storage daemon
 >
 >```
 >ceph osd lspools
@@ -360,21 +373,42 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >rados -p bjrdc-pool rm testfile
 >```
 >
->pg
+>**mon**
+>
+>```
+>sudo ceph mon dump
+>```
+>
+>**pg**
 >
 >```
 >ceph pg stat
 >```
 >
->fs
+>**fs**
 >
 >```
 >sudo ceph fs reset cephfs --yes-i-really-mean-it
+>
 >```
 >
 >[参考]: https://docs.ceph.com/docs/jewel/cephfs/administration/
 >
->mgr
+>**df**
+>
+>```
+>sudo ceph df
+>```
+>
+>**log**
+>
+>```
+>sudo ceph log
+>```
+>
+>
+>
+>**mgr**
 >
 >```
 >sudo ceph mgr module ls

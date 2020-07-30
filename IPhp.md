@@ -44,6 +44,11 @@ sudo apt install libxml2-dev libpng-dev
    ```
 
    
+   
+   
+   
+#### with apache
+
 1. php7 安装
 
    ```
@@ -60,7 +65,7 @@ sudo apt install libxml2-dev libpng-dev
    ```
 
 2. httpd/conf/httpd.conf
-  增加php的filesmatch
+     增加php的filesmatch
 
   ```
   <FilesMatch \.php$>
@@ -90,6 +95,42 @@ sudo apt install libxml2-dev libpng-dev
    mysql.default_socket=/var/run/mysqld/mysqld.sock
    pdo_mysql.default_socket=/var/run/mysqld/mysqld.sock
    #/var/run/mysqld/mysqld.sock many is not there in your server
+   ```
+
+
+#### with nginx
+
+1. ​	安装php
+
+   ```
+   ./configure --with-apxs2=/home/liufeng/software/httpd-2.4.42/bin/apxs --with-zlib --prefix=/home/liufeng/software/php-7.3.12 --without-sqlite3 --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pdo-sqlite --prefix=/home/liufeng/software/php --with-openssl --enable-fpm
+   ```
+
+2. 启动fpm
+
+   ```
+   $php_home/sbin/php-fpm
+   ```
+
+3. nginx 配置
+
+   ```
+           location / {
+               root  	path/to/wordpress;
+               index  index.html index.htm index.php;
+           }
+   ```
+
+   
+
+   ```
+           location ~ \.php$ {
+               root           /home/liufeng/software/wordpress;
+               fastcgi_pass 127.0.0.1:9000;
+               fastcgi_index  index.php;
+               fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+               include        fastcgi_params;
+           }
    ```
 
    

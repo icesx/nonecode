@@ -1,14 +1,33 @@
 Vsftpd
 ==
-###  yum install
+###  安装
+
+### centos
+
+```
+yum install vstfpd
+vi /etc/vsftpd/vsftpd.conf
+```
+
+### ubuntu
+
+```
+sudo apt install vsftpd
+vi /etc/vsftpd.conf
+```
+
+
+
 ### 553错误的时候
 ```
 	#setsebool -P allow_ftpd_full_access on
 	#setsebool -P ftp_home_dir  on 
 ```
 ### 相关配置
+
+vsftpd.conf
+
 ```
-vi /etc/vsftpd/vsftpd.conf	
 		anonymous_enable=NO	【关闭匿名访问】
 		userlist_deny=NO	【只允许userlist_file中的用户使用FTP】
 		userlist_file=/etc/vsftpd/user_list	【允许使用ftp的本地账户】
@@ -16,10 +35,10 @@ vi /etc/vsftpd/vsftpd.conf
 		chroot_local_user=YES	【If chroot_local_user is YES, then this list becomes a list of users to NOT chroot()】
 		allow_writeable_chroot=YES   【允许chroot的时候写文件】
 		注：${home} 应该为755
-		#被动模式	
+		#被动模式
 		pasv_enable=YES
 		pasv_min_port=6000
-		pasv_max_port=6100 
+		pasv_max_port=6100
 ```
 ```
 	vi /etc/vsftpd/chroot_list
@@ -44,10 +63,10 @@ vi /etc/vsftpd/vsftpd.conf
 2. 配置匿名需要在vsftpd.conf中增加如下配置
 ```
 userlist_enable=NO
-		anonymous_enable=YES
-		anon_upload_enable=yes
-		anon_mkdir_write_enable=yes
-		anon_other_write_enable=yes
+anonymous_enable=YES
+anon_upload_enable=yes
+anon_mkdir_write_enable=yes
+anon_other_write_enable=yes
 		...
 ```
 
@@ -61,12 +80,6 @@ userlist_enable=NO
 	allow_writeable_chroot=YES
 	write_enable=YES
 ```
-## ubuntu
-### install
-​	`sudo apt install vsftpd`
-
-### config
-	vi /etc/vsftpd.conf
 ## 端口转发
 
 ### 被动模式

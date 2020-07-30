@@ -81,17 +81,41 @@ DNS
 
 > ubuntu18以后，dns服务器是127.0.0.1:53，本地有一个dns服务器，如果需要增加远程的dns服务器，
 >
-> 只能通过`resolvconf`来实现更新，（直接修改/etc/resolv.conf文件是会被系统自动覆盖的）相关方法如下
+> 1. 通过`resolvconf`来实现更新，（直接修改/etc/resolv.conf文件是会被系统自动覆盖的）相关方法如下**此方式不推荐**
 >
 > ```
 > sudo apt install resolvconf
 > cat > /etc/resolvconf/resolv.conf.d/head <<EOF
-> nameserver 10.0.96.10
+> nameserver 10.96.0.10
 > EOF
 > resolvconf -u
 > ```
 >
-> 
+> 2. 使用systemd-resolved
+>
+>    修改`vi /etc/systemd/resolved.conf`
+>
+>    ```
+>    [Resolve]
+>    DNS=10.96.0.10
+>    ```
+>
+>    重启服务
+>
+>    ```
+>    sudo systemctl restart systemd-resolved
+>    ```
+>
+>    
+>
+>    重建链接
+>
+>    ```
+>    sudo rm -f /etc/resolv.conf
+>    sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+>    ```
+>
+>    
 
 ### 多网卡配置
 
@@ -189,6 +213,25 @@ User=以什么用户执行命令
 # 常用的 Target 有两个：一个是 multi-user.target，表示多用户命令行状态；另一个是 graphical.target，表示图形用户状态，它依赖于 multi-user.target
 WantedBy=multi-user.target
 ```
+
+
+
+## journalctl
+
+查看完整日志
+
+```
+sudo journalctl -f -u kubelet
+sudo journalctl -xe --no-pager
+```
+
+查看简短日志
+
+```
+sudo journalctl -xe
+```
+
+
 
 
 
@@ -335,6 +378,7 @@ exit 0
 ```
 3. run this command
 ```
+sudo chmod 755 /etc/rc.local
 sudo systemctl enable rc.
 ```
 
