@@ -680,138 +680,313 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 A StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, or to backup policies, or to arbitrary policies determined by the cluster administrators. Kubernetes itself is unopinionated about what classes represent. This concept is sometimes called "profiles" in other storage systems.
 
-TODO
+**可悲的是在k8s 1.10版本的某个版本以上，将默认的rbd支持去掉了——文档竟然没有更新**
+
+解决办法是安装rbd-provisoner插件，安装方法如下
+
+1. kubernetes官方有安装的地址和方法**https://github.com/kubernetes-incubator/external-storage/tree/master/ceph/rbd/deploy**
+
+   ```
+   .
+   ├── clusterrolebinding.yaml
+   ├── clusterrole.yaml
+   ├── deployment.yaml
+   ├── rolebinding.yaml
+   ├── role.yaml
+   └── serviceaccount.yaml
+   ```
+
+   
+
+2. 首先下载这个目录的文件，在执行之前需要配置namespace和修改权限，具体方法如下
+
+3. 修改namespace，按照官方的的方式修改namespace
+
+   ```
+   sed -r -i "s/namespace: [^ ]+/namespace: kube-system/g" ./rbac/clusterrolebinding.yaml ./rbac/rolebinding.yaml
+   ```
+
+4. 这种方式完了后，发现会漏，继续修改
+
+   在serviceaccount.yaml和deployment.yaml中增加
+
+   ```
+     namespace: kube-system
+   ```
+
+5. 最后还需要让`rbd-provisioner`具有secret权限
+
+   ```
+   vi clusterrole.yaml
+     - apiGroups: [""]
+       resources: ["secrets"]
+       verbs: ["get", "create", "delete"]
+   ```
+
+6. 执行所有的yaml应该就可以将rbd-provisioner安装好了
+
+   ```
+   kubectl apply -f .
+   ```
+
+7. 下一步可以使用storageclass来部署statefulset
+
+8. 问题处理
+
+   1. failed to provision volume with StorageClass "ceph-storageclass": failed to get admin secret from ["bjrdc-dev"/"ceph-rbd-secret"]: secrets "ceph-rbd-secret" is forbidden: User "system:serviceaccount:kube-system:rbd-provisioner" cannot get resource "secrets" in API group "" in the namespace "bjrdc-dev"
+
+      ```
+      vi clusterrole.yaml
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get", "create", "delete"]
+      ```
+
+   2. auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin,: (2) No such file or directory
+
+      **secrte配置错了**
+
+   3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 
+
+      [$PATH问题]: https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075
+
+      
 
 ## ceph
 
 ### RBD
 
 > RBD 模式下可以使用storageclass 和普通的pvc两种模式
->
-> 1. **storageclass**
->
->    在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 
->
->    [$PATH问题]: https://github.com/kubernetes/kubernetes/issues/38923
->    
-> 2. **pvc**
->
->    *采用pvc的方式*
->
->    1. 创建cecret,key密码为base64后的值
->
->       ```
->       cat >1-ceph-secret.yaml <<EOF
->       apiVersion: v1
->       kind: Secret
->       metadata:
->         name: ceph-normal-secret
->         namespace: bjrdc-dev
->       data:
->         key: QVFCYUZCUmZPVndHQkJBQWJKQ2ZENTZrbGpMaHJ1aURmSW1odlE9PQ==
->       EOF
->       ```
->
->       其中key通过如下命令获取
->
->       ```
->       ceph auth get-key client.admin | base64
->       ```
->
->    2. 创建pv
->
->       ```
->       cat >2-pv.yaml <<EOF
->       apiVersion: v1
->       kind: PersistentVolume
->       metadata:
->         name: ceph-normal-pv
->         namespace: bjrdc-dev
->         labels:
->           pv: ceph-normal-pv
->       spec:
->         capacity:
->           storage: 2Gi
->         accessModes:
->           - ReadWriteOnce 
->         rbd:
->           monitors:
->             - 172.16.15.208:6789
->           pool: k8s_pool_01
->           image: k8s-v1
->           user: admin
->           secretRef:
->             name: ceph-normal-secret
->           fsType: ext4
->           readOnly: false
->         persistentVolumeReclaimPolicy: Recycle
->       EOF
->       ```
->
->    3. 创建vpc
->
->       ```
->       cat >3-pvc.yaml <<EOF
->       kind: PersistentVolumeClaim
->       apiVersion: v1
->       metadata:
->         name: ceph-normal-pvc
->         namespace: bjrdc-dev
->       spec:
->         selector:
->           matchLabels:
->             pv: ceph-normal-pv
->         accessModes:
->           - ReadWriteOnce
->         resources:
->           requests:
->             storage: 2Gi
->       EOF
->       ```
->
->    4. 创建deployment
->
->       ```
->       cat >4-deploy.yaml <<EOF
->       apiVersion: apps/v1
->       kind: Deployment
->       metadata:
->         name: ceph-normal-demo
->         namespace: bjrdc-dev
->       spec:
->         replicas: 1
->         selector:
->           matchLabels:
->             app: ceph-normal-demo
->         template:
->           metadata:
->             labels:
->               app: ceph-normal-demo
->           spec:
->             containers:
->             - name: ceph-normal-demo
->               image: bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
->               ports:
->               - containerPort: 8080
->               volumeMounts:
->                 - mountPath: "/data"
->                   name: ceph-normal-pvc-name
->             volumes:
->               - name: ceph-normal-pvc-name
->                 persistentVolumeClaim:
->                   claimName: ceph-normal-pvc
->       EOF
->       ```
->
->    5. 执行
->
->       ```
->       kubectl apply -f .
->       ```
->
->       
->
->    
+
+#### Storageclass
+
+> 在进行storageclass模式之前需要确保`rbd-provisoner`安装成功。
+
+1. 创建cecret，key密码为base64后的值
+
+   ```
+   cat >1-ceph-secret.yaml <<EOF
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: ceph-rbd-secret
+     namespace: bjrdc-dev
+   data:
+     key: QVFCYUZCUmZPVndHQkJBQWJKQ2ZENTZrbGpMaHJ1aURmSW1odlE9PQ==
+   EOF  
+   ```
+
+2. 创建storageclass实例
+
+   adminSecretName，userSecretName:为secret的name
+
+   ```
+   cat >2-ceph-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+3. 创建pvc
+
+   执行成功后应该可以通过`kubectl get pvc -n bjrdc-dev`查看到
+
+   ```
+   cat >3-ceph-pvc.yaml <<EOF
+   kind: PersistentVolumeClaim
+   apiVersion: v1
+   metadata:
+     name: ceph-storageclass-pvc
+     namespace: bjrdc-dev
+   spec:
+     storageClassName: ceph-storageclass
+     accessModes:
+       - ReadWriteOnce 
+     resources:
+       requests:
+         storage: 800Mi
+   EOF      
+   ```
+
+4. 挂载到pod
+
+   ```
+   cat >4-ceph-deploy.yaml <<EOF
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: ceph-rbd-demo
+     namespace: bjrdc-dev
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: ceph-rbd-demo
+     template:
+       metadata:
+         labels:
+           app: ceph-rbd-demo
+       spec:
+         containers:
+         - name: ceph-rbd-demo
+           image: bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+           ports:
+           - containerPort: 80
+           volumeMounts:
+             - mountPath: "/data"
+               name: k8s-v1
+         volumes:
+           - name: k8s-v1
+             persistentVolumeClaim:
+               claimName: ceph-storageclass-pvc
+   EOF            
+   ```
+
+5. 此时应该可以正常的访问到pod，并且pod上挂载了ceph的目录。同时在ceph上可以看到一个自动创建的image
+
+   ```
+   sudo rbd list -p k8s_pool_01
+   
+   k8s-mysql-cluster-v1
+   k8s-mysql-v1
+   k8s-statefulset-v1
+   k8s-v1
+   kubernetes-dynamic-pvc-7be164a4-d315-11ea-9a3c-4e8cdd04a447
+   ```
+
+   
+
+#### pv
+
+> 采用pv的方式不需要做格外的配置，但是pv的弊端是一个pv只能挂在一个pvc，无法在statefulset模式下使用。安装方式如下：
+
+1. 创建cecret,key密码为base64后的值
+
+   ```
+   cat >1-ceph-secret.yaml <<EOF
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: ceph-normal-secret
+     namespace: bjrdc-dev
+   data:
+     key: QVFCYUZCUmZPVndHQkJBQWJKQ2ZENTZrbGpMaHJ1aURmSW1odlE9PQ==
+   EOF
+   ```
+
+   其中key通过如下命令获取
+
+   ```
+   ceph auth get-key client.admin | base64
+   ```
+
+2. 创建pv
+
+   ```
+   cat >2-pv.yaml <<EOF
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: ceph-normal-pv
+     namespace: bjrdc-dev
+     labels:
+       pv: ceph-normal-pv
+   spec:
+     capacity:
+       storage: 2Gi
+     accessModes:
+       - ReadWriteOnce 
+     rbd:
+       monitors:
+         - 172.16.15.208:6789
+       pool: k8s_pool_01
+       image: k8s-v1
+       user: admin
+       secretRef:
+         name: ceph-normal-secret
+       fsType: ext4
+       readOnly: false
+     persistentVolumeReclaimPolicy: Recycle
+   EOF
+   ```
+
+3. 创建vpc
+
+   ```
+   cat >3-pvc.yaml <<EOF
+   kind: PersistentVolumeClaim
+   apiVersion: v1
+   metadata:
+     name: ceph-normal-pvc
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         pv: ceph-normal-pv
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 2Gi
+   EOF
+   ```
+
+4. 创建deployment
+
+   ```
+   cat >4-deploy.yaml <<EOF
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: ceph-normal-demo
+     namespace: bjrdc-dev
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: ceph-normal-demo
+     template:
+       metadata:
+         labels:
+           app: ceph-normal-demo
+       spec:
+         containers:
+         - name: ceph-normal-demo
+           image: bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+           ports:
+           - containerPort: 8080
+           volumeMounts:
+             - mountPath: "/data"
+               name: ceph-normal-pvc-name
+         volumes:
+           - name: ceph-normal-pvc-name
+             persistentVolumeClaim:
+               claimName: ceph-normal-pvc
+   EOF
+   ```
+
+5. 执行
+
+   ```
+   kubectl apply -f .
+   ```
+
+   
 
 ## 集群监控
 
@@ -1155,6 +1330,12 @@ kubectl diff -f ./my-manifest.yaml
 
 
 ```
+kubectl delete event --all -n bjrdc-dev
+```
+
+
+
+```
 kubectl scale --replicas=3 rs/foo                                 # Scale a replicaset named 'foo' to 3
 kubectl scale --replicas=3 -f foo.yaml                            # Scale a resource specified in "foo.yaml" to 3
 kubectl scale --current-replicas=2 --replicas=3 deployment/mysql  # If the deployment named mysql's current size is 2, scale mysql to 3
@@ -1334,147 +1515,6 @@ sudo docker-compose up -d
 ```
 
 或者直接重启host
-
-## 本地开发
-
-> kubernets虽然提供了强大的平台，但是本地开发调试却比较麻烦，就像开发大数据系统一样，需要当前开发主机与所有节点能够通信
-
-### 打通虚拟网络
-
-> 1. 配置路由
->
->    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
->
->    ```
->    route add -net 10.0.0.0/8 gw 172.16.15.17
->    ```
->
->    172.16.15.17为k8s的master的ip
->
->    但是打通IP由有什么用呢？能够发现service吗？
->
-> 2. 配置dns
->
->    只能通过`resolvconf`来实现更新，相关方法如下
->
->    ```
->    sudo apt install resolvconf
->    cat > /etc/resolvconf/resolv.conf.d/head <<EOF
->    nameserver 10.0.96.10
->    EOF
->    resolvconf -u
->    ```
-
-### 测试开发（Eclipse）
-
-> **spring-cloud on k8s**
->
-> 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
->
-> 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
->
-> 从原理上说，使用网络打通的方式应该只适合spring-cloud on k8s
-
-
-
-> **spring-cloud in k8s**
->
-> 在spring-cloud in k8s的模式下，尚未测试。
->
-> 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
->
-> ```
-> 	@Autowired
-> 	private DiscoveryClient discoveryClient;
-> 
-> 	@GetMapping("/services")
-> 	public List<String> services() {
-> 		return this.discoveryClient.getServices();
-> 	}
-> ```
->
-> 需要在pom.xml中配置如下
->
-> ```
-> <dependency>
->  <groupId>org.springframework.cloud</groupId>
->  <artifactId>spring-cloud-kubernetes-core</artifactId>
-> </dependency>
-> <dependency>
->  <groupId>org.springframework.cloud</groupId>
->  <artifactId>spring-cloud-kubernetes-discovery</artifactId>
-> </dependency>
-> <dependency>
->  <groupId>org.springframework.cloud</groupId>
->  <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
-> </dependency>
-> ```
->
-> 使用如下方法测试
->
-> service发现
->
-> ```
-> curl localhost:8086/sc-k8s-consumer/services
-> ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
-> ```
->
-> 调用provider方法
->
-> ```
-> curl localhost:8086/sc-k8s-provider/index/list
-> ```
->
-> 将consumer也部署到k8s后，报如下错误
->
-> ```
-> io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
-> ```
-> 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
->
-> ```
-> apiVersion: rbac.authorization.k8s.io/v1
-> kind: ClusterRole
-> metadata:
->   name: bjrdc-cr
->   namespace: bjrdc-dev
-> rules:
-> - apiGroups: [""]
->   resources: ["services", "endpoints", "pods"]
->   verbs: ["get", "list", "watch"]
-> ---
-> apiVersion: rbac.authorization.k8s.io/v1
-> kind: ClusterRoleBinding
-> metadata:
->   name: bjrdc-rb
->   namespace: bjrdc-dev
-> roleRef:
->   apiGroup: rbac.authorization.k8s.io
->   kind: ClusterRole
->   name: bjrdc-cr
-> subjects:
-> - kind: ServiceAccount
->   name: default
->   namespace: bjrdc-dev
-> ```
->
-> 
->
-> 在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
->
-> 
-
-### 使用 telepresence
-
-> telepresence为k8s提供的一个开发客户端-服务端程序，类是vpn，将服务器和客户端打通
->
-> 具体使用方法尚未验证
->
-> TODO
-
-## 关于jkube插件
-
-TODO
 
 ## 概念与YAML
 
@@ -1716,20 +1756,125 @@ curl 10.102.118.239:3000
 >
 > 
 >
+
+### pv and pvc
+
+> pv 是对卷的声明，pvc是对声明的卷的使用，相当与从中再切割一部分出来。
+>
+> pv 和pvc是一一对应的，如果一个pv要对应多个pvc那是不可以的只能用*storageclass*
+>
 > 
 
-## 应用
+#### statefulset
 
-### spring-cloud
+> deployment 部署的pod都是无状态的，所谓的无状态是指其下配置的pod之间是没有连带关系的，没有状态的依存关系。
+>
+> 如果一个app需要部署的时候各个pod之间是有先后顺序，并且id是全局不变的，则需要使用到statefulset，如*mysql-cluster*,*es*,*redis-cluster*,*kafka*等
+>
+> **volumeClaimTemplates**: 表示一类PVC的模板，系统会根据Statefulset配置的replicas数量，创建相应数量的PVC。这些PVC除了名字不一样之外其他配置都是一样的
 
+**要使用statefulset,先要让storageclass可用。直接用pv和pvc会出问题，地一个pod可以创建出来，第二个pod就创建不出来了。因为第一个pod占用唯一的一个pv。**
 
+> 在已经配置好了ceph 的storageclass后，使用如下方式配置一个简单的statefulset
+
+1. 创建secret
+
+   ```
+   cat >0-ceph-stateful-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-stateful
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+2. 创建statefulset
+
+   ```
+   cat 1-statefulset.yaml 
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: nginx-stateful
+     namespace: bjrdc-dev
+     labels:
+       app: nginx-stateful
+   spec:
+     ports:
+     - port: 80
+       name: web
+     clusterIP: None
+     selector:
+       app: nginx-stateful
+   ---
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: web-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: nginx-stateful # has to match .spec.template.metadata.labels
+     serviceName: nginx-stateful
+     replicas: 3 # by default is 1
+     template:
+       metadata:
+         labels:
+           app: nginx-stateful # has to match .spec.selector.matchLabels
+       spec:
+         terminationGracePeriodSeconds: 10
+         containers:
+         - name: nginx-stateful
+           image: nginx:1.19.0
+           ports:
+           - containerPort: 80
+             name: web
+           volumeMounts:
+           - name: www
+             mountPath: /usr/share/nginx/html
+     volumeClaimTemplates:
+     - metadata:
+         name: www
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-stateful
+         resources:
+           requests:
+             storage: 500Mi
+   ```
+
+3. 查看pod，此时应该创建了多个pod
+
+   ```
+   kubectl get pod -n bjrdc-dev
+   
+   web-stateful-0                      1/1     Running             0          7m37s   10.244.2.145   bjrdc205   <none>           <none>
+   web-stateful-1                      1/1     Running             0          6m47s   10.244.1.88    bjrdc81    <none>           <none>
+   web-stateful-2                      0/1     ContainerCreating   0          6m10s   <none>         bjrdc207   <none>           <none>
+   ```
+
+下一步将使用同样的原理进行mysql集群的创建。
 
 
 
 ## mysql
 
-> mysql cluster in k8s
->
+### mysql singal
+
 > 1. local
 >
 >    TODO
@@ -1741,7 +1886,7 @@ curl 10.102.118.239:3000
 >    1. 创建pv
 >
 >       ```
->       cat 》0-mysql-pv.yaml <<EOF
+>      cat >0-mysql-pv.yaml <<EOF
 >       apiVersion: v1
 >       kind: PersistentVolume
 >       metadata:
@@ -1767,11 +1912,11 @@ curl 10.102.118.239:3000
 >         persistentVolumeReclaimPolicy: Recycle
 >         EOF
 >       ```
->
+> 
 >    2. 创建pvc
 >
 >       ```
->       cat >1-mysql-pvc.yaml <EOF
+>      cat >1-mysql-pvc.yaml <EOF
 >       kind: PersistentVolumeClaim
 >       apiVersion: v1
 >       metadata:
@@ -1788,11 +1933,11 @@ curl 10.102.118.239:3000
 >             storage: 3Gi
 >       EOF
 >       ```
->
+> 
 >    3. deployment
 >
 >       ```
->       cat >2-mysql-depoyment.yaml <<EOF
+>      cat >2-mysql-depoyment.yaml <<EOF
 >       apiVersion: apps/v1
 >       kind: Deployment
 >       metadata:
@@ -1828,11 +1973,11 @@ curl 10.102.118.239:3000
 >                 claimName: ceph-mysql-pvc-01
 >       EOF
 >       ```
->
+> 
 >    4. service
 >
 >       ```
->       cat >3-mysql-service.yaml <<EOF
+>      cat >3-mysql-service.yaml <<EOF
 >       apiVersion: v1
 >       kind: Service
 >       metadata:
@@ -1849,12 +1994,23 @@ curl 10.102.118.239:3000
 >           targetPort: 3306
 >       EOF
 >       ```
->
+> 
 >       
 >
 >    
 >
-> 
+
+### mysql cluster
+
+> mysql cluster on ceph
+>
+> 1. 创建ceph镜像
+>
+>    ```
+>    sudo rbd create k8s_pool_01/k8s-mysql-cluster-v1 --size $((6*1024))
+>    ```
+>
+> 2. 
 
 ## ES
 
@@ -1862,14 +2018,11 @@ curl 10.102.118.239:3000
 
 ## 问题处理
 
-```
-netstat -lntup|grep kube-sche
-kubectl  get pods -n kube-system
-```
+1. 查看日志
 
-```
-journalctl -f -u kubelet
-```
+   ```
+   journalctl -f -u kubelet
+   ```
 
 2. kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
 
@@ -1896,7 +2049,7 @@ journalctl -f -u kubelet
 
 3. /run/flannel/subnet.env: no such file or directory
 
-   重新apply flannel
+   重新apply flannel，或者手动创建该文件（不推荐）
 
    ```
    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
@@ -1905,12 +2058,163 @@ journalctl -f -u kubelet
 4. coredns pod crash
 
    ```
-   kubectl -n kube-system get deployment coredns -o yaml | \
-     sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
-     kubectl apply -f -
+   kubectl -n kube-system get deployment coredns -o yaml |sed s/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -
    ```
-
    
+
+
+
+## 应用
+
+### spring-cloud
+
+
+
+
+
+## 本地开发
+
+> kubernets虽然提供了强大的平台，但是本地开发调试却比较麻烦，就像开发大数据系统一样，需要当前开发主机与所有节点能够通信
+
+### 打通虚拟网络
+
+> 1. 配置路由
+>
+>    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
+>
+>    ```
+>    route add -net 10.0.0.0/8 gw 172.16.15.17
+>    ```
+>
+>    172.16.15.17为k8s的master的ip
+>
+>    但是打通IP由有什么用呢？能够发现service吗？
+>
+> 2. 配置dns
+>
+>    只能通过`resolvconf`来实现更新，相关方法如下
+>
+>    ```
+>    sudo apt install resolvconf
+>    cat > /etc/resolvconf/resolv.conf.d/head <<EOF
+>    nameserver 10.0.96.10
+>    EOF
+>    resolvconf -u
+>    ```
+
+### 测试开发（Eclipse）
+
+> **spring-cloud on k8s**
+>
+> 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
+>
+> 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
+>
+> 从原理上说，使用网络打通的方式应该只适合spring-cloud on k8s
+
+
+
+> **spring-cloud in k8s**
+>
+> 在spring-cloud in k8s的模式下，尚未测试。
+>
+> 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
+>
+> ```
+> 	@Autowired
+> 	private DiscoveryClient discoveryClient;
+> 
+> 	@GetMapping("/services")
+> 	public List<String> services() {
+> 		return this.discoveryClient.getServices();
+> 	}
+> ```
+>
+> 需要在pom.xml中配置如下
+>
+> ```
+> <dependency>
+> <groupId>org.springframework.cloud</groupId>
+> <artifactId>spring-cloud-kubernetes-core</artifactId>
+> </dependency>
+> <dependency>
+> <groupId>org.springframework.cloud</groupId>
+> <artifactId>spring-cloud-kubernetes-discovery</artifactId>
+> </dependency>
+> <dependency>
+> <groupId>org.springframework.cloud</groupId>
+> <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
+> </dependency>
+> ```
+>
+> 使用如下方法测试
+>
+> service发现
+>
+> ```
+> curl localhost:8086/sc-k8s-consumer/services
+> ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
+> ```
+>
+> 调用provider方法
+>
+> ```
+> curl localhost:8086/sc-k8s-provider/index/list
+> ```
+>
+> 将consumer也部署到k8s后，报如下错误
+>
+> ```
+> io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
+> ```
+>
+> 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
+>
+> ```
+> apiVersion: rbac.authorization.k8s.io/v1
+> kind: ClusterRole
+> metadata:
+> name: bjrdc-cr
+> namespace: bjrdc-dev
+> rules:
+> - apiGroups: [""]
+>   resources: ["services", "endpoints", "pods"]
+>   verbs: ["get", "list", "watch"]
+> ---
+> apiVersion: rbac.authorization.k8s.io/v1
+> kind: ClusterRoleBinding
+> metadata:
+>   name: bjrdc-rb
+>   namespace: bjrdc-dev
+> roleRef:
+>   apiGroup: rbac.authorization.k8s.io
+>   kind: ClusterRole
+>   name: bjrdc-cr
+> subjects:
+> - kind: ServiceAccount
+>   name: default
+>   namespace: bjrdc-dev
+> ```
+>
+> 
+>
+> 在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
+>
+> 
+
+### 使用 telepresence
+
+> telepresence为k8s提供的一个开发客户端-服务端程序，类是vpn，将服务器和客户端打通
+>
+> 具体使用方法尚未验证
+>
+> TODO
+
+## 关于jkube插件
+
+TODO
+
+
 
 ## 基本概念
 
@@ -1991,7 +2295,11 @@ journalctl -f -u kubelet
 
 ### 有状态服务集（StatefulSet）
 
-> Kubernetes 在 1.3 版本里发布了 Alpha 版的 PetSet 功能，在 1.5 版本里将 PetSet 功能升级到了 Beta 版本，并重新命名为 StatefulSet，最终在 1.9 版本里成为正式 GA 版本。在云原生应用的体系里，有下面两组近义词；第一组是无状态（stateless）、牲畜（cattle）、无名（nameless）、可丢弃（disposable）；第二组是有状态（stateful）、宠物（pet）、有名（having name）、不可丢弃（non-disposable）。RC 和 RS 主要是控制提供无状态服务的，其所控制的 Pod 的名字是随机设置的，一个 Pod 出故障了就被丢弃掉，在另一个地方重启一个新的 Pod，名字变了。名字和启动在哪儿都不重要，重要的只是 Pod 总数；而 StatefulSet 是用来控制有状态服务，StatefulSet 中的每个 Pod 的名字都是事先确定的，不能更改。StatefulSet 中 Pod 的名字的作用，并不是《千与千寻》的人性原因，而是关联与该 Pod 对应的状态。
+> Kubernetes 在 1.3 版本里发布了 Alpha 版的 PetSet 功能，在 1.5 版本里将 PetSet 功能升级到了 Beta 版本，并重新命名为 StatefulSet，最终在 1.9 版本里成为正式 GA 版本。在云原生应用的体系里，有下面两组近义词；
+>
+> 第一组是无状态（stateless）、牲畜（cattle）、无名（nameless）、可丢弃（disposable）；第二组是有状态（stateful）、宠物（pet）、有名（having name）、不可丢弃（non-disposable）。
+>
+> RC 和 RS 主要是控制提供无状态服务的，其所控制的 Pod 的名字是随机设置的，一个 Pod 出故障了就被丢弃掉，在另一个地方重启一个新的 Pod，名字变了。名字和启动在哪儿都不重要，重要的只是 Pod 总数；而 StatefulSet 是用来控制有状态服务，StatefulSet 中的每个 Pod 的名字都是事先确定的，不能更改。StatefulSet 中 Pod 的名字的作用，并不是《千与千寻》的人性原因，而是关联与该 Pod 对应的状态。
 
 > 对于 RC 和 RS 中的 Pod，一般不挂载存储或者挂载共享存储，保存的是所有 Pod 共享的状态，Pod 像牲畜一样没有分别（这似乎也确实意味着失去了人性特征）；对于 StatefulSet 中的 Pod，每个 Pod 挂载自己独立的存储，如果一个 Pod 出现故障，从其他节点启动一个同样名字的 Pod，要挂载上原来 Pod 的存储继续以它的状态提供服务。
 
