@@ -345,6 +345,7 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >sudo rbd list k8s_pool_01
 >sudo rbd map k8s_pool_01/k8s_v1
 >sudo rbd mv k8s_pool_01/k8s_v1 k8s_pool_01/k8s-v1
+>sudo rbd info k8s_pool_mysql_cluster_01/kubernetes-dynamic-pvc-04b80b00-d562-11ea-9a3c-4e8cdd04a447
 >```
 >
 >
@@ -363,6 +364,7 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >ceph osd pool mksnap bjrdc-pool bjrdc-pool-snapshot
 >ceph osd pool rmsnap bjrdc-pool bjrdc-pool-snapshot
 >sudo ceph osd tree
+>
 >```
 >
 >**文件操作**

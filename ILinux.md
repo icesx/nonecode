@@ -577,6 +577,9 @@ sudo cu -l /dev/ttyUSB0 -s 115200
 ### tar
 	tar -cvf test.tgz test/ --exclude *.txt --exclude *.jpg
 ### nc
+
+udp
+
 	$  nc -vz -u 10.1.0.100 53
 	Connection to 10.1.0.100 53 port [udp/domain] succeeded!
 
