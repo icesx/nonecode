@@ -340,12 +340,13 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >```
 >sudo rbd create k8s_pool_01/volume01 --size $((5* 1024)) 
->sudo rbd resize --size $((5*1024*1024)) k8s_pool_01/volume01
+>sudo rbd resize --size $((5*1024)) k8s_pool_01/volume01
 >sduo rbd rm {pool-name}/{image-name}
 >sudo rbd list k8s_pool_01
 >sudo rbd map k8s_pool_01/k8s_v1
 >sudo rbd mv k8s_pool_01/k8s_v1 k8s_pool_01/k8s-v1
 >sudo rbd info k8s_pool_mysql_cluster_01/kubernetes-dynamic-pvc-04b80b00-d562-11ea-9a3c-4e8cdd04a447
+>sudo rbd resize --image rdb_pool_01/k8s-pod-shard-v1 --allow-shrink --size 601
 >```
 >
 >

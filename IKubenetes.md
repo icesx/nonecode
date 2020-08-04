@@ -38,57 +38,53 @@ https://github.com/cncf/landscape
 
 2. node.js
 
-   > node.js 代码
-   >
-   > ```
-   > cat > server.js <<EOF 
-   > var http = require('http');
-   > 
-   > var handleRequest = function(request, response) {
-   >   console.log('Received request for URL: ' + request.url);
-   >   response.writeHead(200);
-   >   response.end('Hello World!');
-   > };
-   > var www = http.createServer(handleRequest);
-   > www.listen(8080);
-   > EOF
-   > ```
-   >
-   > 
+   server.js 代码
+   
+   ```
+   cat > server.js <<EOF 
+   var http = require('http');
+   
+   var handleRequest = function(request, response) {
+   console.log('Received request for URL: ' + request.url);
+   response.writeHead(200);
+   response.end('Hello World!');
+   };
+   var www = http.createServer(handleRequest);
+   www.listen(8080);
+   EOF
+   ```
+   
+   Dockerfile
 
-   > Dockerfile
-   >
-   > ```
-   > cat > Dockerfile <<EOF
-   > FROM bjrdc206.reg/library/node:8.10.0
-   > EXPOSE 8080
-   > COPY server.js .
-   > CMD [ "node", "server.js" ]
-   > EOF
-   > ```
+   ```
+   cat > Dockerfile <<EOF
+   FROM bjrdc206.reg/library/node:8.10.0
+   EXPOSE 8080
+   COPY server.js .
+   CMD [ "node", "server.js" ]
+   EOF
+   ```
+   
+   制作镜像
 
-   > 制作镜像
-   >
-   > ```
-   > docker build -t bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1 .
-   > ```
-   >
-   > 执行
-   >
-   > ```
-   > docker run -p 8080:8080 bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
-   > docker run -p 8080:8080 -d bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
-   > ```
-   >
-   > 访问
-   >
-   > ```
-   > curl localhost:8080
-   > ```
-   >
-   > 
-
-
+   ```
+   docker build -t bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1 .
+   ```
+   
+   执行
+   
+   ```
+   docker run -p 8080:8080 bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+   docker run -p 8080:8080 -d bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
+   ```
+   
+   访问
+   
+   ```
+   curl localhost:8080
+   ```
+   
+   
 
 ## Kubernetes install
 
@@ -176,7 +172,7 @@ sudo systemctl start kubelet.service
 
 ### 镜像搜索
 
-[https://cr.console.aliyun.com/cn-hangzhou/instances/images](https://links.jianshu.com/go?to=https%3A%2F%2Fcr.console.aliyun.com%2Fcn-hangzhou%2Finstances%2Fimages)
+[hub.docker.com](https://hub.docker.com/)
 
 ## 配置
 
@@ -843,7 +839,7 @@ bjrdc-dev              hello-node                  ClusterIP   10.102.118.239   
 curl 10.102.118.239:3000
 ```
 
-### 5.configmap
+### 5.Configmap
 
 >configmap 是k8s的配置服务，一个简单的配置如下
 >
@@ -870,40 +866,6 @@ curl 10.102.118.239:3000
 >
 >在spring-cloud中使用这个configmap需要
 >
->
-
-#### apiversion
-
-> Deployment
-> 1.6版本之前 apiVsersion：extensions/v1beta1
->
-> 1.6版本到1.9版本之间：apps/v1beta1
->
-> 1.9版本之后:apps/v1
-
-> 1. v1 
->
-> Kubernetes API的稳定版本，包含很多核心对象：pod、service等
-
-
-
-> 2. app/v1 
->
-> 在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
-
-
-
-> apps/v1代表：包含一些通用的应用层的api组合，如：Deployments, RollingUpdates, and ReplicaSets
-
-#### Label
-
-> *Labels* are key/value pairs that are attached to objects, such as pods. Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users, but do not directly imply semantics to the core system.
->
-> labels do not provide uniqueness. In general, we expect many objects to carry the same label(s)
-
-#### selector
-
->service选择pod的时候，需要在service的spec.selector:xxx中描述pod的lable
 
 ### 6.pod
 
@@ -955,7 +917,7 @@ curl 10.102.118.239:3000
 >
 > 
 
-### 8.statefulset
+### 8.Statefulset
 
 > [官方文档](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
 >
@@ -965,7 +927,7 @@ curl 10.102.118.239:3000
 >
 > **volumeClaimTemplates**: 表示一类PVC的模板，系统会根据Statefulset配置的replicas数量，创建相应数量的PVC。这些PVC除了名字不一样之外其他配置都是一样的
 
-**要使用statefulset,先要让storageclass可用。直接用pv和pvc会出问题，地一个pod可以创建出来，第二个pod就创建不出来了。因为第一个pod占用唯一的一个pv。**
+**要使用statefulset,先要让storageclass可用。直接用pv和pvc会出问题，第一个pod可以创建出来，第二个pod就创建不出来了。因为第一个pod占用唯一的一个pv。**
 
 **在statefulset.spec.serviceName需要配置为对外访问的servicename，否则无法通过dns访问到pod**
 
@@ -1525,7 +1487,7 @@ kubectl describe pod podName
 
 
 
-### Cluster IP
+#### Cluster IP
 
 Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有kubernetes集群内部访问使用。
 
@@ -1535,11 +1497,190 @@ Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有ku
 kubectl -n 命名空间 get Service即可看到ClusterIP
 ```
 
-### 三种IP网络间的通信
+#### 三种IP网络间的通信
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
+### 14.apiversion
 
+> Deployment
+> 1.6版本之前 apiVsersion：extensions/v1beta1
+>
+> 1.6版本到1.9版本之间：apps/v1beta1
+>
+> 1.9版本之后:apps/v1
+
+> 1. v1 
+>
+> Kubernetes API的稳定版本，包含很多核心对象：pod、service等
+
+> 2. app/v1 
+>
+> 在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
+
+
+
+> apps/v1代表：包含一些通用的应用层的api组合，如：Deployments, RollingUpdates, and ReplicaSets
+
+### 15.Label
+
+> *Labels* are key/value pairs that are attached to objects, such as pods. Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users, but do not directly imply semantics to the core system.
+>
+> labels do not provide uniqueness. In general, we expect many objects to carry the same label(s)
+
+### 16.selector
+
+>service选择pod的时候，需要在service的spec.selector:xxx中描述pod的lable
+
+
+
+### 17.Container
+
+> 一般情况下一个pod只需要一个container，但是有一些情况需要多个container共同完成一个工作。这种情况，这些container是可以共享configmap，pvc的
+>
+> 如下案例，创建一个nginx服务，通过一个busybox实现对nginx中的index.html的修改。
+
+1. 创建ceph-pv
+
+   ```
+   cat >0-pod-shard-pv.yaml <<EOF
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: ceph-pod-shard-pv
+     namespace: bjrdc-dev
+     labels:
+       pv: ceph-pod-shard-pv
+   spec:
+     capacity:
+       storage: 601Mi
+     accessModes:
+       - ReadWriteOnce 
+     rbd:
+       monitors:
+         - bjrdc208:6789
+       pool: rdb_pool_01
+       image: k8s-pod-shard-v1
+       user: admin
+       secretRef:
+         name: ceph-normal-secret
+       fsType: ext4
+       readOnly: false
+     persistentVolumeReclaimPolicy: Recycle
+   EOF  
+   ```
+
+2. 创建pvc
+
+   ```
+   cat >1-pod-shard-pvc.yaml <<EOF
+   kind: PersistentVolumeClaim
+   apiVersion: v1
+   metadata:
+     name: ceph-pod-shard-pvc
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         pv: ceph-pod-shard-pv
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 601Mi
+   EOF      
+   ```
+
+3. 创建depoyment，其中一个pod中包含多个container，并在busybox的container中修改了index.html
+
+   ```
+   cat >2-pod-shard-depoyment.yaml<<EOF 
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: pod-shard
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: pod-shard
+     strategy:
+       type: Recreate
+     template:
+       metadata:
+         labels:
+           app: pod-shard
+       spec:
+         containers:
+         - name: pod-shard-nginx
+           image: nginx:1.19.0
+           ports:
+           - containerPort: 80
+             name: web
+           volumeMounts:
+           - name: pod-shard-www
+             mountPath: /usr/share/nginx/html 
+         - name: busybox
+           image: busybox
+           args:
+           - /bin/sh
+           - -c
+           - sleep 10; touch /tmp/healthy; echo `hostname` >/html/index.html;sleep 30000
+           readinessProbe:
+             exec:
+               command:
+               - cat
+               - /tmp/healthy
+             initialDelaySeconds: 10
+             periodSeconds: 5
+           volumeMounts:
+           - name: pod-shard-www
+             mountPath: /html
+         volumes:
+         - name: pod-shard-www
+           persistentVolumeClaim: 
+             claimName: ceph-pod-shard-pvc
+   EOF          
+   ```
+
+4. 创建service，用于测试访问
+
+   ```
+   cat >3-pod-shard-service.yaml <<EOF
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: pod-shard-service
+     namespace: bjrdc-dev
+     labels:
+       app: pod-shard-service
+   spec:
+     selector:
+         app: pod-shard
+     ports:
+     - protocol : TCP
+       port: 80
+       targetPort: 80
+   EOF    
+   ```
+
+5. 测试
+
+   查看pod的状态
+
+   ```
+   kubectl get pod -n bjrdc-dev|grep pod-shard
+   pod-shard-5c7b7f6bd6-2dhdj          2/2     Running   0          18m
+   ```
+
+   测试pod的服务，发现能够正常的返回pod的hostname`pod-shard-5c7b7f6bd6-2dhdj`
+
+   ```
+   curl pod-shard-service.bjrdc-dev.svc.cluster.local
+   pod-shard-5c7b7f6bd6-2dhdj
+   ```
+
+   
 
 ## ceph
 
@@ -1691,31 +1832,29 @@ kubeadm token create --print-join-command
 ```
 ### kubectl
 
-kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs]
+命令模式
+
+kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs|storageclass|pv|pvc|ep]
 
 
 
 ```
 kubectl cluster-info
+kubectl config view
 ```
+
+创建资源
 
 ```
 kubectl create -f xx.yaml
+kubectl create -f .
 ```
+
+获取资源
 
 ```
 kubectl get ep kube-dns --namespace=kube-system
-```
-
-
-
-```
 kubectl get pod -n bjrdc-dev --watch
-```
-
-
-
-```
 kubectl get nodes
 kubectl get namespace
 kubectl get pod
@@ -1725,7 +1864,6 @@ kubectl get svc
 kubectl get all --all-namespaces
 kubectl get roles --all-namespaces
 kubectl get service --all-namespaces
-kubectl get serivce xxx --url
 kubectl get --raw "/"
 kubectl get events
 kubectl get secret regcred --output=yaml
@@ -1733,6 +1871,8 @@ kubectl get deployment metrics-server -n kube-system --output=yaml
 kubectl get serviceaccounts -n bjrdc-dev
 kubectl get serviceaccounts -n bjrdc-dev -o yaml
 ```
+
+描述资源详情
 
 ```
 kubectl describe namespaces kube-system
@@ -1742,15 +1882,21 @@ kubectl describe node bjrdc81
 kubectl describe pod/mysql-statefulset-0 -n bjrdc-dev
 ```
 
+扩去pod的log，该方法只能获取到控制台的log
+
 ```
 kubectl logs pod xxxx -n kube-system -f
 kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 #查看pod/mysql-statefulset-1下的容器 cone-mysql的日志
 ```
 
+
+
 ```
 kubectl label node/10.47.136.60 role=entry
 ```
+
+删除资源
 
 ```
 kubectl delete -f recommended.yaml
@@ -1761,46 +1907,47 @@ kubectl delete service spring-cloud-eureka -n bjrdc-dev
 
 kubectl delete deploment spring-cloud-eureka -n bjrdc-dev
 # delete service with pod
+kubectl delete event --all -n bjrdc-dev
 ```
 
-```
-kubectl config view
-```
+在线编辑资源信息
 
 ```
 kubectl edit deployment kubernetes-hello-world
 ```
 
-
+控制台启动一个pod
 
 ```
 kubectl run hello-node --image=hello-node:v1 --port=3000
 ```
 
-
+执行到pod内的任务，如果一个pod有多个container，需要增加-c参数
 
 ```
 kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/bash
+kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/sh
+kubectl exec -it pod-shard-5c7b7f6bd6-2dhdj -c busybox -n bjrdc-dev -- hostname
 ```
 
-
+对比参数
 
 ```
 kubectl diff -f ./my-manifest.yaml
 ```
 
-
-
-```
-kubectl delete event --all -n bjrdc-dev
-```
-
-
+伸缩
 
 ```
-kubectl scale --replicas=3 rs/foo                                 # Scale a replicaset named 'foo' to 3
-kubectl scale --replicas=3 -f foo.yaml                            # Scale a resource specified in "foo.yaml" to 3
-kubectl scale --current-replicas=2 --replicas=3 deployment/mysql  # If the deployment named mysql's current size is 2, scale mysql to 3
+kubectl scale --replicas=3 rs/foo                                 
+# Scale a replicaset named 'foo' to 3
+
+kubectl scale --replicas=3 -f foo.yaml                            
+# Scale a resource specified in "foo.yaml" to 3
+
+kubectl scale --current-replicas=2 --replicas=3 deployment/mysql  
+# If the deployment named mysql's current size is 2, scale mysql to 3
+
 kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 ```
 
@@ -1994,11 +2141,128 @@ sudo docker-compose up -d
 
 #### on local
 
-TODO
+> local模式下，虽然可以启动mysql的服务，但是如果pod飘逸了后，由于在另外的node上没有数据，故会导致数据找不多，随意不推荐这种方式。本例只是作示例，生产环境不要这样来作。
+
+1. 创建pv
+
+   ```
+   cat >0-mysql-local-pv.yaml <<EOF
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: mysql-local-pv
+     namespace: bjrdc-dev
+     labels:
+       pv: mysql-local-pv
+   spec:
+     storageClassName: manual
+     capacity:
+       storage: 2Gi
+     accessModes:
+       - ReadWriteOnce
+     hostPath:
+       path: "/data/mysql"
+   EOF
+   ```
+
+2. 创建pvc
+
+   ```
+   cat >1-mysql-local-pvc.yaml <<EOF
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: mysql-local-pv
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         pv: mysql-local-pv
+     storageClassName: manual
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 2Gi
+   EOF      
+   ```
+
+3. 创建deployment
+
+   ```
+   cat >2-mysql-deployment.yaml <<EOF
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: mysql-local
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: mysql-local
+     strategy:
+       type: Recreate
+     template:
+       metadata:
+         labels:
+           app: mysql-local
+       spec:
+         containers:
+         - image: mysql:5.7
+           name: mysql-local
+           env:
+             # Use secret in real usage
+           - name: MYSQL_ROOT_PASSWORD
+             value: xxxx
+           ports:
+           - containerPort: 3306
+             name: mysql-local
+           volumeMounts:
+           - name: mysql-persistent-storage
+             mountPath: /var/lib/mysql
+         volumes:
+         - name: mysql-persistent-storage
+           persistentVolumeClaim:
+             claimName: mysql-local-pv
+   EOF          
+   ```
+
+   
+
+4. 创建service
+
+   ```
+   cat >3-mysql-service.yaml <<EOF
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: mysql-local
+     namespace: bjrdc-dev
+     labels:
+       app: mysql-local
+   spec:
+     selector:
+         app: mysql-local
+     ports:
+     - protocol : TCP
+       port: 3306
+       targetPort: 3306
+   EOF    
+   ```
+
+5. 测试
+
+   ```
+   mysql -u root -h mysql-local.bjrdc-dev.svc.cluster.local -p
+   ```
+
+   
 
 #### on ceph
 
-> 首先需要一个部署好的ceph集群
+> 单机模式下，如果采用ceph作为存储，可以解决pod漂移后，不丢失存储的问题。
+>
+> 前提条件是需要一个部署好的ceph集群。
 
 1. 创建pv
 
@@ -2116,7 +2380,7 @@ TODO
 
 ### mysql cluster
 
-> mysql cluster on ceph
+> 集群模式下，只能采用共享存储来进行数据存储，故必须一个ceph集群（采用local模式也不是完全不可以作cluster，就是做数据同步的过程较为复杂）
 
 1. 创建ceph镜像，创建一个10G的Pool
 
@@ -2125,7 +2389,7 @@ TODO
    sudo ceph osd pool set-quota k8s_pool_mysql_cluster_01 max_bytes $((10 * 1024 * 1024 * 1024))
    ```
 
-2. 设置storageclass
+2. 设置storageclass，在cluster模式下使用的是statefulset，此方式只能使用storageclass作为存储。
 
    ```
    cat > 0-mysql-cluster-storageclass.yaml <<EOF
@@ -2688,7 +2952,7 @@ TODO
 
 
 
-## 基本概念
+## 官方资料
 
 ### 资源
 
