@@ -357,7 +357,6 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >```
 >ceph osd lspools
->rados df
 >ceph osd pool create bjrdc-pool 128 128
 >ceph osd pool rename bjrdc-pool bjrdc-pool-new
 >ceph osd pool set-quota bjrdc-pool max_bytes $((100 * 1024 * 1024 * 1024))
@@ -374,6 +373,7 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >rados -p bjrdc-pool put testfile /etc/hosts
 >rados -p bjrdc-pool ls
 >rados -p bjrdc-pool rm testfile
+>rados df
 >```
 >
 >**mon**

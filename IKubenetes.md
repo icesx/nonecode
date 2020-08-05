@@ -40,7 +40,7 @@ https://github.com/cncf/landscape
 
    server.js 代码
    
-   ```
+   ```js
    cat > server.js <<EOF 
    var http = require('http');
    
@@ -56,7 +56,7 @@ https://github.com/cncf/landscape
    
    Dockerfile
 
-   ```
+   ```dockerfile
    cat > Dockerfile <<EOF
    FROM bjrdc206.reg/library/node:8.10.0
    EXPOSE 8080
@@ -67,20 +67,20 @@ https://github.com/cncf/landscape
    
    制作镜像
 
-   ```
+   ```sh
    docker build -t bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1 .
    ```
    
    执行
    
-   ```
+   ```shell
    docker run -p 8080:8080 bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
    docker run -p 8080:8080 -d bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
    ```
    
    访问
    
-   ```
+   ```shell
    curl localhost:8080
    ```
    
@@ -94,7 +94,7 @@ https://github.com/cncf/landscape
 
 您可以使用命令 `ip link` 或 `ifconfig -a` 来获取网络接口的 MAC 地址
 
-```
+```shell
 sudo cat /sys/class/dmi/id/product_uuid
 ```
 
@@ -115,7 +115,7 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 #### 按照安装官方教程安装（需要梯子）
 
-```
+```bash
 sudo apt-get update && sudo apt-get install -y apt-transport-https curl
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -130,13 +130,13 @@ sudo apt-mark hold kubelet kubeadm kubectl
 
 官方教程中无法访问google，需要手动安装
 
-```
+```shell
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
 ```
 
 增加source 
 
-```
+```shell
 cat <<EOF | sudo  /etc/apt/sources.list.d/kubernetes.list
 deb https://apt.kubernetes.io/ kubernetes-xenial main
 EOF
@@ -202,7 +202,7 @@ sudo systemctl start kubelet.service
 
 3. enable docker
 
-   ```
+   ```shell
    sudo apt install docker.io
    systemctl enable docker.service
    cat > /etc/docker/daemon.json <<EOF
@@ -302,7 +302,7 @@ sudo systemctl start kubelet.service
 
    docker
 
-   ```
+   ```shell
    sudo apt install -y docker.io
    systemctl enable docker.service
    cat > /etc/docker/daemon.json <<EOF
@@ -370,7 +370,7 @@ sudo systemctl start kubelet.service
 
    需要生成证书
 
-   ```
+   ```shell
    # 生成client-certificate-data
    grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.crt
    
@@ -394,7 +394,7 @@ sudo systemctl start kubelet.service
    >
    >在master上通过如下命令获取token
    >
-   >```
+   >```shell
    >kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
    >```
    >
@@ -408,7 +408,7 @@ sudo systemctl start kubelet.service
    >
    > **创建名为admin-user的serviceaccount，放到kube-system namespace下，并将用户绑定到名称为cluster-admin的ClusterRole下**
    >
-   > ```
+   > ```yaml
    > apiVersion: v1
    > kind: ServiceAccount
    > metadata:
@@ -471,7 +471,7 @@ sudo systemctl start kubelet.service
 
 1. 下载最新版本
 
-```
+```shell
 wget https://github.com/kubernetes-sigs/metrics-server/archive/v0.3.6.tar.gz
 tar -xzvf v0.3.6.tar.gz
 cd metrics-server-0.3.6/deploy/1.8+
@@ -483,7 +483,7 @@ cd metrics-server-0.3.6/deploy/1.8+
 vi metrics-server-deployment.yaml
 ```
 
-```
+```yaml
       containers:
       - name: metrics-server
         image: mirrorgooglecontainers/metrics-server-amd64:v0.3.6
@@ -502,7 +502,7 @@ kubectl apply -f .
 
 4. 验证
 
-```
+```shell
 kubectl top node
 NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
 bjrdc17    188m         2%     1629Mi          16%       
@@ -510,7 +510,7 @@ bjrdc205   41m          0%     944Mi           9%
 bjrdc81    63m          0%     825Mi           8%  
 ```
 
-```
+```shell
 kubectl top pods -n kube-system
 NAME                              CPU(cores)   MEMORY(bytes)   
 coredns-7ff77c879f-26gn7          5m           8Mi             
@@ -525,7 +525,7 @@ kube-proxy-6vllz                  1m           17Mi
 kube-proxy-7zlh2                  1m           12Mi            
 kube-proxy-tn7rg                  1m           12Mi            
 kube-scheduler-bjrdc17            5m           12Mi            
-metrics-server-85b7f6dc48-fnrsw   1m           13Mi   
+metrics-server-85b7f6dc48-fnrsw   1m           13Mi   	
 ```
 
 #### Ingress
@@ -574,7 +574,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    安装了ingrss后，需要为服务配置ingress，假设已将安装了hello-node的服务，使用如下yaml，为该服务增加ingress
 
-   ```
+   ```yaml
    cat > hello-node-ingress.yaml <<EOF
    apiVersion: extensions/v1beta1
    kind: Ingress
@@ -603,7 +603,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
    >
    > 如`curl ingress.bjrdc17:30080/sc-gateway/consumer/feign/list`请求到达`curl spring-cloud-k8s-gateway.bjrdc-dev.svc.cluster.local:8097/consumer/feign/list`
    >
-   > ```
+   > ```yaml
    > apiVersion: extensions/v1beta1
    > kind: Ingress
    > metadata:
@@ -627,13 +627,13 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 6. 验证
 
-   ```
+   ```shell
    sudo sh -c "echo 172.16.10.17 ingress.bjrdc17 >> /etc/hosts"
    ```
 
    查看ingress端口
 
-   ```
+   ```shell
    kubectl get service -n ingress-nginx        
    NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
    ingress-nginx-controller             LoadBalancer   10.103.204.188   <pending>     80:32628/TCP,443:31687/TCP   3h50m
@@ -642,7 +642,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    访问
 
-   ```
+   ```shell
    curl ingress.bjrdc17:32628
    ```
 
@@ -709,7 +709,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 创建Dockerfile
 
-```
+```dockerfile
 cat >Dockerfile <<EOF
 FROM node:8.10.0
 EXPOSE 8080
@@ -733,7 +733,7 @@ sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 
 ### 2.namespace
 
-```
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -752,7 +752,7 @@ metadata:
 >
 > spec.template.描述的是pod的信息
 
-```
+```yaml
 cat >deloyment<<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -789,7 +789,7 @@ Deployment和Service关联起来只需要Label标签相同就可以关联起来�
 
 .spec.selector:xxx lable下描述的就是关联的deployment中声明的pod的lable
 
-```
+```yaml
 cat >service.yaml <<EOF
 apiVersion: v1
 kind: Service
@@ -813,7 +813,7 @@ EOF
 kubectl create -f service.yaml
 ```
 
-```
+```shell
 kubectl get services -n bjrdc-dev
 NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
 hello-node   ClusterIP   10.102.118.239   <none>        3000/TCP   39m
@@ -843,7 +843,7 @@ curl 10.102.118.239:3000
 
 >configmap 是k8s的配置服务，一个简单的配置如下
 >
->```
+>```yaml
 >kind: ConfigMap
 >apiVersion: v1
 >metadata:
@@ -887,19 +887,19 @@ curl 10.102.118.239:3000
 >
 >    先将node设置为不可调度
 >
->    ```
+>    ```bash
 >    kubectl cordon bjrdc81
 >    ```
 >
 >    重启pod
 >
->    ```
+>    ```shell
 >    kubectl get pod mysql-on-ceph-01-xxx -o yaml -n bjrdc-dev|kubectl replace --force -f -
 >    ```
 >
 >    恢复node
 >
->    ```
+>    ```shell
 >    kubectl uncordon bjrdc81
 >    ```
 >
@@ -935,7 +935,7 @@ curl 10.102.118.239:3000
 
 1. 创建secret
 
-   ```
+   ```yaml
    cat >0-ceph-stateful-storageclass.yaml <<EOF
    apiVersion: storage.k8s.io/v1
    kind: StorageClass
@@ -959,7 +959,7 @@ curl 10.102.118.239:3000
 
 2. 创建statefulset
 
-   ```
+   ```yaml
    cat 1-statefulset.yaml 
    apiVersion: v1
    kind: Service
@@ -1015,7 +1015,7 @@ curl 10.102.118.239:3000
 
 3. 查看pod，此时应该创建了多个pod
 
-   ```
+   ```shell
    kubectl get pod -n bjrdc-dev
    
    web-stateful-0                      1/1     Running   0          13h
@@ -1033,13 +1033,13 @@ curl 10.102.118.239:3000
 
    在每个pod上创建index.html，使用如下命令，命令中需要将pod的name修改为对应的。
 
-   ```
+   ```sh
    kubectl exec -it web-stateful-2 -n bjrdc-dev -- /bin/bash -c "echo web-stateful-2 > /usr/share/nginx/html/index.html"
    ```
 
    通过service访问，发现有负载均衡的作用**这不就是mysql的读写分离需要的吗？**
 
-   ```
+   ```sh
    for i in {0..5}; do curl nginx-stateful.bjrdc-dev.svc.cluster.local; done
    web-stateful-2
    web-stateful-1
@@ -1051,7 +1051,7 @@ curl 10.102.118.239:3000
 
    通过pod访问
 
-   ```
+   ```shell
    for i in {0..5}; do curl web-stateful-0.nginx-stateful.bjrdc-dev.svc.cluster.local; done
    web-stateful-0
    web-stateful-0
@@ -1073,7 +1073,7 @@ curl 10.102.118.239:3000
 >
 >    容器是否正常执行
 >
->    ```
+>    ```yaml
 >    apiVersion: v1
 >    kind: Pod
 >    metadata:
@@ -1101,7 +1101,7 @@ curl 10.102.118.239:3000
 >
 >    容器是否可以接受请求
 >
->    ```
+>    ```yaml
 >    apiVersion: v1
 >    kind: Pod
 >    metadata:
@@ -1147,7 +1147,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 3. 修改namespace，按照官方的的方式修改namespace
 
-   ```
+   ```sh
    sed -r -i "s/namespace: [^ ]+/namespace: kube-system/g" ./rbac/clusterrolebinding.yaml ./rbac/rolebinding.yaml
    ```
 
@@ -1204,7 +1204,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 1. 创建cecret,key密码为base64后的值
 
-   ```
+   ```yaml
    cat >1-ceph-secret.yaml <<EOF
    apiVersion: v1
    kind: Secret
@@ -1218,13 +1218,13 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
    其中key通过如下命令获取
 
-   ```
+   ```sh
    ceph auth get-key client.admin | base64
    ```
 
 2. 创建pv
 
-   ```
+   ```yaml
    cat >2-pv.yaml <<EOF
    apiVersion: v1
    kind: PersistentVolume
@@ -1275,7 +1275,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 4. 创建deployment
 
-   ```
+   ```yaml
    cat >4-deploy.yaml <<EOF
    apiVersion: apps/v1
    kind: Deployment
@@ -1333,7 +1333,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 >
 > 创建一个serviceaccount
 >
-> ```
+> ```yaml
 > apiVersion: v1
 > kind: ServiceAccount
 > metadata:
@@ -1343,19 +1343,19 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 >
 > 查看serviceaccount
 >
-> ```
+> ```sh
 > kubectl get serviceaccounts -n bjrdc-dev
 > ```
 
 >  **Role**
 
->
+TODO
 
  **ClusterRole**
 
 >创建clusterRole
 >
->```
+>```yaml
 >apiVersion: rbac.authorization.k8s.io/v1
 >kind: ClusterRole
 >metadata:
@@ -1382,14 +1382,14 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 > \${servicename}.\${namespace}.svc.cluster.local
 
-```
+```sh
 ping hello-node.bjrdc-dev.svc.cluster.local
 ping mysql.bjrdc-dev.svc.cluster.local
 ```
 
 > dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
 >
-> ```
+> ```yaml
 > clusterDNS:
 > - 10.96.0.10
 > clusterDomain: cluster.local
@@ -1410,7 +1410,7 @@ ping mysql.bjrdc-dev.svc.cluster.local
 >
 > 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
 >
-> ```
+> ```yaml
 > apiVersion: v1
 > kind: Service
 > metadata:  
@@ -1429,7 +1429,7 @@ ping mysql.bjrdc-dev.svc.cluster.local
 >
 > **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
 >
-> ```
+> ```yaml
 > apiVersion: v1
 > kind: Service
 > metadata:  
@@ -1468,7 +1468,7 @@ ping mysql.bjrdc-dev.svc.cluster.local
 
 每个Service都会在Node节点上开通一个端口，外部可以通过NodeIP:NodePort即可访问Service里的Pod,和我们访问服务器部署的项目一样，IP:端口/项目名
 
-```
+```sh
 kubectl describe node nodeName
 ```
 
@@ -1480,7 +1480,7 @@ Pod IP是每个Pod的IP地址，他是Docker Engine根据docker网桥的IP地址
 同Service下的pod可以直接根据PodIP相互通信，不同Service下的pod在集群间pod通信要借助于 cluster ip
 pod和集群外通信，要借助于node ip
 
-```
+```sh
 kubectl get pods
 kubectl describe pod podName
 ```
@@ -1493,7 +1493,7 @@ Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有ku
 
 在kubernetes查询Cluster IP
 
-```
+```sh
 kubectl -n 命名空间 get Service即可看到ClusterIP
 ```
 
@@ -1542,7 +1542,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 1. 创建ceph-pv
 
-   ```
+   ```yaml
    cat >0-pod-shard-pv.yaml <<EOF
    apiVersion: v1
    kind: PersistentVolume
@@ -1572,7 +1572,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 2. 创建pvc
 
-   ```
+   ```yaml
    cat >1-pod-shard-pvc.yaml <<EOF
    kind: PersistentVolumeClaim
    apiVersion: v1
@@ -1593,7 +1593,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 3. 创建depoyment，其中一个pod中包含多个container，并在busybox的container中修改了index.html
 
-   ```
+   ```yaml
    cat >2-pod-shard-depoyment.yaml<<EOF 
    apiVersion: apps/v1
    kind: Deployment
@@ -1645,7 +1645,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 4. 创建service，用于测试访问
 
-   ```
+   ```yaml
    cat >3-pod-shard-service.yaml <<EOF
    apiVersion: v1
    kind: Service
@@ -1668,19 +1668,41 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
    查看pod的状态
 
-   ```
+   ```sh
    kubectl get pod -n bjrdc-dev|grep pod-shard
    pod-shard-5c7b7f6bd6-2dhdj          2/2     Running   0          18m
    ```
 
    测试pod的服务，发现能够正常的返回pod的hostname`pod-shard-5c7b7f6bd6-2dhdj`
 
-   ```
+   ```sh
    curl pod-shard-service.bjrdc-dev.svc.cluster.local
    pod-shard-5c7b7f6bd6-2dhdj
    ```
 
-   
+
+### 18 env
+
+> 在container的配置中可以设置环境变量，如下
+
+```yaml
+  template:
+    metadata:
+      labels:
+        app: es-stateful
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: es-stateful
+        image: elasticsearch:6.8.11
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+```
+
+这个POD_NAME可以在其他的yaml文件中通过${POD_NAME}获取
 
 ## ceph
 
@@ -1694,7 +1716,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 1. 创建cecret，key密码为base64后的值
 
-   ```
+   ```yaml
    cat >1-ceph-secret.yaml <<EOF
    apiVersion: v1
    kind: Secret
@@ -1710,7 +1732,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
    adminSecretName，userSecretName:为secret的name
 
-   ```
+   ```yaml
    cat >2-ceph-storageclass.yaml <<EOF
    apiVersion: storage.k8s.io/v1
    kind: StorageClass
@@ -1736,7 +1758,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
    执行成功后应该可以通过`kubectl get pvc -n bjrdc-dev`查看到
 
-   ```
+   ```yaml
    cat >3-ceph-pvc.yaml <<EOF
    kind: PersistentVolumeClaim
    apiVersion: v1
@@ -1755,7 +1777,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 4. 挂载到pod
 
-   ```
+   ```yaml
    cat >4-ceph-deploy.yaml <<EOF
    apiVersion: apps/v1
    kind: Deployment
@@ -1789,7 +1811,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 5. 此时应该可以正常的访问到pod，并且pod上挂载了ceph的目录。同时在ceph上可以看到一个自动创建的image
 
-   ```
+   ```yaml
    sudo rbd list -p k8s_pool_01
    
    k8s-mysql-cluster-v1
@@ -1811,7 +1833,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 ### kubeadm
 
-```
+```sh
 kubeadm token list
 
 kubeadm join \
@@ -1825,7 +1847,7 @@ kubeadm join \
   --discovery-token-ca-cert-hash sha256:c6de85f6c862c0d58cc3d10fd199064ff25c4021b6e88475822d6163a25b4a6c
 ```
 
-```
+```sh
 kubeadm token create
 kubeadm token list
 kubeadm token create --print-join-command
@@ -1838,21 +1860,21 @@ kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)
 
 
 
-```
+```sh
 kubectl cluster-info
 kubectl config view
 ```
 
 创建资源
 
-```
+```sh
 kubectl create -f xx.yaml
 kubectl create -f .
 ```
 
 获取资源
 
-```
+```sh
 kubectl get ep kube-dns --namespace=kube-system
 kubectl get pod -n bjrdc-dev --watch
 kubectl get nodes
@@ -1874,7 +1896,7 @@ kubectl get serviceaccounts -n bjrdc-dev -o yaml
 
 描述资源详情
 
-```
+```sh
 kubectl describe namespaces kube-system
 kubectl describe pods monitoring-influxdb-7f474cc79-cslt5 -n kube-system
 kubectl describe clusterrole system:heapster
@@ -1884,7 +1906,7 @@ kubectl describe pod/mysql-statefulset-0 -n bjrdc-dev
 
 扩去pod的log，该方法只能获取到控制台的log
 
-```
+```sh
 kubectl logs pod xxxx -n kube-system -f
 kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 #查看pod/mysql-statefulset-1下的容器 cone-mysql的日志
@@ -1892,13 +1914,13 @@ kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 
 
 
-```
+```sh
 kubectl label node/10.47.136.60 role=entry
 ```
 
 删除资源
 
-```
+```sh
 kubectl delete -f recommended.yaml
 kubectl delete clusterrole system:heapster
 kubectl delete pod hello-node
@@ -1912,19 +1934,19 @@ kubectl delete event --all -n bjrdc-dev
 
 在线编辑资源信息
 
-```
+```sh
 kubectl edit deployment kubernetes-hello-world
 ```
 
 控制台启动一个pod
 
-```
+```sh
 kubectl run hello-node --image=hello-node:v1 --port=3000
 ```
 
 执行到pod内的任务，如果一个pod有多个container，需要增加-c参数
 
-```
+```sh
 kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/bash
 kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/sh
 kubectl exec -it pod-shard-5c7b7f6bd6-2dhdj -c busybox -n bjrdc-dev -- hostname
@@ -1932,13 +1954,13 @@ kubectl exec -it pod-shard-5c7b7f6bd6-2dhdj -c busybox -n bjrdc-dev -- hostname
 
 对比参数
 
-```
+```sh
 kubectl diff -f ./my-manifest.yaml
 ```
 
 伸缩
 
-```
+```sh
 kubectl scale --replicas=3 rs/foo                                 
 # Scale a replicaset named 'foo' to 3
 
@@ -1965,25 +1987,25 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 
 1. Generate a CA certificate private key
 
-   ```
+   ```sh
    openssl genrsa  -out ca.key 4096
    ```
 
 2. Generate the CA certificate.
 
-   ```
+   ```sh
    openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"  -key ca.key -out ca.crt
    ```
 
 3. Generate a Server Certificate
 
-   ```
-   penssl genrsa -out bjrdc206.key 4096
+   ```sh
+   openssl genrsa -out bjrdc206.key 4096
    ```
 
 4. Generate a certificate signing request (CSR).
 
-   ```
+   ```sh
    openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"     -key bjrdc206.reg.key -out bjrdc206.reg.csr
    ```
 
@@ -2006,7 +2028,7 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 
 6. Use the `v3.ext` file to generate a certificate for your Harbor host.
 
-   ```
+   ```sh
    openssl x509 -req -sha512 -days 3650 \
        -extfile v3.ext \
        -CA ca.crt -CAkey ca.key -CAcreateserial \
@@ -2016,27 +2038,27 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 
 7. Copy the server certificate and key into the certficates folder on your Harbor host
 
-   ```
+   ```sh
    cp bjrdc206.reg.crt /docker/cert/
    cp bjrdc206.reg.key /docker/cert/
    ```
 
 8. Convert `yourdomain.com.crt` to `yourdomain.com.cert`, for use by Docker.
 
-   ```
+   ```sh
    openssl x509 -inform PEM -in bjrdc206.reg.crt -out bjrdc206.reg.cert
    ```
 
 9. Copy the server certificate, key and CA files into the Docker certificates folder on the Harbor host. You must create the appropriate folders first
 
-   ```
+   ```sh
    mkdir /etc/docker/certs.d/bjrdc206.reg -p
    cp bjrdc206.reg.cert /etc/docker/certs.d/bjrdc206.reg/
    cp bjrdc206.reg.key /etc/docker/certs.d/bjrdc206.reg/
    cp ca.crt /etc/docker/certs.d/bjrdc206.reg/
    ```
 
-   ```
+   ```sh
    cp bjrdc206.reg.crt /usr/local/share/ca-certificates/
    update-ca-certificates
    ```
@@ -2047,21 +2069,21 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 
 1. 安装docker
 
-   ```
+   ```sh
    systemctl enable docker.service
    systemctl restart docker
    ```
 
 2. install docker-compose
 
-   ```
+   ```sh
    sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
    sudo chmod +x /usr/local/bin/docker-compose
    ```
 
 3. 修改 harbor.yml
 
-   ```
+   ```yaml
    hostname: bjrdc206
    
    # http related config
@@ -2089,7 +2111,7 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
 
 修改host 的docker配置，让https生效
 
-```
+```sh
 cat > /etc/docker/daemon.json <<EOF
 {
   "graph": "/docker",
@@ -2107,7 +2129,7 @@ sudo service docker restart
 
 >  "insecure-registries":["bjrdc206.reg"],用于告知客户端信任该证书
 
-```
+```sh
  docker login bjrdc206.reg
  docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
  sudo docker push bjrdc206.reg/bjrdc-dev/hello-world:v1.0.0
@@ -2145,7 +2167,7 @@ sudo docker-compose up -d
 
 1. 创建pv
 
-   ```
+   ```yaml
    cat >0-mysql-local-pv.yaml <<EOF
    apiVersion: v1
    kind: PersistentVolume
@@ -2167,7 +2189,7 @@ sudo docker-compose up -d
 
 2. 创建pvc
 
-   ```
+   ```yaml
    cat >1-mysql-local-pvc.yaml <<EOF
    apiVersion: v1
    kind: PersistentVolumeClaim
@@ -2189,7 +2211,7 @@ sudo docker-compose up -d
 
 3. 创建deployment
 
-   ```
+   ```yaml
    cat >2-mysql-deployment.yaml <<EOF
    apiVersion: apps/v1
    kind: Deployment
@@ -2231,7 +2253,7 @@ sudo docker-compose up -d
 
 4. 创建service
 
-   ```
+   ```yaml
    cat >3-mysql-service.yaml <<EOF
    apiVersion: v1
    kind: Service
@@ -2252,7 +2274,7 @@ sudo docker-compose up -d
 
 5. 测试
 
-   ```
+   ```sh
    mysql -u root -h mysql-local.bjrdc-dev.svc.cluster.local -p
    ```
 
@@ -2266,8 +2288,8 @@ sudo docker-compose up -d
 
 1. 创建pv
 
-   ```
-    cat >0-mysql-pv.yaml <<EOF
+   ```yaml
+   cat >0-mysql-pv.yaml <<EOF
    apiVersion: v1
    kind: PersistentVolume
    metadata:
@@ -2296,7 +2318,7 @@ sudo docker-compose up -d
 
 2. 创建pvc
 
-   ```
+   ```yaml
     cat >1-mysql-pvc.yaml <EOF
    kind: PersistentVolumeClaim
    apiVersion: v1
@@ -2317,7 +2339,7 @@ sudo docker-compose up -d
 
 3. deployment
 
-   ```
+   ```yaml
     cat >2-mysql-depoyment.yaml <<EOF
    apiVersion: apps/v1
    kind: Deployment
@@ -2357,7 +2379,7 @@ sudo docker-compose up -d
 
 4. 创建service
 
-   ```
+   ```yaml
     cat >3-mysql-service.yaml <<EOF
    apiVersion: v1
    kind: Service
@@ -2384,14 +2406,14 @@ sudo docker-compose up -d
 
 1. 创建ceph镜像，创建一个10G的Pool
 
-   ```
+   ```shell
    sudo ceph osd pool create k8s_pool_mysql_cluster_01 128 128
    sudo ceph osd pool set-quota k8s_pool_mysql_cluster_01 max_bytes $((10 * 1024 * 1024 * 1024))
    ```
 
 2. 设置storageclass，在cluster模式下使用的是statefulset，此方式只能使用storageclass作为存储。
 
-   ```
+   ```yaml
    cat > 0-mysql-cluster-storageclass.yaml <<EOF
    apiVersion: storage.k8s.io/v1
    kind: StorageClass
@@ -2415,7 +2437,7 @@ sudo docker-compose up -d
 
 3. configmap for mysql
 
-   ```
+   ```yaml
    cat >1-mysql-cluster-configmap.yaml <<EOF
    apiVersion: v1
    kind: ConfigMap
@@ -2438,7 +2460,7 @@ sudo docker-compose up -d
 
 4. service for statefulset 
 
-   ```
+   ```yaml
    cat >2-mysql-cluster-service.yaml <<EOF
    # Headless service for stable DNS entries of StatefulSet members.
    apiVersion: v1
@@ -2476,7 +2498,7 @@ sudo docker-compose up -d
 
 5. 最关键的一步，配置statefulset
 
-   ```
+   ```yaml
    cat >3-mysql-cluster-stateful.yaml <<EOF
    apiVersion: apps/v1
    kind: StatefulSet
@@ -2654,13 +2676,13 @@ sudo docker-compose up -d
 
    写入通过pod进行
 
-   ```
+   ```sh
    mysql -h  mysql-stateful-0.mysql-stateful-headless.bjrdc-dev.svc.cluster.local -u root -e "create database test_xxx"
    ```
 
    查询通过headless service进行
 
-   ```
+   ```sql
    mysql -h  mysql-stateful-headless.bjrdc-dev.svc.cluster.local -u root -e "show variables where variable_name='hostname'; show databases;"
    +---------------+------------------+
    | Variable_name | Value            |
@@ -2683,7 +2705,7 @@ sudo docker-compose up -d
 
    1. 查找pvc
 
-      ```
+      ```bash
       kubectl get pvc -n bjrdc-dev|grep mysql-ceph
       mysql-ceph-data-mysql-stateful-0   Bound    pvc-4736b344-572b-4470-9d14-5384f949caa6   451Mi      RWO            ceph-storageclass-stateful-mysql   33h
       mysql-ceph-data-mysql-stateful-1   Bound    pvc-f5587f05-4137-46bf-a038-b305d0f0ff9e   451Mi      RWO            ceph-storageclass-stateful-mysql   38m
@@ -2692,7 +2714,7 @@ sudo docker-compose up -d
 
    2. 查看pvc信息
 
-      ```
+      ```sh
       kubectl describe pv pvc-4736b344-572b-4470-9d14-5384f949caa6 -n bjrdc-dev
       Name:            pvc-4736b344-572b-4470-9d14-5384f949caa6
       Labels:          <none>
@@ -2723,14 +2745,201 @@ sudo docker-compose up -d
 
 8. 下一步部署es
 
-## ES
+## Elasticsearch
 
-> ES 与mysql一样也是有状态的，部署方式类似
->
+> ES 与mysql一样也是有状态的，部署方式类似，在进行es的安装的时候，需要执行一定的`commad`详细参考如下yaml
+
+### elasticsearch install
+
+1. config storageclass
+
+   ```yaml
+   cat >0-es-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-es
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: bjrdc208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_es_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+2. configmap for elasticsearch.yaml
+
+   > POD_NAME为一个环境变量，在statefulset中进行配置
+
+   ```yaml
+   cat >1-es-configmap.yaml <<EOF
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: es-config
+     namespace: bjrdc-dev
+   data:
+     elasticsearch.yml: |
+       cluster.name: es-cluster-stateful-01
+       node.name: "${POD_NAME}"
+       network.host: 0.0.0.0
+       discovery.zen.ping.unicast.hosts: ["es-stateful-0.es-stateful-headless", "es-stateful-1.es-stateful-headless","es-stateful-2.es-stateful-headless"] 
+   EOF
+   ```
+
+3. statefulset 配置
+
+   需要执行`exec su elasticsearch /usr/share/elasticsearch/bin/elasticsearch`，因为默认的command似乎是被这个command声明的命令覆盖了，那么就要手动的启动
+
+   `vm.max_map_count=262144`如果在容器执行不成功，就需要在host上修改systctl.conf，因为容器中没有这个权限。
+
+   ```yaml
+   cat 2-es-statefulset.yaml 
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: es-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: es-stateful 
+     serviceName: es-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: es-stateful
+       spec:
+         initContainers:
+         - name: busybox-init
+           image: busybox
+           command:
+           - sh
+           - "-c"
+           - |
+             set -ex
+             chown -R 1000:1000 /usr/share/elasticsearch/data
+           volumeMounts:
+           - name: es-data
+             mountPath: /usr/share/elasticsearch/data 
+         containers:
+         - name: es-stateful
+           image: elasticsearch:6.8.11
+           command:
+           - bash
+           - "-c"
+           - |
+             set -ex
+             ulimit -n 1024000
+             exec su elasticsearch /usr/share/elasticsearch/bin/elasticsearch
+           env:
+             - name: POD_NAME
+               valueFrom:
+                 fieldRef:
+                   fieldPath: metadata.name
+           ports:
+           - containerPort: 9200
+             protocol: TCP
+           - containerPort: 9300
+             protocol: TCP
+           volumeMounts:
+           - name: es-data
+             mountPath: /usr/share/elasticsearch/data
+           - name: es-config
+             mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+             subPath: elasticsearch.yml
+         volumes:
+           - name: es-config
+             configMap:
+               name: es-config
+     volumeClaimTemplates:
+     - metadata:
+         name: es-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-stateful
+         resources:
+           requests:
+             storage: 5Gi
+   ```
+
+4. headless service
+
+   ```yaml
+   cat >3-es-cluster-service.yaml <<EOF
+   # Headless service for stable DNS entries of StatefulSet members.
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: es-stateful-headless
+     namespace: bjrdc-dev
+     labels:
+       app: es-stateful
+   spec:
+     ports:
+     - name: es-stateful-port
+       port: 9200
+     clusterIP: None
+     selector:
+       app: es-stateful
+   EOF    
+   ```
+
+   
+
+5. 查看pod
+
+   正常情况下，es的所有pod都起来了，通过如下命令可以查看
+
+   ```sh
+   kubectl get pod -n bjrdc-dev|grep es
+   es-stateful-0                       1/1     Running   0          31m
+   es-stateful-1                       1/1     Running   0          30m
+   es-stateful-2                       1/1     Running   0          30m
+   ```
+
+6. 测试
+
+   ```sh
+   curl es-stateful-headless.bjrdc-dev.svc.cluster.local:9200/_cat/nodes
+   10.244.3.40  25 13 2 0.04 0.23 0.26 mdi - es-stateful-2
+   10.244.2.171 19 13 2 0.26 0.20 0.18 mdi - es-stateful-1
+   10.244.1.138 23 13 3 0.62 0.45 0.29 mdi * es-stateful-0
+   ```
+
+   master
+
+   ```sh
+   curl es-stateful-headless.bjrdc-dev.svc.cluster.local:9200/_cat/master
+   SBEGJoxxTmWpVFlDMVHnCg 10.244.1.138 10.244.1.138 es-stateful-0
+   ```
+
+   
+
+### plugin config
+
+
+
+### kibana install
 
 
 
 ## Redis
+
+
+
+## 日志收集
+
+### logstash
 
 
 
@@ -2779,8 +2988,9 @@ sudo docker-compose up -d
    kubectl -n kube-system get deployment coredns -o yaml |sed s/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -
    ```
    
+5. Back-off restarting failed container
 
-
+   没有常驻进程，也就是服务可能没有启动
 
 ## 应用
 
