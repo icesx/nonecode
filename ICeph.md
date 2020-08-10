@@ -5,7 +5,7 @@ ceph
 
 > 1. 准备服务器
 >
->    ```
+>    ```sh
 >    bjrdc208
 >    bjrdc209 
 >    bjrdc210
@@ -13,13 +13,13 @@ ceph
 >
 > 2. 免秘登录
 >
->    ```
+>    ```sh
 >    ssh-copy-id bjrdc210
 >    ```
 >
 > 3. 安装 ceph-deploy
 >
->    ```
+>    ```sh
 >    wget -q -O- 'https://download.ceph.com/keys/release.asc' | apt-key add -
 >    echo deb https://download.ceph.com/debian-octopus/ $(lsb_release -sc) main | tee /etc/apt/sources.list.d/ceph.list
 >    apt update
@@ -28,14 +28,14 @@ ceph
 >
 > 4. new
 >
->    ```
+>    ```sh
 >    cd /cloud/ceph
 >    ceph-deploy new bjrdc208
 >    ```
 >
 > 5. install
 >
->    ```
+>    ```sh
 >    export CEPH_DEPLOY_REPO_URL=https://mirrors.aliyun.com/ceph/debian-octopus
 >    #使用阿里云源
 > ceph-deploy install bjrdc208 bjrdc209 bjrdc210
@@ -184,7 +184,7 @@ ceph
 >
 >`module 'dashboard' reports that it cannot run on the active manager daemon: No module named 'distutils.util'`
 >
->```
+>```sh
 >sudo apt install python3-distutils
 >sudo systemctl restart ceph-mgr@bjrdc208.service
 >sudo ceph mgr module enable dashboard
@@ -216,7 +216,7 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 
 > 创建rbd
 >
-> ```
+> ```sh
 > sudo ceph osd pool create rdb_pool_01 128 128
 > sudo rbd pool init rbd_pool_01
 > sudo ceph osd pool set-quota rdb_pool_01 max_bytes $((10 * 1024 * 1024 * 1024))
@@ -224,7 +224,7 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 >
 > 创建块存储
 >
-> ```
+> ```sh
 > sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
 > sudo rbd --image rdb_pool_01/volume01 info
 > sudo rados -p rdb_pool_01 ls
@@ -263,16 +263,12 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 >
 > 2. 挂载
 >
->    ```
+>    ```sh
 >    sudo rbd map rdb_pool_01/volume01
 >    sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
 >    ```
-> ```
->    
->    
 > 
 > 
-> ```
 
 ## cephfs
 
@@ -355,7 +351,7 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >objrdc storage daemon
 >
->```
+>```sh
 >ceph osd lspools
 >ceph osd pool create bjrdc-pool 128 128
 >ceph osd pool rename bjrdc-pool bjrdc-pool-new
@@ -364,12 +360,19 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >ceph osd pool mksnap bjrdc-pool bjrdc-pool-snapshot
 >ceph osd pool rmsnap bjrdc-pool bjrdc-pool-snapshot
 >sudo ceph osd tree
+>```
+>
+>delete pool
 >
 >```
+>
+>```
+>
+>
 >
 >**文件操作**
 >
->```
+>```sh
 >rados -p bjrdc-pool put testfile /etc/hosts
 >rados -p bjrdc-pool ls
 >rados -p bjrdc-pool rm testfile
@@ -413,13 +416,32 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >**mgr**
 >
->```
+>```sh
 >sudo ceph mgr module ls
 >sudo ceph mgr services
 >sudo ceph mgr module enable dashboard
 >```
 >
 >
+
+## 问题处理
+
+### 1 pool(s) do not have an application enabled
+
+```sh
+sudo ceph osd pool application enable k8s_pool_es_01 rbd
+```
+
+
+
+### 2 e2 handle_auth_request failed to assign global_id
+
+```
+ ceph-deploy --overwrite-conf mon destroy bjrdc210
+ ceph-deploy --overwrite-conf mon add bjrdc210
+```
+
+
 
 ## 性能测试
 

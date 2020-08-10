@@ -145,7 +145,7 @@ sudo apt-get install -y kubelet kubeadm kubectl
 
 #### 通过aliyun安装（推荐）
 
-```
+```sh
 sudo su root
 curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
 sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
@@ -156,7 +156,7 @@ sudo apt-get install -y kubelet kubeadm kubectl
 
 > 注： 如果是在node上不用安装，不需要安装kubectl
 >
-> ```
+> ```sh
 > sudo apt-get install -y kubelet kubeadm
 > ```
 >
@@ -180,12 +180,12 @@ sudo systemctl start kubelet.service
 
 1. disable swap
    
-   ```
+   ```sh
    sudo vi /etc/fstab
    #/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
    ```
    
-   ```
+   ```sh
    sudo reboot
    ```
    
@@ -223,7 +223,7 @@ sudo systemctl start kubelet.service
 
    4. 初始化
 
-      ```
+      ```sh
       kubeadm init \
       --apiserver-advertise-address=172.16.15.17 \
       --image-repository registry.aliyuncs.com/google_containers \
@@ -232,7 +232,7 @@ sudo systemctl start kubelet.service
       #如果无法下载，需要设置--kubernetes-version为当然registry服务器上有的版本
       ```
 
-      ```
+      ```sh
       kubectl get nodes
       ```
 
@@ -246,7 +246,7 @@ sudo systemctl start kubelet.service
 
    5. .kube/config
 
-      ```
+      ```sh
       mkdir -p $HOME/.kube
       sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
       sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -256,7 +256,7 @@ sudo systemctl start kubelet.service
 
       > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
       >
-      > ```
+      > ```sh
       > kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
       > ```
       >
@@ -266,13 +266,13 @@ sudo systemctl start kubelet.service
 
    7. 查看pod
 
-      ```
+      ```sh
       kubectl get pod --all-namespaces
       ```
 
 9. 安装dashborad
 
-   ```
+   ```sh
    wget  https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc7/aio/deploy/recommended.yaml
    kubectl create -f recommended.yaml 
    ```
@@ -285,14 +285,14 @@ sudo systemctl start kubelet.service
 
    disable swap
 
-   ```
+   ```sh
    sudo vi /etc/fstab
    #/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
    ```
 
    sysctl
 
-   ```
+   ```sh
    cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
    net.bridge.bridge-nf-call-ip6tables = 1
    net.bridge.bridge-nf-call-iptables = 1
@@ -322,7 +322,7 @@ sudo systemctl start kubelet.service
 
 2. 安装kubectl
 
-   ```
+   ```sh
    sudo su root
    curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
    # 添加 k8s 镜像源
@@ -337,7 +337,7 @@ sudo systemctl start kubelet.service
 
    1. on master
 
-   ```
+   ```sh
    kubeadm token list
    kubeadm token create --print-join-command
    kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
@@ -345,7 +345,7 @@ sudo systemctl start kubelet.service
 
    2. on node
 
-   ```
+   ```sh
    kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
    ```
 
@@ -355,7 +355,7 @@ sudo systemctl start kubelet.service
 
 1. install
 
-   ```
+   ```sh
    wget https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
    kubectl apply -f recommended.yaml
    ```
@@ -364,7 +364,7 @@ sudo systemctl start kubelet.service
 
    此时直接访问dasnboradr，使用如下地址，会forbidden
 
-   ```
+   ```http
    https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
    ```
 
@@ -388,7 +388,7 @@ sudo systemctl start kubelet.service
    >
    >使用浏览器打开
    >
-   >```
+   >```http
    >https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
    >```
    >
@@ -432,13 +432,13 @@ sudo systemctl start kubelet.service
    >
    > 执行该权限
    >
-   > ```
+   > ```sh
    > kubectl  create -f admin-user.rbac.yaml 
    > ```
    >
    > 查询token
    >
-   > ```
+   > ```sh
    > kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
    > 
    > ')
@@ -496,7 +496,7 @@ vi metrics-server-deployment.yaml
 
 3. 安装
 
-```
+```sh
 kubectl apply -f .
 ```
 
@@ -544,7 +544,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 1. 下载yaml，不需要进行修改可以直接使用
 
-   ```
+   ```sh
    wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml
    
    ```
@@ -555,7 +555,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    > 使用如下命令，将该image下载并推送到harbor中
 
-   ```
+   ```sh
    docker pull quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
    docker tag quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0 bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
    docker login bjrdc206:443
@@ -678,14 +678,16 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 1. master 重启
 
    > 如果因为操作系统更新需要重启，直接重启host,重启前检查系统的ip配置以及网络配置是否正常
-
-   ```
-   sudo reboot
-   ```
+   >
+   > ```sh
+   > sudo reboot
+   > ```
+   >
+   > 
 
    > 如果重启后k8s未启动通过如下命令查看状态
    >
-   > ```
+   > ```sh
    > journalctl -xe kubelet
    > ```
 
@@ -693,7 +695,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
    > 确保kubelet开机自启动了
    >
-   > ```
+   > ```sh
    > systemctl enable kubelet
    > ```
 
@@ -720,13 +722,13 @@ EOF
 
 构建docker镜像
 
-```
+```sh
 sudo docker build -t hello-node:v1 .
 ```
 
 镜像推送到harbor
 
-```
+```sh
 sudo docker tag hello-node:v1 bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 ```
@@ -809,7 +811,7 @@ spec:
 EOF
 ```
 
-```
+```sh
 kubectl create -f service.yaml
 ```
 
@@ -831,7 +833,7 @@ targetPort:pod 的服务端口
 
 port：service将pod的端口映射为集群的端口。
 
-```
+```sh
 kubectl get services --all-namespaces
 NAMESPACE              NAME                        TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
 bjrdc-dev              hello-node                  ClusterIP   10.102.118.239   <none>        3000/TCP                 12m
@@ -871,15 +873,40 @@ curl 10.102.118.239:3000
 
 > pod 是container的更高抽象
 >
-> 1. 独立生命pod
+> 1. 独立声明pod
 >
+>    ```yaml
+>    cat >0-busybox-pod.yaml <<EOF
+>    apiVersion: v1
+>    kind: Pod
+>    metadata:
+>      name: busybox
+>      namespace: bjrdc-dev
+>      labels: 
+>       app: busybox 
+>    spec:
+>          containers: 
+>          - name: busybox
+>            image: busybox
+>            args:
+>            - /bin/sh
+>            - -c
+>            - sleep 10; touch /tmp/healthy; sleep 30000
+>            readinessProbe:           
+>              exec:
+>                command:
+>                - cat
+>                - /tmp/healthy
+>              initialDelaySeconds: 10      
+>              periodSeconds: 5
+>    EOF          
 >    ```
+>
 >    
->    ```
 >
 > 2. 重启pod
 >
->    ```
+>    ```sh
 >    kubectl get pod mysql-on-ceph-01-yyy -o yaml -n bjrdc-dev|kubectl replace --force -f -
 >    ```
 >
@@ -887,7 +914,7 @@ curl 10.102.118.239:3000
 >
 >    先将node设置为不可调度
 >
->    ```bash
+>    ```sh
 >    kubectl cordon bjrdc81
 >    ```
 >
@@ -960,7 +987,7 @@ curl 10.102.118.239:3000
 2. 创建statefulset
 
    ```yaml
-   cat 1-statefulset.yaml 
+   cat >1-statefulset.yaml <<EOF
    apiVersion: v1
    kind: Service
    metadata:
@@ -1011,18 +1038,18 @@ curl 10.102.118.239:3000
          resources:
            requests:
              storage: 500Mi
+   EOF          
    ```
 
 3. 查看pod，此时应该创建了多个pod
 
    ```shell
    kubectl get pod -n bjrdc-dev
-   
    web-stateful-0                      1/1     Running   0          13h
    web-stateful-1                      1/1     Running   0          13h
    web-stateful-2                      1/1     Running   0          13h
    ```
-
+   
 4. 验证
 
    部署完成后，可以使用service和pod的域名进行访问，访问的模式为
@@ -1155,13 +1182,13 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
    在serviceaccount.yaml和deployment.yaml中增加
 
-   ```
+   ```yaml
      namespace: kube-system
    ```
 
 5. 最后还需要让`rbd-provisioner`具有secret权限
 
-   ```
+   ```yaml
    vi clusterrole.yaml
      - apiGroups: [""]
        resources: ["secrets"]
@@ -1170,7 +1197,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 6. 执行所有的yaml应该就可以将rbd-provisioner安装好了
 
-   ```
+   ```sh
    kubectl apply -f .
    ```
 
@@ -1180,7 +1207,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
    1. failed to provision volume with StorageClass "ceph-storageclass": failed to get admin secret from ["bjrdc-dev"/"ceph-rbd-secret"]: secrets "ceph-rbd-secret" is forbidden: User "system:serviceaccount:kube-system:rbd-provisioner" cannot get resource "secrets" in API group "" in the namespace "bjrdc-dev"
 
-      ```
+      ```yaml
       vi clusterrole.yaml
         - apiGroups: [""]
           resources: ["secrets"]
@@ -1191,9 +1218,11 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
       **secrte配置错了**
 
-   3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 详细见如下issue
+   3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 详细见如下issue，需要安装rdb-provisoner
 
       [https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 ](https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 )
+   
+9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*
 
 
 ​      
@@ -1254,7 +1283,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 3. 创建vpc
 
-   ```
+   ```yaml
    cat >3-pvc.yaml <<EOF
    kind: PersistentVolumeClaim
    apiVersion: v1
@@ -1309,7 +1338,7 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 5. 执行
 
-   ```
+   ```sh
    kubectl apply -f .
    ```
 
@@ -1811,7 +1840,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 5. 此时应该可以正常的访问到pod，并且pod上挂载了ceph的目录。同时在ceph上可以看到一个自动创建的image
 
-   ```yaml
+   ```sh
    sudo rbd list -p k8s_pool_01
    
    k8s-mysql-cluster-v1
@@ -1821,7 +1850,10 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
    kubernetes-dynamic-pvc-7be164a4-d315-11ea-9a3c-4e8cdd04a447
    ```
 
-   
+
+### 如何方式数据卷被删除呢？
+
+TODO
 
 ## Prometheus（监控）
 
@@ -1926,7 +1958,6 @@ kubectl delete clusterrole system:heapster
 kubectl delete pod hello-node
 kubectl delete service spring-cloud-eureka -n bjrdc-dev
 # cannot delete pod
-
 kubectl delete deploment spring-cloud-eureka -n bjrdc-dev
 # delete service with pod
 kubectl delete event --all -n bjrdc-dev
@@ -2101,7 +2132,7 @@ kubectl scale --replicas=5 rc/foo rc/bar rc/baz
      ...
    ```
 
-   ```
+   ```sh
    ./install.sh
    ```
 
@@ -2145,9 +2176,9 @@ sudo service docker restart
 
 使用docker-compose
 
-```
+```sh
 sudo docker-compose down
-sudo docker-compose up -d
+sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 ```
 
 或者直接重启host
@@ -2380,7 +2411,7 @@ sudo docker-compose up -d
 4. 创建service
 
    ```yaml
-    cat >3-mysql-service.yaml <<EOF
+   cat >3-mysql-service.yaml <<EOF
    apiVersion: v1
    kind: Service
    metadata:
@@ -2714,7 +2745,7 @@ sudo docker-compose up -d
 
    2. 查看pvc信息
 
-      ```sh
+      ```yaml
       kubectl describe pv pvc-4736b344-572b-4470-9d14-5384f949caa6 -n bjrdc-dev
       Name:            pvc-4736b344-572b-4470-9d14-5384f949caa6
       Labels:          <none>
@@ -2866,7 +2897,7 @@ sudo docker-compose up -d
          name: es-data
        spec:
          accessModes: [ "ReadWriteOnce" ]
-         storageClassName: ceph-storageclass-stateful
+         storageClassName: ceph-storageclass-es
          resources:
            requests:
              storage: 5Gi
@@ -2931,11 +2962,95 @@ sudo docker-compose up -d
 
 ### kibana install
 
+> kibana 安装之前需要将es先安装好。安装kibana的套路和安装es的套路类似，详细如下：
 
+1. configmap
 
-## Redis
+   ```yaml
+   cat >0-es-configmap.yaml <<EOF
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: kibana-config
+     namespace: bjrdc-dev
+   data:
+     kibana.yml: |
+       server.host: "${POD_NAME}"
+       elasticsearch.url: "http://es-stateful-headless.bjrdc-dev.svc.cluster.local:9200"
+       elasticsearch.username: "kibana"
+       elasticsearch.password: "elastic"
+   EOF    
+   ```
 
+2. deployment
 
+   ```yaml
+   cat >1-es-kibana-deployment.yaml <<EOF
+   kind: Deployment
+   apiVersion: apps/v1
+   metadata:
+     labels:
+       app: kibana
+     name: kibana
+     namespace: bjrdc-dev
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: kibana
+     template:
+       metadata:
+         labels:
+           app: kibana
+       spec:
+         containers:
+         - name: kibana
+           image: kibana:6.8.11
+           ports:
+           - containerPort: 5601
+             protocol: TCP
+           env:
+           - name: POD_NAME
+             valueFrom:
+               fieldRef:
+                 fieldPath: metadata.name
+           volumeMounts:
+           - name: kibana-config
+             mountPath: /usr/share/kibana/config/kibana.yml
+             subPath: kibana.yml
+         volumes:
+         - name: kibana-config
+           configMap:
+             name: kibana-config
+   EOF          
+   ```
+
+3. service
+
+   ```yaml
+   cat >2-es-kibana-service.yaml <<EOF
+   kind: Service
+   apiVersion: v1
+   metadata:
+     labels:
+       app: kibana
+     name: kibana
+     namespace: bjrdc-dev
+   spec:
+     ports:
+     - port: 5601
+     selector:
+       app: kibana
+   EOF    
+   ```
+
+4. 完成安装后，通过如下地址访问kibana
+
+   ```sh
+   curl http://kibana.bjrdc-dev.svc.cluster.local:5601/app/kibana#/home
+   ```
+
+   
 
 ## 日志收集
 
@@ -2943,11 +3058,357 @@ sudo docker-compose up -d
 
 
 
+## Redis
+
+### singal
+
+> 使用ceph作为存储的单节点配置方式
+
+1. 万年不变的storageclass
+
+   ```yaml
+   cat >0-redis-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-redis
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_redis_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+2. 千年不变的configmap
+
+   ```yaml
+   cat> 1-redis-configmap.yaml <<EOF
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: redis-config
+     namespace: bjrdc-dev
+   data:
+     redis.conf: |
+       dir /data/redis
+       save 900 1
+       save 300 10
+       save 60 10000
+       bind 0.0.0.0
+   EOF    
+   ```
+   
+   
+   
+3. storageclass
+
+   ```yaml
+   cat >0-redis-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-redis
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_redis_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+   
+
+4. 必要的pvc
+
+   ```yaml
+   cat >2-redis-pvc.yaml <<EOF
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: ceph-redis-pvc
+     namespace: bjrdc-dev
+   spec:
+     accessModes:
+       - ReadWriteOnce
+     storageClassName: ceph-storageclass-redis 
+     resources:
+       requests:
+         storage: 3Gi
+   EOF      
+   ```
+
+5. 必须要的deployment
+
+   ```yaml
+   cat >3-redis-deployment.yaml <<EOF
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: redis-on-ceph-singal
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: redis-on-ceph-singal
+     strategy:
+       type: Recreate
+     template:
+       metadata:
+         labels:
+           app: redis-on-ceph-singal
+       spec:
+         containers:
+         - image: redis:6.0.6
+           name: redis
+           ports:
+           - containerPort: 6379
+           volumeMounts:
+           - name: redis-data
+             mountPath: /data/redis
+           - name: redis-config
+             mountPath: /data/redis.conf
+             subPath: redis.conf
+           command:
+           - bash
+           - "-c"
+           - |
+             exec /usr/local/bin/redis-server /data/redis.conf
+         volumes:
+         - name: redis-data
+           persistentVolumeClaim: 
+             claimName: ceph-redis-pvc
+         - name: redis-config
+           configMap:
+             name: redis-config
+   EOF          
+   ```
+
+6. 可能需要service
+
+   ```yaml
+   cat >4-redis-service.yaml <<EOF
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: redis-service-singal
+     namespace: bjrdc-dev
+     labels:
+       app: redis-service-singal
+   spec:
+     selector:
+         app: redis-on-ceph-singal
+     ports:
+     - protocol : TCP
+       port: 6379
+       targetPort: 6379
+   EOF    
+   ```
+
+   
+
+7. 验证
+
+   ```sh
+   kubectl exec -it redis-on-ceph-singal-c744b4fdb-pntns -n bjrdc-dev -- redis-cli 
+   127.0.0.1:6379> get keys
+   (nil)
+   127.0.0.1:6379> set 001 chengtao
+   OK
+   127.0.0.1:6379> get 001
+   "chengtao"
+   ```
+
+   
+
+### cluster
+
+> 集群方式部署和mysql的类似，需要用到`statefulset`
+>
+> 基本思路是使用statefulset创建节点后，通过redis的命令创建集群
+
+1. 使用singal模式的storageclass，不需要再另外声明
+
+2. 创建configmap
+
+   ```yaml
+   cat 0-redis-cluster-configmap.yaml 
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: redis-cluster-config
+     namespace: bjrdc-dev
+   data:
+     redis.conf: |
+       dir /data/redis
+       appendonly yes
+       cluster-enabled yes
+       cluster-config-file /data/nodes.conf 
+       cluster-node-timeout 5000 
+       port 6379
+       bind 0.0.0.0
+   ```
+
+   
+
+3. 创建statefulset
+
+   ```yaml
+   cat 1-redis-cluster-statefulset.yaml 
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: redis-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: redis-stateful 
+     serviceName: redis-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: redis-stateful
+       spec:
+         containers:
+         - name: redis-stateful
+           image: redis:6.0.6
+           command:
+           - bash
+           - "-c"
+           - |
+             set -ex
+             nodeconf=/data/nodes.conf
+             dir=/data/redis
+             if [ ! -d "$dir" ]; then
+               mkdir "$dir"
+             fi
+             if [ -f "$nodeconf" ]; then
+               sed -i -e "/myself/ s/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/${POD_IP}/" "$nodeconf"
+             fi
+             exec /usr/local/bin/redis-server /data/redis.conf 
+           env:
+           - name: POD_IP
+             valueFrom:
+               fieldRef:
+                 fieldPath: status.podIP
+           ports:
+           - containerPort: 6379
+             protocol: TCP
+           volumeMounts:
+           - name: redis-data
+             mountPath: /data
+           - name: redis-config
+             mountPath: /data/redis.conf
+             subPath: redis.conf
+         volumes:
+           - name: redis-config
+             configMap:
+               name: redis-cluster-config
+     volumeClaimTemplates:
+     - metadata:
+         name: redis-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-redis
+         resources:
+           requests:
+             storage: 2Gi
+   ```
+
+   
+
+4. 创建headless service
+
+   ```yaml
+   cat 2-redis-cluster-service.yaml 
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: redis-stateful-headless
+     namespace: bjrdc-dev
+     labels:
+       app: redis-stateful
+   spec:
+     ports:
+     - name: redis-stateful-port
+       port: 6379
+     clusterIP: None
+     selector:
+       app: redis-stateful
+   ```
+
+   
+
+5. 测试statefulset
+
+   ```sh
+   dig redis-stateful-headless.bjrdc-dev.svc.cluster.local
+   ```
+
+   
+
+6. 创建cluster
+
+   ```sh
+   redis-cli --cluster create redis-stateful-0.redis-stateful-headless redis-stateful-1.redis-stateful-headless
+   #可惜这个方法执行不下去,原因是redis只能通过ip创建集群。。。
+   #Node redis-stateful-1.redis-stateful-headless:6379 replied with error:
+   #ERR Invalid node address specified: redis-stateful-0.redis-stateful-headless:6379
+   ```
+
+   通过如下方法可以替换当前的cluster的node的ip，集群重启后，ip全部变化的情况下，无法确保所有的node可用。
+
+   ```sh
+   kubectl exec -it redis-stateful-0 -n bjrdc-dev -- redis-cli --cluster create $(kubectl get pods -l app=redis-stateful -n bjrdc-dev -o jsonpath='{range.items[*]}{.status.podIP}:6379 ')
+   ```
+
+   再通过其他办法来
+   
+   **通过脚本重建nodes.conf**
+   
+   
+   
+7. 查看cluster状态
+
+   ```sh
+   kubectl exec -it redis-stateful-0 -n bjrdc-dev -- redis-cli role
+   kubectl exec -it redis-stateful-1 -n bjrdc-dev -- redis-cli role
+   kubectl exec -it redis-stateful-0 -n bjrdc-dev -- redis-cli cluster info
+   ```
+
+   
+
+8. 重启
+
+## 启动顺序
+
+> 使用`initcontainer`确保服务的启动顺序。
+>
+> TODO
+
 ## 问题处理
 
 1. 查看日志
 
-   ```
+   ```sh
    journalctl -f -u kubelet
    ```
 
@@ -2955,7 +3416,7 @@ sudo docker-compose up -d
 
    现象
 
-   ```
+   ```sh
    jouralctl -xe --no-page 
    ...
    failed to run Kubelet: misconfiguration: kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
@@ -2963,14 +3424,14 @@ sudo docker-compose up -d
 
    问题定位，k8s的cgrou-driver与docker的不同（daemon.json）
 
-   ```
+   ```sh
    cat /var/lib/kubelet/kubeadm-flags.env
    KUBELET_KUBEADM_ARGS="--cgroup-driver=cgroupfs --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
    ```
 
    修改为
 
-   ```
+   ```sh
    KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
    ```
 
@@ -2978,19 +3439,23 @@ sudo docker-compose up -d
 
    重新apply flannel，或者手动创建该文件（不推荐）
 
-   ```
+   ```sh
    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
    ```
 
 4. coredns pod crash
 
-   ```
+   ```sh
    kubectl -n kube-system get deployment coredns -o yaml |sed s/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -
    ```
    
 5. Back-off restarting failed container
 
    没有常驻进程，也就是服务可能没有启动
+   
+6. Failed to update endpoint bjrdc-dev/redis-stateful-headless: Operation cannot be fulfilled on endpoints "redis-stateful-headless": the object has been modified; please apply your changes to the latest version and try again
+
+   
 
 ## 应用
 
@@ -3010,7 +3475,7 @@ sudo docker-compose up -d
 >
 >    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
 >
->    ```
+>    ```sh
 >    route add -net 10.0.0.0/8 gw 172.16.15.17
 >    ```
 >
@@ -3018,7 +3483,7 @@ sudo docker-compose up -d
 >
 >    或者通过netplan配置，and config to netplan.yaml
 >
->    ```
+>    ```yaml
 >    network:
 >      version: 2
 >      renderer: networkd
@@ -3038,7 +3503,7 @@ sudo docker-compose up -d
 >
 >    只能通过`resolvconf`来实现更新，相关方法如下
 >
->    ```
+>    ```sh
 >    sudo apt install resolvconf
 >    cat > /etc/resolvconf/resolv.conf.d/head <<EOF
 >    nameserver 10.96.0.10
@@ -3066,7 +3531,7 @@ sudo docker-compose up -d
 >
 > 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
 >
-> ```
+> ```java
 > 	@Autowired
 > 	private DiscoveryClient discoveryClient;
 > 
@@ -3078,7 +3543,7 @@ sudo docker-compose up -d
 >
 > 需要在pom.xml中配置如下
 >
-> ```
+> ```xml
 > <dependency>
 > <groupId>org.springframework.cloud</groupId>
 > <artifactId>spring-cloud-kubernetes-core</artifactId>
@@ -3097,14 +3562,14 @@ sudo docker-compose up -d
 >
 > service发现
 >
-> ```
+> ```sh
 > curl localhost:8086/sc-k8s-consumer/services
 > ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
 > ```
 >
 > 调用provider方法
 >
-> ```
+> ```sh
 > curl localhost:8086/sc-k8s-provider/index/list
 > ```
 >
@@ -3116,7 +3581,7 @@ sudo docker-compose up -d
 >
 > 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
 >
-> ```
+> ```yaml
 > apiVersion: rbac.authorization.k8s.io/v1
 > kind: ClusterRole
 > metadata:
@@ -3170,12 +3635,12 @@ TODO
 >
 > 
 
-| 类别     | 名称                                                         |
-| :------- | ------------------------------------------------------------ |
-| 资源对象 | Pod、ReplicaSet、ReplicationController、Deployment、StatefulSet、DaemonSet、Job、CronJob、HorizontalPodAutoscaling、Node、Namespace、Service、Ingress、Label、CustomResourceDefinition |
-| 存储对象 | Volume、PersistentVolume、Secret、ConfigMap                  |
-| 策略对象 | SecurityContext、ResourceQuota、LimitRange                   |
-| 身份对象 | ServiceAccount、Role、ClusterRole                            |
+| 类别     | 名称                                                         | 说明 |
+| :------- | ------------------------------------------------------------ | ---- |
+| 资源对象 | Pod、ReplicaSet、ReplicationController、Deployment、StatefulSet、DaemonSet、Job、CronJob、HorizontalPodAutoscaling、Node、Namespace、Service、Ingress、Label、CustomResourceDefinition |      |
+| 存储对象 | Volume、PersistentVolume、Secret、ConfigMap                  |      |
+| 策略对象 | SecurityContext、ResourceQuota、LimitRange                   |      |
+| 身份对象 | ServiceAccount、Role、ClusterRole                            |      |
 
 ### pod
 

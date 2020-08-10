@@ -8,29 +8,29 @@ xxnet
 3. 登录google，让chorme同步插件后，配置switchyomega
 4. 关闭系统的automatic pac
 5. 开启ipv6
-```
-	$sudo apt-get install miredo
-	$sudo service miredo restart
-	$修改路由器上的dns，否则miredo有时无法建立，经测试114.114.114.114暂时可以
+```sh
+sudo apt-get install miredo
+sudo service miredo restart
+#修改路由器上的dns，否则miredo有时无法建立，经测试114.114.114.114暂时可以
 ```
 
 ### 修改端口和ip
 
 1. web ip 端口
 
-   ```
+   ```sh
    vi XX-Net/data/launcher/config.yaml
    ```
 
    代理端口
 
-   ```
+   ```sh
    web_control.py:            "proxy_listen": str(config.listen_ip) + ":" + str(config.listen_port),
    ```
 
    
 
-   ```
+   ```sh
    icesx@ztf:~/software/XX-Net/data/gae_proxy$ cat config.json 
    {
      "GAE_APPIDS": [
@@ -56,7 +56,7 @@ xxnet
 
    3. 修改8087 和ip为必要的端口与ip以及appid
    
-      ```
+      ```sh
       vi /XX-Net/data/gae_proxy/config.json 
       {
         "GAE_APPIDS": [
@@ -74,7 +74,7 @@ xxnet
    
    5. deploy
    
-      ```
+      ```sh
       vi ./code/default/gae_proxy/local/download_gae_lib.py
       
           client = simple_http_client.Client(proxy={

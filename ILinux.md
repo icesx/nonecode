@@ -534,23 +534,23 @@ export HISTSIZE=45000
 ### expect
 
  1. shell
- ```
+ ```sh
  #/usr/bin/expect <<EOF
  set timeout 3000
  spawn scp ${zip_file} ${user}@${host}:${remote}/
  expect "password:"
  send "${password}\r"
- #expect "$"
- #spawn ssh ${user}@${host}
- #expect "password:"
- #send "${password}\r"
- #expect "${user}@"
- #send "${spark_commit} --master yarn-cluster --class  ${main_class}  /home/docker/mrs/${jar}\r"
+ expect "$"
+ spawn ssh ${user}@${host}
+ expect "password:"
+ send "${password}\r"
+ expect "${user}@"
+ send "${spark_commit} --master yarn-cluster --class  ${main_class} /home/docker/mrs/${jar}\r"
  expect EOF  
  ```
  2. ssh yes
 
- ```
+ ```sh
  #!/usr/bin/expect
  set user [lindex $argv 0] 
  set host [lindex $argv 1] 
@@ -566,7 +566,7 @@ export HISTSIZE=45000
  interact
  ```
 ### cu
-```
+```sh
 chown uucp /dev/ttyUSB0
 sudo cu -l /dev/ttyUSB0 -s 115200
 ```
@@ -631,7 +631,7 @@ cu -l ttyAMA0 -s 115200
 
 1. scp
 
-   ```
+   ```sh
    #!/bin/bash
    set -x
    _file=$(pwd $0)/$(dirname $0)
@@ -659,8 +659,8 @@ disable selinux
 	
 3、添加用户，一定要添加本地用户
 
-```
-#sambapasswd -a docker
+```sh
+sambapasswd -a docker
 zgjx@321
 zgjx@321
 ```
@@ -669,15 +669,15 @@ zgjx@321
 
 ## DNS
 
-```
-	#yum install bind
- 	#vi /etc/named.conf
+```sh
+yum install bind
+vi /etc/named.conf
 				listen-on port 53 { 127.0.0.1; };
 				allow-query     { localhost; };
 			修改为
 				listen-on port 53 { any; };
 				allow-query     { any; };
-	#service named restart
+service named restart
 ```
 
 
@@ -709,7 +709,7 @@ sudo apt install postfix mailutils
 
 1. 发送邮件
 
-```
+```sh
 echo "test message42..." | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
 echo "test message42..." | mailx -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
 -r : from
@@ -724,5 +724,19 @@ My site is www.361way.com
 My site is www.91it.org
 Test for cat and EOF!
 EOF
+```
+
+
+
+## nfs
+
+```sh
+sudo apt install nfs-kernel-server
+cat >>/etc/exports <<EOF
+/cloud/nfs-root *(rw,sync,no_subtree_check)
+EOF
+sudo systemctl restart nfs-kernel-server.service
+sudo showmount -e localhost
+sudo mount bjrdc216:/cloud/nfs-root temp/
 ```
 

@@ -471,6 +471,12 @@ flush privileges;
 
 >首先挂在ceph-rdb卷
 >
+>```
+>sudo rbd map rdb_pool_01/volume01
+>```
+>
+>
+>
 >测试脚本
 >
 >```
@@ -481,30 +487,30 @@ flush privileges;
 >
 >```
 >SQL statistics:
->    queries performed:
->        read:                            1998164
->        write:                           570902
->        other:                           285451
->        total:                           2854517
->    transactions:                        142725 (1188.39 per sec.)
->    queries:                             2854517 (23767.96 per sec.)
->    ignored errors:                      1      (0.01 per sec.)
->    reconnects:                          0      (0.00 per sec.)
+>queries performed:
+>   read:                            1998164
+>   write:                           570902
+>   other:                           285451
+>   total:                           2854517
+>transactions:                        142725 (1188.39 per sec.)
+>queries:                             2854517 (23767.96 per sec.)
+>ignored errors:                      1      (0.01 per sec.)
+>reconnects:                          0      (0.00 per sec.)
 >
 >General statistics:
->    total time:                          120.0975s
->    total number of events:              142725
+>total time:                          120.0975s
+>total number of events:              142725
 >
 >Latency (ms):
->         min:                                    2.80
->         avg:                                  107.66
->         max:                                  712.90
->         95th percentile:                      235.74
->         sum:                             15365546.17
+>    min:                                    2.80
+>    avg:                                  107.66
+>    max:                                  712.90
+>    95th percentile:                      235.74
+>    sum:                             15365546.17
 >
 >Threads fairness:
->    events (avg/stddev):           1115.0391/16.93
->    execution time (avg/stddev):   120.0433/0.02
+>events (avg/stddev):           1115.0391/16.93
+>execution time (avg/stddev):   120.0433/0.02
 >```
 >
 >
