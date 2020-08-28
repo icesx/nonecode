@@ -1120,15 +1120,42 @@ curl 10.102.118.239:3000
 >            - /tmp/health
 >          initialDelaySeconds: 15
 >          timeoutSeconds: 1
+>          periodSeconds: 5
 >    ```
 >
->    
+>    > `periodSeconds` 规定kubelet要每隔5秒执行一次liveness probe。 `initialDelaySeconds` 告诉kubelet在第一次执行probe之前要的等待5秒钟。探针检测命令是在容器中执行 `cat /tmp/healthy` 命令。如果命令执行成功，将返回0，kubelet就会认为该容器是活着的并且很健康。如果返回非0值，kubelet就会杀掉这个容器并重启它
 >
-> 2. **readinessProbe**
+>    http 检测
 >
->    容器是否可以接受请求
+>    ```
+>    apiVersion: v1
+>    kind: Pod
+>    metadata:
+>      labels:
+>        test: liveness
+>      name: liveness-http
+>    spec:
+>      containers:
+>      - name: liveness
+>        args:
+>        - /server
+>        image: gcr.io/google_containers/liveness
+>        livenessProbe:
+>          httpGet:
+>            path: /healthz
+>            port: 8080
+>            httpHeaders:
+>              - name: X-Custom-Header
+>                value: Awesome
+>          initialDelaySeconds: 3
+>          periodSeconds: 3
+>    ```
 >
->    ```yaml
+>    > 任何大于200小于400的返回码都会认定是成功的返回码。其他返回码都会被认为是失败的返回码
+>
+>    端口检查
+>
+>    ```
 >    apiVersion: v1
 >    kind: Pod
 >    metadata:
@@ -1147,6 +1174,24 @@ curl 10.102.118.239:3000
 >    ```
 >
 >    
+>
+> 2. **readinessProbe**
+>
+>    容器是否可以接受请求。
+>
+>    有时，应用程序暂时无法对外部流量提供服务。 例如，应用程序可能需要在启动期间加载大量数据或配置文件。 在这种情况下，你不想杀死应用程序，但你也不想发送请求。 Kubernetes提供了readiness probe来检测和减轻这些情况。 Pod中的容器可以报告自己还没有准备，不能处理Kubernetes服务发送过来的流量
+>    
+>    ```yaml
+>    readinessProbe:
+>      exec:
+>        command:
+>        - cat
+>        - /tmp/healthy
+>      initialDelaySeconds: 5
+>      periodSeconds: 5
+>    ```
+>    
+>    Readiness probe的HTTP和TCP的探测器配置跟liveness probe一样。
 
 ### 10.StorageClass
 
@@ -1886,7 +1931,7 @@ kubeadm token create --print-join-command
 ```
 ### kubectl
 
-命令模式
+#### 命令模式
 
 kubectl   [get|describe|delete]  [node(s)|pod(s)|service(s)|role(s)|namespace(s)|cs|storageclass|pv|pvc|ep]
 
@@ -1897,14 +1942,14 @@ kubectl cluster-info
 kubectl config view
 ```
 
-创建资源
+#### 创建资源
 
 ```sh
 kubectl create -f xx.yaml
 kubectl create -f .
 ```
 
-获取资源
+#### 获取资源
 
 ```sh
 kubectl get ep kube-dns --namespace=kube-system
@@ -1926,7 +1971,7 @@ kubectl get serviceaccounts -n bjrdc-dev
 kubectl get serviceaccounts -n bjrdc-dev -o yaml
 ```
 
-描述资源详情
+#### 描述资源详情
 
 ```sh
 kubectl describe namespaces kube-system
@@ -1936,7 +1981,9 @@ kubectl describe node bjrdc81
 kubectl describe pod/mysql-statefulset-0 -n bjrdc-dev
 ```
 
-扩去pod的log，该方法只能获取到控制台的log
+#### logs
+
+获取pod的log，该方法只能获取到控制台的log
 
 ```sh
 kubectl logs pod xxxx -n kube-system -f
@@ -1944,13 +1991,13 @@ kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 #查看pod/mysql-statefulset-1下的容器 cone-mysql的日志
 ```
 
-
+#### lable
 
 ```sh
 kubectl label node/10.47.136.60 role=entry
 ```
 
-删除资源
+#### 删除资源
 
 ```sh
 kubectl delete -f recommended.yaml
@@ -1963,17 +2010,19 @@ kubectl delete deploment spring-cloud-eureka -n bjrdc-dev
 kubectl delete event --all -n bjrdc-dev
 ```
 
-在线编辑资源信息
+#### 在线编辑资源信息
 
 ```sh
 kubectl edit deployment kubernetes-hello-world
 ```
 
-控制台启动一个pod
+#### 控制台启动一个pod
 
 ```sh
 kubectl run hello-node --image=hello-node:v1 --port=3000
 ```
+
+#### exec
 
 执行到pod内的任务，如果一个pod有多个container，需要增加-c参数
 
@@ -1983,13 +2032,13 @@ kubectl exec -it spring-cloud-config-68768fb466-mkjxz -n bjrdc-dev -- /bin/sh
 kubectl exec -it pod-shard-5c7b7f6bd6-2dhdj -c busybox -n bjrdc-dev -- hostname
 ```
 
-对比参数
+#### 对比参数
 
 ```sh
 kubectl diff -f ./my-manifest.yaml
 ```
 
-伸缩
+#### 伸缩
 
 ```sh
 kubectl scale --replicas=3 rs/foo                                 
@@ -2002,6 +2051,19 @@ kubectl scale --current-replicas=2 --replicas=3 deployment/mysql
 # If the deployment named mysql's current size is 2, scale mysql to 3
 
 kubectl scale --replicas=5 rc/foo rc/bar rc/baz
+```
+
+#### 创建
+
+```sh
+kubectl create configmap redis-cluster-config  -n bjrdc-dev --from-file=redis.conf=./redis.conf --from-file=redis-cluster-boot.py=./redis-cluster-boot.py
+```
+
+#### 重启 资源
+
+```sh
+kubectl get pod ubuntu -n bjrdc-dev -o yaml|kubectl replace --force -f -
+kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --force -f -
 ```
 
 
@@ -2958,7 +3020,7 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 
 ### plugin config
 
-
+TODO 安装自定义插件
 
 ### kibana install
 
@@ -3056,7 +3118,254 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 
 ### logstash
 
+## RabbitMQ
 
+> rabbitmq 的安装在kubernetes上并没有太多的特殊的地方，主要需要解决如下几个问题
+>
+> 1. .erlang.cookie文件的同步问题：保证各个节点上的该文件一样
+>
+>    **该问题在刚开始的时候花费了我较多的时间，因为没有太多关注，后来查询官方文档后，才知道，如果没有设置该文件，则rabbit会自动创建一个随机的，这样就导致各个节点上的不一样了，无法链接到集群；同时通过测试发现设置的`RABBITMQ_ERLANG_COOKIE`并不能生效，也耽误了一定的时间**
+>
+>    ```
+>    If the file does not exist, Erlang VM will try to create one with a randomly generated value when the RabbitMQ server starts up. Using such generated cookie files are appropriate in development environments only. Since each node will generate its own value independently, this strategy is not really viable in a clustered environment.
+>    ```
+>
+>    [https://www.rabbitmq.com/clustering.html](https://www.rabbitmq.com/clustering.html)
+>
+> 2. 域名的问题：rabbit有一个短域名和长域名的概念，如果短域名下，是无法通过pod中的容器访问到其他的pod的，故无法创建集群。
+
+1. 创建ceph pool
+
+   ```sh
+   sudo ceph osd pool create k8s_pool_rabbit_01
+   sudo ceph osd pool application enable k8s_pool_rabbit_01 rbd
+   ```
+
+   rabbitmq以集群方案安装的思路是，采用storageclass作为存储，使用命令创建集群。
+
+   rabbitMQ默认的存储路径为`/var/lib/rabbitmq/mnesia/`
+
+2. 创建erlang.cookie
+
+   ```sh
+   echo $(openssl rand -base64 32) > erlang.cookie
+   ```
+
+3. 创建rabbit-start.sh
+
+   > 在rabbit启动之前需要等待一段时间`30s`等headlessservice启动
+
+   ```sh
+   cat >rabbit-start.sh <<EOF
+   set -ex
+   echo  "waiting headless online"
+   sleep 30
+   hostname=`hostname`
+   rabbitmq-server -detached
+   echo "start rabbitmq-server"
+   
+   until rabbitmqctl node_health_check; do sleep 3; done
+   echo "$hostname is started."
+   if [[ "$hostname" -eq "$CLUSTER" ]]; then
+     rabbitmqctl stop_app
+     echo "stop_app on $hostname"
+     echo  "reset on $hostname"
+     rabbitmqctl start_app
+     echo "start_app on $hostname"
+     rabbitmq-plugins enable rabbitmq_management
+     echo  "rabbitmq_management enabled on $hostname"
+     bjrdc=`rabbitmqctl list_users|grep bjrdc||true`
+     if [ -z "$bjrdc" ]; then
+       echo "create user bjrdc.."
+       rabbitmqctl add_user bjrdc xxxxx
+       rabbitmqctl set_user_tags bjrdc administrator
+       rabbitmqctl set_permissions -p / bjrdc ".*" ".*" ".*"
+       echo "create user finished."
+     else
+       echo "bjrdc is in cluster so do nothing."     
+     fi      
+   else
+     cluster=`rabbitmqctl cluster_status|grep $CLUSTER.$HEADLESS||true`
+     echo "cluster is $cluster ."
+     if [ -z "$cluster" ]; then
+       echo "$hostname is not join to cluster $CLUSTER.$HEADLESS"
+       rabbitmqctl stop_app
+       rabbitmqctl join_cluster rabbit@$CLUSTER.$HEADLESS
+       echo  "$hostname join cluster to rabbit@$CLUSTER.$HEADLESS"
+       rabbitmqctl start_app
+     else
+       echo "$hostname is in cluster $CLUSTER.$HEADLESS"
+     fi
+   fi
+   EOF
+   ```
+
+   
+
+4. 创建的configmap 
+
+   采用命令行方式创建，可以引入外部文件
+
+   ```sh
+   kubectl create configmap rabbit-cluster-config  -n bjrdc-dev --from-file=rabbit-start.sh=./rabbit-start.sh
+   ```
+
+5. 创建 .erlang.cookie的configmap
+
+   ```sh
+   kubectl create configmap rabbit-cluster-cookie  -n bjrdc-dev --from-file=erlang.cookie=./erlang.cookie
+   ```
+
+6. 创建 storageclass
+
+   ```yaml
+   cat >0-rabbit-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-rabbit
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_rabbit_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering
+     
+   EOF  
+   ```
+
+7. 创建statefulset
+
+   ```yaml
+   cat >1-rabbit-cluster-statefulset.yaml <<EOF
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: rabbit-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: rabbit-stateful 
+     serviceName: rabbit-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: rabbit-stateful
+       spec:
+         containers:
+         - name: rabbit-stateful
+           image: bjrdc206.reg/library/rabbitmq:3.7-management
+           command:
+           - bash
+           - "-c" 
+           - |
+             set -ex
+             exec /bjrdc/rabbit-start.sh &
+             while true; do echo do...; sleep 10;done
+           env: 
+           - name: CLUSTER
+             value: rabbit-stateful-0
+           - name: HEADLESS
+             value: rabbit-stateful-headless
+           - name: MY_POD_NAME
+             valueFrom:
+               fieldRef:
+                 fieldPath: metadata.name
+           - name: RABBITMQ_NODENAME
+             value: "rabbit@$(MY_POD_NAME).$(HEADLESS)"
+           - name: RABBITMQ_USE_LONGNAME
+             value: "true"
+           ports:
+           - containerPort: 15672
+             protocol: TCP
+           - containerPort: 5672
+             protocol: TCP
+           - containerPort: 25672
+             protocol: TCP
+           - containerPort: 4369
+             protocol: TCP
+   
+           livenessProbe:
+             exec: 
+               command: 
+               - rabbitmqctl
+               - node_health_check
+             initialDelaySeconds: 80
+             periodSeconds: 30
+   
+           volumeMounts:
+           - name: rabbit-data
+             mountPath: /var/lib/rabbitmq/mnesia 
+           - name: rabbit-config
+             mountPath: /bjrdc/rabbit-start.sh
+             subPath: rabbit-start.sh
+           - name: rabbit-config-cookie
+             mountPath: /var/lib/rabbitmq/.erlang.cookie
+             subPath: erlang.cookie
+         volumes:
+           - name: rabbit-config
+             configMap:
+               name: rabbit-cluster-config
+               defaultMode: 0777
+           - name: rabbit-config-cookie
+             configMap:
+               name: rabbit-cluster-cookie
+               defaultMode: 0400
+   
+     volumeClaimTemplates:
+     - metadata:
+         name: rabbit-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-rabbit
+         resources:
+           requests:
+             storage: 2Gi
+   EOF          
+   ```
+
+8. 创建用户权限
+
+   > 使用如下命令创建用户，具体已经包含在`rabbit-start.sh`中
+
+   ```sh
+   rabbitmqctl add_user bjrdc xxxxx
+   rabbitmqctl set_user_tags bjrdc administrator
+   rabbitmqctl set_permissions -p / bjrdc ".*" ".*" ".*"
+   ```
+
+9. 测试
+
+   使用浏览器打开manager地址`http://rabbit-stateful-0.rabbit-stateful-headless.bjrdc-dev.svc.cluster.local:15672/#/`
+
+   或者使用命令访问集群状态
+
+   ```sh
+   kubectl exec -it rabbit-stateful-0 -n bjrdc-dev -- rabbitmqctl cluster_status
+   Cluster status of node rabbit@rabbit-stateful-0.rabbit-stateful-headless ...
+   [{nodes,[{disc,['rabbit@rabbit-stateful-0.rabbit-stateful-headless',
+                   'rabbit@rabbit-stateful-1.rabbit-stateful-headless',
+                   'rabbit@rabbit-stateful-2.rabbit-stateful-headless']}]},
+    {running_nodes,['rabbit@rabbit-stateful-1.rabbit-stateful-headless',
+                    'rabbit@rabbit-stateful-2.rabbit-stateful-headless',
+                    'rabbit@rabbit-stateful-0.rabbit-stateful-headless']},
+    {cluster_name,<<"rabbit@rabbit-stateful-0.rabbit-stateful-headless.bjrdc-dev.svc.cluster.local">>},
+    {partitions,[]},
+    {alarms,[{'rabbit@rabbit-stateful-1.rabbit-stateful-headless',[]},
+             {'rabbit@rabbit-stateful-2.rabbit-stateful-headless',[]},
+             {'rabbit@rabbit-stateful-0.rabbit-stateful-headless',[]}]}]
+   ```
+
+   
 
 ## Redis
 
@@ -3243,6 +3552,8 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 >
 > 基本思路是使用statefulset创建节点后，通过redis的命令创建集群
 
+#### 使用statefulset
+
 1. 使用singal模式的storageclass，不需要再另外声明
 
 2. 创建configmap
@@ -3394,9 +3705,314 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
    kubectl exec -it redis-stateful-0 -n bjrdc-dev -- redis-cli cluster info
    ```
 
+8. 创建数据
+
+   创建1000个数据，重启后，重建集群，看看数据是否安在
+
+   ```sh
+   for i in {0..1000}; do kubectl exec -it redis-stateful-0 -n bjrdc-dev -- redis-cli -c set $i $i; done
+   ```
+
+   ```sh
+   kubectl exec -it redis-stateful-1 -n bjrdc-dev -- redis-cli -c get 875
+   "875"
+   ```
+
    
 
-8. 重启
+9. 重启后数据没了。。。
+
+#### 通过python 修改nodes.conf
+
+1. 转换思路，采用人工修改nodes.conf文件的方式，将nodes.conf文件修改对应的ip后，集群能够正常起来。下一步将使用python或者sh修改nodes.conf文件。
+
+2. 编写python
+
+   ```python
+   cat >redis-cluster-boot.py <<EOF
+   # coding:utf-8
+   # Copyright (C)
+   # Author: I
+   # Contact: 12157724@qq.com
+   import os
+   from time import sleep
+   
+   replicas = 3
+   node_file = "/data/nodes.conf"
+   data_redis = "/data/redis"
+   node_ok = "/data/node_ok"
+   
+   
+   def code(host):
+       ip = ""
+       while True:
+           p = os.popen("nslookup " + host + " 10.96.0.10 |grep Address|grep -v '#53'|awk '{print$2}'")
+           result = p.readlines()
+           if len(result) == 0:
+               print("cannot detect IP for host %s" % host)
+               sleep(5)
+               continue
+           else:
+               ip = result[0].replace("\n", "")
+               print("detect IP %s,for host %s" % (ip, host))
+               break
+       return ip
+   
+   
+   def hosts():
+       host_temp = "redis-stateful-{}.redis-stateful-headless"
+       __list = range(0, replicas)
+       return list(map(lambda i: host_temp.format(i), __list))
+   
+   
+   def node_hash(host):
+       __hash = ""
+       while True:
+           result = list(os.popen("redis-cli -h " + host + " cluster nodes|grep myself|awk '{print$1}'"))
+           if len(result) == 0:
+               print("cannot get hash for host", host)
+               sleep(5)
+               continue
+           else:
+               __hash = result[0].replace("\n","")
+               break
+       print("node_hash for host %s is %s" % (host, __hash))
+       return __hash
+   
+   
+   def mk_data_redis():
+       if os.path.exists(data_redis) is not True:
+           os.mkdir(data_redis)
+           print("make dir ", data_redis)
+   
+   
+   def doit():
+       mk_data_redis()
+       for host in hosts():
+           hash = node_hash(host)
+           ip = code(host)
+           i = os.system(
+               "sed -i -e \"/" + hash + "/ s/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/" + ip + "/\" " + node_file)
+           print("change nodes.conf result is ", i)
+       if os.path.exists(node_ok) is not True:
+           open(node_ok,"w")
+           print("create node_ok file")
+       else:
+           print("node_ok is exists")
+   
+   
+   
+   if __name__ == '__main__':
+       doit()
+   EOF    
+   ```
+
+3. 编写redis.conf
+
+   ```sh
+   cat >redis.conf <<EOF
+   dir /data/redis
+   appendonly no
+   cluster-enabled yes
+   cluster-config-file /data/nodes.conf 
+   cluster-node-timeout 5000 
+   port 6379
+   bind 0.0.0.0
+   EOF
+   ```
+
+   
+
+4. 创建configmap,使用命令行导入文件到configmap中
+
+   ```
+   kubectl create configmap redis-cluster-config  -n bjrdc-dev --from-file=redis.conf=./redis.conf --from-file=redis-cluster-boot.py=./redis-cluster-boot.py
+   ```
+   
+5. 创建statefulset
+
+   ```yaml
+   cat >1-redis-cluster-statefulset.yaml <<EOF
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: redis-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: redis-stateful 
+     serviceName: redis-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: redis-stateful
+       spec:
+         containers:
+         - name: ubuntu
+           image: bjrdc206.reg/library/ubuntu:18.04.bjrdc-dev
+           imagePullPolicy: Always
+           command:
+           - bash
+           - "-c"
+           - |
+             set ex
+             python3  /data/cluster-boot.py
+             while true; do echo do...; sleep 10;done
+           volumeMounts:
+           - name: redis-data
+             mountPath: /data
+           - name: redis-config
+             mountPath: /data/cluster-boot.py
+             subPath: redis-cluster-boot.py
+         - name: redis-stateful
+           image: redis:6.0.6
+           command:
+           - bash
+           - "-c"
+           - |
+             set -ex 
+             /usr/local/bin/redis-server /data/redis.conf --protected-mode no --cluster-announce-ip ${POD_IP} &
+             while :
+             do
+             if [ -f "/data/node_ok" ]; then            
+                 rm -rf /data/node_ok
+                 kill -9 $(ps -ef|grep redis-server|awk '{print $2}')
+                 exec /usr/local/bin/redis-server /data/redis.conf --protected-mode no --cluster-announce-ip ${POD_IP}
+                 break
+             else
+                 echo "node_ok not prepare"
+                 sleep 5
+             fi
+             done 
+           env:
+           - name: POD_IP
+             valueFrom:
+               fieldRef:
+                 fieldPath: status.podIP
+           ports:
+           - containerPort: 6379
+             protocol: TCP
+           volumeMounts:
+           - name: redis-data
+             mountPath: /data
+           - name: redis-config
+             mountPath: /data/redis.conf
+             subPath: redis.conf
+         volumes:
+           - name: redis-config
+             configMap:
+               name: redis-cluster-config
+     volumeClaimTemplates:
+     - metadata:
+         name: redis-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-redis
+         resources:
+           requests:
+             storage: 2Gi
+   EOF          
+   ```
+
+6. 验证集群状态
+
+   重启redis-statefulset
+
+   ```sh
+   kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --force -f -
+   ```
+
+   ```sh
+   kubectl exec -it redis-stateful-0 -n bjrdc-dev -c redis-stateful -- redis-cli cluster info
+   cluster_state:ok
+   cluster_slots_assigned:16384
+   cluster_slots_ok:16384
+   cluster_slots_pfail:0
+   cluster_slots_fail:0
+   cluster_known_nodes:3
+   cluster_size:3
+   cluster_current_epoch:3
+   cluster_my_epoch:1
+   cluster_stats_messages_ping_sent:148
+   cluster_stats_messages_pong_sent:148
+   cluster_stats_messages_sent:296
+   cluster_stats_messages_ping_received:148
+   cluster_stats_messages_pong_received:148
+   cluster_stats_messages_received:296
+   ```
+
+7. 实验数据是否丢失
+
+   创建数据
+
+   ```sh
+   for i in {0..1000}; do kubectl exec -it redis-stateful-0 -n bjrdc-dev -c redis-stateful -- redis-cli -c set $i $i; done
+   ```
+
+   获取数据
+
+   ```sh
+   redis-cli -h redis-stateful-0.redis-stateful-headless.bjrdc-dev.svc.cluster.local -c  get 100
+   "100"
+   ```
+
+   重启statefulset
+
+   ```sh
+   kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --force -f -
+   ```
+
+   再次获取数据，一切正常
+
+   ```sh
+   redis-cli -h redis-stateful-0.redis-stateful-headless.bjrdc-dev.svc.cluster.local -c  get 100
+   ```
+
+   
+
+
+
+## The FieldRef Parameter
+
+| **Name**                           | **Description**                                              |
+| ---------------------------------- | ------------------------------------------------------------ |
+| spec.nodename                      | The name of the node where the Pod is running.               |
+| status.hostIP                      | The IP address of the node where the Pod us running.         |
+| metadata.name                      | The Pod name (notice that this is different than the container’s name. A Pod may have more than one container) |
+| metadata.namespace                 | The namespace of the Pod                                     |
+| status.podIP                       | The IP address of the Pod                                    |
+| spec.serviceAccountName            | The service account that was used with the Pod.              |
+| metadata.uid                       | The UID of the running Pod                                   |
+| metadata.labels[*‘label*’]         | The value of the label put on the Pod. For example, if a Pod is labeled env=prod, then metadata.labels[‘env’] returns ‘prod’. |
+| metadata.annotations[‘annotation’] | Similar to labels, it gets the value of the specified annotation. |
+
+
+
+| **Name**        | **Description**                                              |
+| --------------- | ------------------------------------------------------------ |
+| requests.cpu    | The amount of CPU specified in the requests field of the Pod definition |
+| requests.memory | The amount of memory specified in the requests field of the Pod definition |
+| limits.cpu      | The CPU limit of the Pod                                     |
+| limits.memory   | The memory limit of the Pod                                  |
+
+使用如下方式获取参数
+
+```yaml
+spec:
+  containers:
+  - image: bash
+    name: mycontainer
+    command: ['bash','-c','sleep 1000000']
+    env:
+    - name: MY_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+```
+
+
 
 ## 启动顺序
 

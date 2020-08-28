@@ -244,7 +244,7 @@ PREROUTING是目的地址转换，要把别人的公网IP换成你们内部的IP
 ### ufw 相关的概念
 ​	ufw是ubuntu的简单防火墙
 ### 相关的命令
-```
+```sh
 sudo ufw status
 ufw disable 
 ufw enable 
@@ -345,12 +345,12 @@ ubuntu18 后自启动进行了修改，采用systemd,需要做如下修改：
 systemd默认读取/etc/systemd/system下的配置文件，该目录下的文件会链接/lib/systemd/system/下的文件。一般系统安装完/lib/systemd/system/下会有rc-local.service文件，即我们需要的配置文件。
 链接过来：
 
-```
+```sh
 sudo ln -fs /lib/systemd/system/rc-local.service /etc/systemd/system/rc-local.service
 ```
 
 
-```
+```sh
 sudo vi  /etc/systemd/system/rc-local.service 
 add content blow:
 [Install]  
@@ -360,7 +360,7 @@ Alias=rc-local.service
 
 sudo vim /etc/rc.local
 
-```
+```sh
 #!/bin/sh -e
 #
 # rc.local
@@ -377,18 +377,25 @@ sudo vim /etc/rc.local
 exit 0
 ```
 3. run this command
-```
+```sh
 sudo chmod 755 /etc/rc.local
-sudo systemctl enable rc.
 ```
 
 ### apt
 
-```
+```sh
 sudo apt-get build-dep --download-only -o dir::cache=./ openssh-server
 ```
 
 
+
+## fsck
+
+Structure needs cleaning
+
+```
+fsck -AR -t ext4 -y
+```
 
 Centos
 ---------------------
@@ -738,5 +745,16 @@ EOF
 sudo systemctl restart nfs-kernel-server.service
 sudo showmount -e localhost
 sudo mount bjrdc216:/cloud/nfs-root temp/
+```
+
+## sed
+
+```sh
+echo xx,yy,zz >sed.text
+echo 1,2,yy,x>> sed.text
+sed -e "/xx/ s/yy/../g" sed.text 
+xx,..,zz
+1,2,yy,x
+
 ```
 

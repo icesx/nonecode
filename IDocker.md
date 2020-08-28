@@ -8,7 +8,7 @@ sudo apt install docker.io
 
 修改国内镜像
 
-```
+```sh
 cat > /etc/docker/daemon.json <<EOF
 {
  
@@ -102,7 +102,7 @@ docker run hello-world
 ```
 docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 xjgz/ubuntu:v9 /home/hadoop/docker/common/autostart.sh，通过这个命令调用自启动的时候老是失败，目前尚不知道问题所在，但是使用变通的办法如下：
 ```
-```
+```sh
 docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 xjgz/ubuntu:v5
 docker exec hadoop-data00 /etc/rc.local	
 【这个rc.local只是在前台执行，故只能去启动ssh，其他的java环境变量需要设置到.profile中】	
@@ -143,7 +143,7 @@ name		:
 >
 > 注：此种方法如果删除根镜像的时候，子镜像会被删除。稳妥的做法是，将镜像导出，再导入
 
-```
+```sh
 docker run -it java:8-jdk  /bin/bash
 ## 修改镜像文件
 docker commit 880a64a4b26d --message="add rabbitmq" java:jdk-8-bjrdc-v1.0.0
@@ -154,7 +154,7 @@ docker push bjrdc206.reg/java:jdk-8-bjrdc-v1.0.1
 ```
 ### 模板导出
 
-```
+```sh
 docker save -o ubuntu_cdc_add_rabbit.tar xjgz/cdc:v1
 docker rmi xjgz/cdc:v1
 docker load -i images/ubuntu_cdc_v1_add_rabbit.tar
@@ -247,11 +247,17 @@ docker build -t xx:v1 .
 
 
 
+## Alpine
 
+使用Docker创建容器时，基础镜像通常选择Ubuntu或Centos，不管哪个镜像的大小都在100MB以上。
+
+Alpine Linux是一个面向安全的轻型的Linux发行版。
+
+Alpine Linux采用了 [musl libc](http://musl-libc.org/) 和 [busybox](http://busybox.net/)以减小系统的体积和运行时资源消耗
 
 ## docker with hadoop
 
-```
+```sh
 #!/bin/bash
 dockers_hadoop="hadoop-name01 hadoop-data00 hadoop-data01 hadoop-data02 hadoop-data03 hadoop-data04 hadoop-data05 hadoop-data06"
 dockers_hbase="hbase00 hbase01"

@@ -2,46 +2,46 @@ rabbitmq
 =========
 ### 安装
 + 在ubuntu下安装rabbit，使用apt-get就可以
-```
-#sudo apt-get install rabbitmq-server
+```sh
+sudo apt-get install rabbitmq-server
 或者安装最新版本：
-#echo 'deb http://www.rabbitmq.com/debian/ testing main' |sudo tee /etc/apt/sources.list.d/rabbitmq.list
-#wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc |
-#sudo apt-key add -
-#sudo apt-get update
-#sudo apt-get install rabbitmq-server
+echo 'deb http://www.rabbitmq.com/debian/ testing main' |sudo tee /etc/apt/sources.list.d/rabbitmq.list
+wget -O- https://www.rabbitmq.com/rabbitmq-release-signing-key.asc |
+sudo apt-key add -
+sudo apt-get update
+sudo apt-get install rabbitmq-server
 ```
 + 如果需要编译的话比较麻烦，需要先安装zip、xsltproc、xmlto，其中xmlto很大，所以放弃了。编译按照如下命令：
-```
-#make install TARGET_DIR=/opt/mq/rabbitmq SBIN_DIR=/opt/mq/rabbitmq/sbin MAN_DIR=/opt/mq/rabbitmq/man 
+```sh
+make install TARGET_DIR=/opt/mq/rabbitmq SBIN_DIR=/opt/mq/rabbitmq/sbin MAN_DIR=/opt/mq/rabbitmq/man 
 ```
 ### 启动	
 + 安装好后，使用如下命令启动
-```
+```sh
 rabbitmq-server -detached	
 rabbitmq-plugins enable rabbitmq_management
-#rabbitmq-server stop
-#rabbitmq-server -detached
+rabbitmq-server stop
+rabbitmq-server -detached
 ```
-+ + 第一次安装，可能要重启虚拟机
++ 第一次安装，可能要重启虚拟机
 ### 集群启动
 如果需要集群启动，需要在每个主机上运行如下命令
-```
-#rabbitmq-server -detached
-#rabbitmqctl stop_app
-#rabbitmqctl join_cluster rabbit@hadoop9
-#rabbitmqctl start_app
-#rabbitmqctl cluster_status
+```sh
+rabbitmq-server -detached
+rabbitmqctl stop_app
+rabbitmqctl join_cluster rabbit@hadoop9
+rabbitmqctl start_app
+rabbitmqctl cluster_status
 ```
 ### 异常处理
 + 集群无法启动
 有类似如下错误：	Error: unable to connect to  nodedown TCP connection succeeded but Erlang distribution failed
-原因：			cookes的同步问题，具体原理尚不知道。
+原因：			cookes的同步问题。
 解决办法：		
     1. 将集群中的一个服务器上的/var/lib/rabbit/.erlang.cookies文件scp到其他的服务器上【注意文件的属主一定不能更改，如果在scp的时候改了的话，需要改成rabbitmq的属主】
     2. 重启rabbit-server
 + guest无法登录web界面
-````
+````sh
 tail -f /var/log/rabbitmq/rabbit\@hadoop-cq83.log 
 user 'guest' - User can only log in via localhost
 
@@ -55,7 +55,7 @@ centos:	rabbitmq-server -detached
 ```
 + guest 无法登录web界面3.3.0版本之后
 This is a new features since the version 3.3.0. 
-```
+```sh
 sudo rabbitmqctl add_user test test
 sudo rabbitmqctl set_user_tags test administrator
 sudo rabbitmqctl set_permissions -p / test ".*" ".*" ".*"

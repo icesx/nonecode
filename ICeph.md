@@ -441,6 +441,33 @@ sudo ceph osd pool application enable k8s_pool_es_01 rbd
  ceph-deploy --overwrite-conf mon add bjrdc210
 ```
 
+### 3 Possible data damage: 1 pg inconsistent
+```
+sudo ceph -s
+  cluster:
+    id:     d84f5d5b-f8d5-42c6-ab8f-e1240e9bcf78
+    health: HEALTH_ERR
+            1 scrub errors
+            Possible data damage: 1 pg inconsistent
+```
+
+
+
+```
+ sudo ceph health detail
+HEALTH_ERR 1 scrub errors; Possible data damage: 1 pg inconsistent
+[ERR] OSD_SCRUB_ERRORS: 1 scrub errors
+[ERR] PG_DAMAGED: Possible data damage: 1 pg inconsistent
+    pg 8.b is active+clean+scrubbing+deep+inconsistent+repair, acting [3,1,0]
+```
+
+
+
+```
+sudo ceph pg repair 8.b
+instructing pg 8.b on osd.3 to repair
+```
+
 
 
 ## 性能测试
