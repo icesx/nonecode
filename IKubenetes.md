@@ -86,6 +86,14 @@ https://github.com/cncf/landscape
    
    
 
+## 国内镜像
+
+国内有墙的原因，导致google的镜像拿不下来，但是docker.io作了映射如下
+
+在`k8s.gcr.io/kubernetes-zookeeper:1.0-3.4.10`可以映射为`mirrorgooglecontainers/kubernetes-zookeeper:1.0-3.4.10`
+
+
+
 ## Kubernetes install
 
 #### 准备工作
@@ -1778,6 +1786,15 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 这个POD_NAME可以在其他的yaml文件中通过${POD_NAME}获取
 
+### 19 headless
+
+> Headless 也是一种Service，但不同的是会定义`spec:clusterIP: None`，也就是不需要`Cluster IP`的`Service`
+>
+> 有什么用途呢？
+>
+> - 可以通过pod.headless...获取到pod的服务。
+> - 在statefulset模式下，多个pod之间要相互访问，需要使用`pod.headless...`
+
 ## ceph
 
 ### RBD
@@ -3117,6 +3134,326 @@ TODO 安装自定义插件
 ## 日志收集
 
 ### logstash
+
+## zookeeper
+
+> zookeeper 如果要自己从0安装的话，会比较麻烦，需要设置myid，和修改zoo.cfg。如果要自己做，可以参考本文中的redis的配置。
+>
+> google官方提供了一个自动配置的容器`mirrorgooglecontainers/kubernetes-zookeeper:1.0-3.4.10`，该容器自带 start-zookeeper的脚本能够自动设置相关参数。
+>
+> 安装详细过程如下
+
+1. 仍然是配置storageclass（一旦有了storageclass，走遍天下都不怕）
+
+   ```yaml
+   cat >0-zookeeper-storageclass.yaml <<EOF
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-zookeeper
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_zookeeper_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   EOF  
+   ```
+
+2. 配置statefulset,基本按照kubenetes官方的样例修改的
+
+   ```yaml
+   cat >1-zookeeper-cluster-statefulset.yaml <<EOF
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: zookeeper-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: zookeeper-stateful 
+     serviceName: zookeeper-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: zookeeper-stateful
+       spec:
+         containers:
+         - name: zookeeper-stateful
+           image: bjrdc206.reg/library/kubernetes-zookeeper:1.0-3.4.10
+           command:
+           - bash
+           - "-c" 
+           - |
+             set -ex
+             start-zookeeper \
+             --servers=3 \
+             --data_dir=/var/lib/zookeeper/data \
+             --data_log_dir=/var/lib/zookeeper/data/log \
+             --conf_dir=/opt/zookeeper/conf \
+             --client_port=2181 \
+             --election_port=3888 \
+             --server_port=2888 \
+             --tick_time=2000 \
+             --init_limit=10 \
+             --sync_limit=5 \
+             --heap=512M \
+             --max_client_cnxns=60 \
+             --snap_retain_count=3 \
+             --purge_interval=12 \
+             --max_session_timeout=40000 \
+             --min_session_timeout=4000 \
+             --log_level=INFO
+           ports:
+           - containerPort: 2181
+             protocol: TCP
+           - containerPort: 2888
+             protocol: TCP
+           - containerPort: 3888
+             protocol: TCP
+           livenessProbe:
+             exec: 
+               command: 
+               - sh
+               - -c
+               - zookeeper-ready.sh 2181  
+             initialDelaySeconds: 80
+             periodSeconds: 30
+   
+           volumeMounts:
+           - name: zookeeper-data
+             mountPath: /var/lib/zookeeper
+   
+     volumeClaimTemplates:
+     - metadata:
+         name: zookeeper-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-zookeeper
+         resources:
+           requests:
+             storage: 2Gi
+   EOF          
+   ```
+
+3. headless 配置
+
+   ```yaml
+   cat >2-zookeeper-cluster-service.yaml <<EOF
+   # Headless service for stable DNS entries of StatefulSet members.
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: zookeeper-stateful-headless
+     namespace: bjrdc-dev
+     labels:
+       app: zookeeper-stateful
+   spec:
+     ports:
+     - name: zookeeper-stateful-port
+       port: 2181
+     - name: zookeeper-stateful-port2
+       port: 2888
+     - name: zookeeper-stateful-port3
+       port: 3888
+   
+   
+     clusterIP: None
+     selector:
+       app: zookeeper-stateful
+   EOF    
+   ```
+
+4. 启动完成后，查看集群状态
+
+   ```sh
+   kubectl exec -it zookeeper-stateful-0 -n bjrdc-dev -- /opt/zookeeper/bin/zkServer.sh status
+   ZooKeeper JMX enabled by default
+   Using config: /opt/zookeeper/bin/../conf/zoo.cfg
+   Mode: leader
+   ```
+
+   
+
+## Kafka
+
+> 在部署kafka之前需要先部署好zookeeper。
+
+1. 又是 storageclass
+
+   ```yaml
+   cat 0-kafka-storageclass.yaml 
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-kafka
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_kafka_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   ```
+
+2. statefulset
+
+   ```yaml
+   cat 1-kafka-cluster-statefulset.yaml 
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: kafka-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: kafka-stateful 
+     serviceName: kafka-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: kafka-stateful
+       spec:
+         containers:
+         - name: kafka-stateful
+           image: bjrdc206.reg/library/kafka:2.12-2.5.0
+           #command: 
+           #- bash
+           #- "-c"
+           #- |
+           #  set -ex
+           #  while true;do sleep 5; echo doing; done
+           ports:
+           - containerPort: 9092
+             protocol: TCP
+           env:
+           - name: KAFKA_ZOOKEEPER_CONNECT
+             value: kzookeeper-stateful-0.kzookeeper-stateful-headless:2181
+           - name: KAFKA_ADVERTISED_LISTENERS
+             value: PLAINTEXT://:9092
+           - name: KAFKA_LISTENERS
+             value: PLAINTEXT://:9092
+           volumeMounts:
+           - name: kafka-data
+             mountPath: /kafka
+   
+     volumeClaimTemplates:
+     - metadata:
+         name: kafka-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-kafka
+         resources:
+           requests:
+             storage: 2Gi
+   ```
+
+3. headless
+
+   ```yaml
+   cat 2-kafka-cluster-service.yaml 
+   # Headless service for stable DNS entries of StatefulSet members.
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: kafka-stateful-headless
+     namespace: bjrdc-dev
+     labels:
+       app: kafka-stateful
+   spec:
+     ports:
+     - name: kafka-stateful-port
+       port: 9092
+     clusterIP: None
+     selector:
+       app: kafka-stateful
+   ```
+
+4. 测试
+
+   ```
+   kubectl exec -it kafka-stateful-0 -n bjrdc-dev -- kafka-topics.sh --describe --zookeeper kzookeeper-stateful-0.kzookeeper-stateful-headless:2181
+   ```
+
+5. 安装kafdrop
+
+   deployment
+
+   ```yaml
+   cat 0-kafdrop-deployment.yaml 
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: kafdrop
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: kafdrop
+     template:
+       metadata:
+         labels:
+           app: kafdrop
+       spec:
+         containers:
+         - image: bjrdc206.reg/library/kafdrop:3.27.0
+           name: kafdrop
+           env: 
+           - name: KAFKA_BROKERCONNECT
+             value: kafka-stateful-0.kafka-stateful-headless:9092,kafka-stateful-1.kafka-stateful-headless:9092,kafka-stateful-2.kafka-stateful-headless:9092
+           ports:
+           - containerPort: 9000
+           livenessProbe:
+             httpGet:
+               path: /actuator
+               port: 9000
+             initialDelaySeconds: 10
+             periodSeconds: 10
+   ```
+
+   service
+
+   ```yaml
+   cat 1-kafdrop-service.yaml 
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: kafdrop
+     namespace: bjrdc-dev
+     labels:
+       app: kafdrop
+   spec:
+     selector:
+         app: kafdrop
+     ports:
+     - protocol : TCP
+       port: 9000
+   ```
+
+6. 测试kafdrop
+
+   ```sh
+   curl http://kafdrop.bjrdc-dev.svc.cluster.local:9000/
+   ```
+
+   
 
 ## RabbitMQ
 

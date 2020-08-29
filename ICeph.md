@@ -1,6 +1,8 @@
 ceph
 ===
 
+> Ceph uniquely delivers **object, block, and file storage in one unified system**
+
 ## install
 
 > 1. 准备服务器
@@ -164,7 +166,14 @@ ceph
 >    ceph-deploy osd create --data /dev/sdb1 bjrdc211
 >    ```
 >
->    
+
+### push config
+
+```sh
+ceph-deploy --overwrite-conf config push bjrdc209 bjrdc210 bjrdc211 bjrdc208
+```
+
+
 
 ### dashboard
 
@@ -280,7 +289,7 @@ sudo ceph osd pool application enable bjrdc-pool cephfs
 
 create cephfs
 
-```
+```sh
 sudo ceph osd pool create bjrdc-pool 128
 sudo ceph osd pool create bjrdc-pool-metadata 128
 sudo ceph fs new cephfs bjrdc-pool-metadata bjrdc-pool
@@ -454,7 +463,7 @@ sudo ceph -s
 
 
 ```
- sudo ceph health detail
+sudo ceph health detail
 HEALTH_ERR 1 scrub errors; Possible data damage: 1 pg inconsistent
 [ERR] OSD_SCRUB_ERRORS: 1 scrub errors
 [ERR] PG_DAMAGED: Possible data damage: 1 pg inconsistent
@@ -467,6 +476,21 @@ HEALTH_ERR 1 scrub errors; Possible data damage: 1 pg inconsistent
 sudo ceph pg repair 8.b
 instructing pg 8.b on osd.3 to repair
 ```
+
+### 4 total pgs, which exceeds max 1000
+
+```
+sudo ceph osd pool create k8s_pool_kafka_01 128 128
+Error ERANGE:  pg_num 128 size 3 would mean 1347 total pgs, which exceeds max 1000 (mon_max_pg_per_osd 250 * num_in_osds 4)
+```
+
+出现此问题需要修改`/etc/ceph/ceph.conf`文件，增加`mon max pg per osd = 5000`然后使参数生效
+
+```sh
+sudo systemctl restart ceph-mon.target
+```
+
+
 
 
 
