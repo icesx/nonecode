@@ -1275,7 +1275,49 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
       [https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 ](https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 )
    
-9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*
+9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*可以的
+
+   ```yaml
+   cat 2-prometheus-pvc.yaml 
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: prometheus-pvc
+     namespace: pro-mon
+   spec:
+     storageClassName: ceph-storageclass-prometheus 
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 3Gi
+   ```
+
+   可直接在deployment中使用
+
+   ```yaml
+   cat 4-prometheus-deployment.yaml 
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: prometheus
+     namespace: pro-mon 
+     labels:
+       app: prometheus
+   spec:
+   ...
+       spec:
+         containers:
+         - image: bjrdc206.reg/library/prometheus:v2.20.1
+           name: prometheus
+           imagePullPolicy: IfNotPresent
+         ...
+         - name: data
+           persistentVolumeClaim:
+             claimName: prometheus-pvc
+   ```
+
+   
 
 
 ​      
@@ -1913,15 +1955,458 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
    ```
 
 
-### 如何方式数据卷被删除呢？
+### 如何防止数据卷被删除呢？
 
 TODO
 
 ## Prometheus（监控）
 
 > IPrometheuse.md
+>
+> 安装prometheus的基本步骤
 
+| 步骤         | 说明                          |
+| ------------ | ----------------------------- |
+| namespace    | 设置prometheus的权限-非常重要 |
+| secret       | storageclass密码              |
+| storageclass |                               |
+| pvc          |                               |
+| configmap    | 设置prometheus.yaml           |
+| deployment   |                               |
+| service      |                               |
+| daemonset    | 每个node上起一个node_export   |
+|              |                               |
 
+1. namespace
+
+   ```yaml
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: pro-mon
+   apiVersion: rbac.authorization.k8s.io/v1beta1
+   ---
+   kind: ClusterRole
+   metadata:
+     name: prometheus
+     namespace: pro-mon
+   rules:
+   - apiGroups: [""]
+     resources:
+     - nodes
+     - nodes/metrics  #让prometheus能够访问到nodes上的这个地址
+     - nodes/proxy    #同上
+     - configmaps
+     - services
+     - endpoints
+     - pods
+     verbs: ["get", "list", "watch"]
+   - apiGroups:
+     - extensions
+     resources:
+     - ingresses
+     verbs: ["get", "list", "watch"]
+   - nonResourceURLs: ["/metrics"]
+     verbs: ["get"]
+   ---  
+   apiVersion: rbac.authorization.k8s.io/v1beta1
+   kind: ClusterRoleBinding
+   metadata:
+     name: prometheus
+     namespace: pro-mon
+   roleRef:
+     apiGroup: rbac.authorization.k8s.io
+     kind: ClusterRole
+     name: prometheus
+   subjects:
+   - kind: ServiceAccount
+     name: default
+     namespace: pro-mon
+   ```
+
+2. 存储相关
+
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-prometheus
+     namespace: pro-mon
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   ---  
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: ceph-rbd-secret
+     namespace: pro-mon
+   data:
+     key: QVFCYUZCUmZPVndHQkJBQWJKQ2ZENTZrbGpMaHJ1aURmSW1odlE9PQ==
+   ---  
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: prometheus-pvc
+     namespace: pro-mon
+   spec:
+     storageClassName: ceph-storageclass-prometheus 
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 3Gi
+   ```
+
+3. **configmap**
+
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: prometheus-config
+     namespace: pro-mon
+   data:
+     prometheus.yml: |
+       global:
+         scrape_interval: 15s
+         scrape_timeout: 15s
+       scrape_configs:
+       - job_name: 'kubernetes-kubelet'
+         scheme: https
+         tls_config:
+           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+           insecure_skip_verify: true
+         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+         kubernetes_sd_configs:
+         - role: node
+         relabel_configs:
+         - action: labelmap
+           regex: __meta_kubernetes_node_label_(.+)
+   
+       - job_name: "kubernetes-nodes"
+         kubernetes_sd_configs:
+         - role: node
+         relabel_configs:
+         - source_labels: [__address__]
+           regex: '(.*):10250'
+           replacement: '${1}:9100'
+           target_label: __address__
+           action: replace
+         - action: labelmap
+           regex: __meta_kubernetes_node_label_(.+)
+       
+       - job_name: 'kubernetes-cadvisor'
+         scheme: https
+         tls_config:
+           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+         kubernetes_sd_configs:
+         - role: node
+         relabel_configs:
+         - target_label: __address__
+           replacement: kubernetes.default.svc:443
+         - source_labels: [__meta_kubernetes_node_name]
+           regex: (.+)
+           target_label: __metrics_path__
+           replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+         - action: labelmap
+           regex: __meta_kubernetes_node_label_(.+)
+   ```
+
+   `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`和`/var/run/secrets/kubernetes.io/serviceaccount/token`这两个文件是 Pod 启动后自动注入进来的，通过这两个文件我们可以在 Pod 中访问 apiserver。
+
+   **kubernetes-kubelet** kubenet自带的一些监控信息
+
+   **kubernetes-nodes** 通过指定`kubernetes_sd_configs`的模式为`node`，Prometheus 就会自动从 Kubernetes 中发现所有的 node 节点并作为当前 job 监控的目标实例，发现的节点`/metrics`（由node_exporter提供）接口是默认的 kubelet 的 HTTP 接口。
+
+   **kubernetes-cadvisor** cAdvisor能够获取当前节点上运行的所有容器的资源使用情况，通过访问kubelet的/metrics/cadvisor地址可以获取到cadvisor的监控指标，因此和获取kubelet监控指标类似，这里同样通过node模式自动发现所有的kubelet信息，并通过适当的relabel过程，修改监控采集任务的配置。 与采集kubelet自身监控指标相似，这里也有两种方式采集cadvisor中的监控指标
+
+4. deployment
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: prometheus
+     namespace: pro-mon 
+     labels:
+       app: prometheus
+   spec:
+     selector:
+       matchLabels:
+         app: prometheus
+     template:
+       metadata:
+         labels:
+           app: prometheus
+       spec:
+         containers:
+         - image: bjrdc206.reg/library/prometheus:v2.20.1
+           name: prometheus
+           imagePullPolicy: IfNotPresent
+           args:
+           - "--config.file=/etc/prometheus/prometheus.yml"
+           - "--storage.tsdb.path=/prometheus"
+           - "--storage.tsdb.retention=7d"
+           - "--web.enable-admin-api"
+           - "--web.enable-lifecycle"
+           ports:
+           - containerPort: 9090
+             name: http
+           volumeMounts:
+           - mountPath: "/prometheus"
+             subPath: prometheus
+             name: data
+           - mountPath: "/etc/prometheus"
+             name: config
+           resources:
+             requests:
+               cpu: 1000m
+               memory: 2Gi
+             limits:
+               cpu: 1000m
+               memory: 2Gi
+         securityContext:
+           runAsUser: 0
+         volumes:
+         - name: config
+           configMap:
+             name: prometheus-config
+         - name: data
+           persistentVolumeClaim:
+             claimName: prometheus-pvc
+   ```
+
+5. service
+
+   ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: prometheus
+     namespace: pro-mon
+     labels:
+       app: prometheus
+   spec:
+     selector:
+         app: prometheus
+     ports:
+     - protocol : TCP
+       port: 9090
+   ```
+
+6. daemonset
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: DaemonSet
+   metadata:
+     name: node-exporter
+     namespace: pro-mon
+     labels:
+       name: node-exporter
+   spec:
+     selector:
+       matchLabels:
+         name: node-exporter
+     template:
+       metadata:
+         labels:
+           name: node-exporter
+       spec:
+         hostPID: true
+         hostIPC: true
+         hostNetwork: true
+         containers:
+         - name: node-exporter
+           image: bjrdc206.reg/library/node-exporter:v1.0.1
+           ports:
+           - containerPort: 9100
+           resources:
+             requests:
+               cpu: 0.15
+           securityContext:
+             privileged: true
+           args:
+           - --path.procfs
+           - /host/proc
+           - --path.sysfs
+           - /host/sys
+           - --collector.filesystem.ignored-mount-points
+           - '"^/(sys|proc|dev|host|etc)($|/)"'
+           volumeMounts:
+           - name: dev
+             mountPath: /host/dev
+           - name: proc
+             mountPath: /host/proc
+           - name: sys
+             mountPath: /host/sys
+           - name: rootfs
+             mountPath: /rootfs
+         tolerations:
+         - key: "node-role.kubernetes.io/master"
+           operator: "Exists"
+           effect: "NoSchedule"
+         volumes:
+           - name: proc
+             hostPath:
+               path: /proc
+           - name: dev
+             hostPath:
+               path: /dev
+           - name: sys
+             hostPath:
+               path: /sys
+           - name: rootfs
+             hostPath:
+               path: /
+   ```
+
+## grafana
+
+> 先安装prometheus，再安装grafana  
+
+1. 存储声明
+
+   ```yaml
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-grafana
+     namespace: pro-mon
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   ---  
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: grafana-pvc
+     namespace: pro-mon
+   spec:
+     storageClassName: ceph-storageclass-grafana
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 4Gi
+   ```
+
+2. deployment
+
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: grafana
+     namespace: pro-mon
+     labels:
+       app: grafana
+   spec:
+     selector:
+       matchLabels:
+         app: grafana
+     template:
+       metadata:
+         labels:
+           app: grafana
+       spec:
+         containers:
+         - name: grafana
+           image: bjrdc206.reg/library/grafana/grafana:7.1.5
+           imagePullPolicy: IfNotPresent
+           ports:
+           - containerPort: 3000
+             name: grafana
+           env:
+           - name: GF_SECURITY_ADMIN_USER
+             value: admin
+           - name: GF_SECURITY_ADMIN_PASSWORD
+             value: admin321
+           readinessProbe:
+             failureThreshold: 10
+             httpGet:
+               path: /api/health
+               port: 3000
+               scheme: HTTP
+             initialDelaySeconds: 60
+             periodSeconds: 10
+             successThreshold: 1
+             timeoutSeconds: 30
+           livenessProbe:
+             failureThreshold: 3
+             httpGet:
+               path: /api/health
+               port: 3000
+               scheme: HTTP
+             periodSeconds: 10
+             successThreshold: 1
+             timeoutSeconds: 1
+           resources:
+             limits:
+               cpu: 100m
+               memory: 256Mi
+             requests:
+               cpu: 100m
+               memory: 256Mi
+           volumeMounts:
+           - mountPath: /var/lib/grafana
+             subPath: grafana
+             name: storage
+         securityContext:
+           fsGroup: 472
+           runAsUser: 472
+         volumes:
+         - name: storage
+           persistentVolumeClaim:
+             claimName: grafana-pvc
+   ```
+
+3. service
+
+   ```
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: grafana
+     namespace: pro-mon
+     labels:
+       app: grafana
+   spec:
+     ports:
+       - port: 3000
+     selector:
+       app: grafana
+   ```
+
+4. 配置
+
+   从grafana[官网](https://grafana.com/dashboards)
+
+   中导入相关的dashboard，如747和741的这两个 dashboard。
+
+   再修改一些参数——可能存在dashboard中的参数和prometheus中的不匹配的问题。
+
+   
 
 ## 常用命令
 

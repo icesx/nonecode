@@ -49,7 +49,7 @@ orginazation,管理一系列合作企业的组织
 
 1. For new Droplets, always set the locale (choose en_US.UTF-8 if in doubt) and do apt update/upgrade
 
-```
+```sh
 sudo dpkg-reconfigure locales
 sudo apt-get update && sudo apt-get upgrade
 ```

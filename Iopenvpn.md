@@ -39,7 +39,7 @@ sudo apt install openvpn easy-rsa -y
 
 #### wget
 
-```
+```sh
 wget http://ftp.us.debian.org/debian/pool/main/e/easy-rsa/easy-rsa_2.2.2-1_all.deb
 sudo dpkg -i reasy-rsa_2.2.2-1_all.deb
 ```

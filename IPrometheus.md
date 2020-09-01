@@ -8,7 +8,7 @@ prometheus
 
 > 使用docker安装
 >
-> ```
+> ```sh
 > docker run --name prometheus -d -p 127.0.0.1:9090:9090 quay.io/prometheus/prometheus
 > ```
 >
@@ -18,13 +18,13 @@ prometheus
 
 > 下载
 >
-> ```
+> ```sh
 > wget https://github.com/prometheus/prometheus/releases/download/v2.19.2/prometheus-2.19.2.linux-amd64.tar.gz
 > ```
 >
 > 配置service
 >
-> ```
+> ```sh
 > cat >prometheus.service <<EOF
 > [Unit]
 > Description=Prometheus
@@ -42,7 +42,7 @@ prometheus
 >
 > 启动service
 >
-> ```
+> ```sh
 > sudo cp prometheuse.service /lib/systemd/system/
 > sudo systemctl enable prometheuse
 > sudo systemctl start prometheuse.service
@@ -54,7 +54,7 @@ prometheus
 >
 > vi $prometheuse_home/prometheus.yml,add content as blow
 >
-> ```
+> ```yaml
 > scrape_configs:
 >   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
 >   - job_name: 'prometheus'
@@ -86,13 +86,13 @@ prometheus
 >
 > 下载
 >
-> ```
+> ```sh
 > wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
 > ```
 >
 > 配置systemd service
 >
-> ```
+> ```sh
 > cat >node_exporter.service <<EOF
 > [Unit]
 > Description=node_exporter
@@ -110,7 +110,7 @@ prometheus
 >
 > 启动service
 >
-> ```
+> ```sh
 > sudo cp node_exporter.service /lib/systemd/system/
 > sudo systemctl enable node_exporter
 > sudo systemctl start node_exporter.service
@@ -118,17 +118,27 @@ prometheus
 >
 > 在prometheus后台应该可以看到新增加的节点
 >
-> ```
+> ```sh
 > http://bjrdc25:9090/targets
 > ```
 >
 > 
 
+## PQL
+
+ ### 简单例子
+
+```
+(sum(node_memory_MemTotal_bytes) - sum(node_memory_MemFree_bytes+node_memory_Buffers_bytes+node_memory_Cached_bytes) ) / sum(node_memory_MemTotal_bytes) * 100
+```
+
+
+
 ## grafana
 
 ### apt
 
-```
+```sh
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
@@ -142,7 +152,7 @@ sudo apt-get install grafana
 
 启动服务
 
-```
+```sh
 sudo systemctl start grafana-server
 sudo systemctl status grafana-server
 sudo systemctl enable grafana-server.service
@@ -158,7 +168,7 @@ admin:admin
 
 ### 手动
 
-```
+```sh
 sudo apt-get install -y adduser libfontconfig1
 wget https://dl.grafana.com/oss/release/grafana_7.0.6_amd64.deb
 sudo dpkg -i grafana_7.0.6_amd64.deb
