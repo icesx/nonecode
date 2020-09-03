@@ -3620,6 +3620,146 @@ TODO 安装自定义插件
 
 ### logstash
 
+
+
+### filebeat
+
+>filebeat 是logstash的升级版本，使用golang开发更节省资源。
+>
+>filebeat与kubernetes的集成可以采用三种方式
+>
+>| 集成方式                    | 优缺点                                                       |
+>| --------------------------- | ------------------------------------------------------------ |
+>| 集成到container中           | 需要定制container，日后会带来升级的问题，如果因其他业务有container定制的需求，可以考虑将filebeat一并集成到里面去 |
+>| multi-container for one pod | filebeat独立的container与其他的container在一个pod中集成，通过共享目录的方式实现文件的beat |
+>| daemtset方式                | 尚未研究                                                     |
+>
+>filebeat并不能自动的清理文件，如果需要对文件进行清理，需要使用脚本或者log引擎自带功能进行
+>
+>安装方式如下
+
+1. configmap
+
+   网上的很多方式均不能正常的进行安装，在了解了filebeat的原理后，决定采用自定义filebeat.yml文件的方式进行安装。
+
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: filebeat-config
+     namespace: bjrdc-dev
+   data:
+     filebeat.yml: |
+       filebeat.config:
+         modules:
+           path: ${path.config}/modules.d/*.yml
+           reload.enabled: false
+       filebeat.inputs:
+       - type: log
+         enabled: true
+         paths:
+           - /logs/*
+       output.elasticsearch:
+         hosts: ["es-stateful-0.es-stateful-headless:9200","es-stateful-1.es-stateful-headless:9200","es-stateful-2.es-stateful-headless:9200"]
+         username: ""
+         password: ""
+       setup.kibana:
+         host: "kibana:5601"
+   ```
+
+2. 使用pod方式部署一个nginx 通过filebeat来获取日志
+
+   ```yaml
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: filebeat
+     namespace: bjrdc-dev
+     labels:
+       app: filebeat
+   spec:
+         containers:
+         - image: bjrdc206.reg/library/elastic/filebeat:6.8.11
+           name: filebeat
+           command:
+           - sh
+           - "-c"
+           - |
+             filebeat -e &
+             sleep 5
+             filebeat setup --dashboards
+             filebeat modules enable system nginx mysql
+             while true;do sleep 10;echo sleep 5;done
+           volumeMounts:
+           - name: app-logs
+             mountPath: /logs
+           - name: filebeat-config
+             subPath: filebeat.yml
+             mountPath: /usr/share/filebeat/filebeat.yml
+         - name: nginx
+           image: nginx:1.19.0
+           ports:
+           - containerPort: 80
+           volumeMounts:
+           - mountPath: /var/log/nginx
+             name: app-logs
+         volumes:
+         - name: app-logs
+           emptyDir: {}
+         - name: filebeat-config
+           configMap:
+             name: filebeat-config
+   ```
+
+3. 使用service暴露nginx
+
+   ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: filebeat-nginx
+     namespace: bjrdc-dev
+     labels:
+       app: filebeat-nginx
+   spec:
+     ports:
+     - port: 80
+       name: web
+     selector:
+       app: filebeat
+   ```
+
+4. 验证
+
+   通过如下命令访问nginx的服务，正常情况下，可以访问成功
+
+   ```
+   curl filebeat-nginx.bjrdc-dev.svc.cluster.local
+   ```
+
+5. 在kinbana上查看
+
+   打开kinbana`http://kibana.bjrdc-dev.svc.cluster.local:5601/`在`Dev Tools`中查看是否有数据进来
+
+   ```json
+   GET filebeat-6.8.11-2020.09.03/_search
+   {
+     "query": {
+       "match_all": {}
+     }
+   }
+   ```
+
+   同时查看是否indics已经创建`filebeat-6.8.11-2020.09.03`
+
+6. 关于日志丢失
+
+   如果pod重启，在重启之前未提交的日志可能丢失，因为该pod采用了local存储，该存储早pod重启后会被k8s回收。
+
+   可以将这个local存储修改到ceph中
+
+   TODO
+
 ## zookeeper
 
 > zookeeper 如果要自己从0安装的话，会比较麻烦，需要设置myid，和修改zoo.cfg。如果要自己做，可以参考本文中的redis的配置。

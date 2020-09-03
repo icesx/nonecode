@@ -145,6 +145,19 @@ without increasing [node.max_local_storage_nodes] (was [1])
 
 ### mapping
 
-### query
+## query
 
+### search
 
+1. 基本格式
+
+   ```json
+   GET filebeat-6.8.11-2020.09.03/_search
+   {
+     "query": {
+       "match_all": {}
+     }
+   }
+   ```
+
+2. 
