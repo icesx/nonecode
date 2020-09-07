@@ -3343,6 +3343,25 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 ## Elasticsearch
 
 > ES 与mysql一样也是有状态的，部署方式类似，在进行es的安装的时候，需要执行一定的`commad`详细参考如下yaml
+>
+> 安装需要重点关注的地方：
+>
+> 1. ES的安装首先需要理解es的配置文件，主要需要配置的几个参数
+>
+>    ```yaml
+>    cluster.name: es-cluster-stateful-01
+>        node.name: "${POD_NAME}"
+>        network.host: 0.0.0.0
+>        discovery.zen.ping.unicast.hosts: ["es-stateful-0.es-stateful-headless", "es-stateful-1.es-stateful-headless","es-stateful-2.es-stateful-headless"] 
+>    ```
+>
+>    这些参数最终需要通过configmap挂载到pod中
+>
+> 2. 另外需要提前了解到es的image的默认的数据目录`/usr/share/elasticsearch/data `，以便将pvc挂在到对应的位置
+>
+> 3. 通过脚本设置一些启动参数如`ulimit -n 1024000`
+
+
 
 ### elasticsearch install
 
@@ -3526,7 +3545,29 @@ TODO 安装自定义插件
 
 ### kibana install
 
-> kibana 安装之前需要将es先安装好。安装kibana的套路和安装es的套路类似，详细如下：
+> kibana 安装之前需要将es先安装好。
+>
+> kibana安装需要注意的地方
+>
+> 1. 需要通过configmap设置kibana.yml
+>
+>    ```yaml
+>        server.host: "${POD_NAME}"
+>        elasticsearch.url: "http://es-stateful-headless.bjrdc-dev.svc.cluster.local:9200"
+>        elasticsearch.username: "kibana"
+>        elasticsearch.password: "elastic"
+>    ```
+>
+>    POD_NAME为一个环境变量通过如下配置设置
+>
+>    ```yaml
+>            - name: POD_NAME
+>              valueFrom:
+>                fieldRef:
+>                  fieldPath: metadata.name
+>    ```
+>
+> 2. 安装kibana不需要使用statefulset
 
 1. configmap
 
