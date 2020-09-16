@@ -1,8 +1,27 @@
 Arduino
-
 =====
 
-### on eclipse
+## avrdude 
+
+> avrdue是一个avr平台的工具，用于编译hex文件和烧写
+
+### 基本命令
+
+1. 支持的isp
+
+   ```sh
+   avrdude  -c avrisp
+   ```
+
+2. 烧写
+
+   ```
+   sudo avrdude -pm2560 -cstk500v2 -P/dev/ttyACM0 -b115200 -D  -Uflash:w:/ICESX/workSpaceC/SmartCarPark/product/code/frontend/demo/eclipse/Blink/ATMEGA2560/Blink.hex
+   ```
+
+   
+
+## on eclipse
 
 1. 参考文献：http://playground.arduino.cc/Code/Eclipse#Arduino_core_library
 2. 参考归参考具体的还是要自己理解的按照实地的情况调整。
@@ -14,7 +33,7 @@ Arduino
    2. arduino uno 3
    3. 安装eclipse插件：AVR Eclipse http://avr-eclipse.sourceforge.net/wiki/index.php/The_AVR_Eclipse_Plugin
 
-```	
+```	sh
 sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
 ```
 
@@ -47,14 +66,24 @@ sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
 
      5. ArdunioAIO-properties-C/C++Build-ManageConfiger-New：ATMMEGA328P_16MHZ-SetActive
 6. ArdunioAIO-properties-C/C++Build-Settings-Addtion Tools in Toolchain-checkon Genner HEX file for Flash Memory
-     7. ArdunioAIO-properties-C/C++Build-Settings-AVR Compiler
-   ​			
-        
-        1. Directores:and "\${workspace_loc:/${ProjName}/arduino}""\${workspace_loc:/\${ProjName}/standrad}""\${workspace_loc:/\${ProjName}/SoftwareSerial}"
-           ​			
+   7. ArdunioAIO-properties-C/C++Build-Settings-AVR Compiler
+     ​			
+
+       1. Directores:and 
+
+          ```
+          "\${workspace_loc:/${ProjName}/arduino}"
+          
+          "\${workspace_loc:/\${ProjName}/standrad}"
+          
+          "\${workspace_loc:/\${ProjName}/SoftwareSerial}"
+          ```
+
+          
      2. debugging：No debug info
-           		
+        
    3. Optimization：Size Optimization；other Optimization:-ffunction-sections -fdata-sections
+        
         4. language Standara：un check all
      8. ArdunioAIO-properties-C/C++Build-Settings-AVR C++ Compiler
         ​			
@@ -64,15 +93,15 @@ sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
         2. language Standara：only check on  no not use exceptions
 
 ### 多项目模式
-        	A、建立eclipse项目ArduinoLib
-        		所有的配置和ArduionAIO相似，区别的有如下两点
-        		I、建立项目的时候，选择AVR Cross target statis Libaray
-        		II、不要创建 source folder “src”
-        		III、不要执行：ArdunioAIO-properties-C/C++Build-Settings-Addtion Tools in Toolchain-checkon Genner HEX file for Flash Memory
-        	B、建立eclipse项目ArduinoProject
-        		所有的配置和ArduionAIO相似，区别的有如下区别
-        		I、不要创建sourcefolder “arduino”，“SoftwareSerial”,"standard"
-        		II、ArduinoProject-properties-project Reference：check on ArduinoLib
+A、建立eclipse项目ArduinoLib
+    		所有的配置和ArduionAIO相似，区别的有如下两点
+    		I、建立项目的时候，选择AVR Cross target statis Libaray
+    		II、不要创建 source folder “src”
+    		III、不要执行：ArdunioAIO-properties-C/C++Build-Settings-Addtion Tools in Toolchain-checkon Genner HEX file for Flash Memory
+    	B、建立eclipse项目ArduinoProject
+    		所有的配置和ArduionAIO相似，区别的有如下区别
+    		I、不要创建sourcefolder “arduino”，“SoftwareSerial”,"standard"
+    		II、ArduinoProject-properties-project Reference：check on ArduinoLib
 
 ### 实例
 
@@ -97,15 +126,25 @@ Ardunio mega2560
 
      ​	
 2. 但是后来不知道怎么的，又不行了，于是又花了一天半时间来定位问题：
-  1. 经过对比发现确实arduinoIDE的编译命令和eclipse的有差别，但是不管怎样将eclipse的命令改成和arduino的一样，都不行，LED仍然是不闪。
-  2. 将arduino编译的o文件，cp到eclipse中来，连接程a文件，发现可以用。所以怀疑是o文件编译的问题。
-  3. 再次检查两边的编译命令，仍然没有突破，于是想到了排除法。
-  4. 将eclipse中的o文件全部替换成arduino的，使用命令连接：avr-ar rcs  "libSmartCarParkFront-Lib.a" *.o。连接出来的a文件是可以用的，led可以闪动。
-  5. 于是将eclipse编译的o文件一个一个替换进去，发现除了wiring_digital.o以外，其他的所有的替换到都是正常的。
-  6. 于是使用arduino的命令在命令行编译wiring_digital.c，使用eclipse的源文件，编译出来的不能用，于是怀疑源代码的问题。
-  7. 将eclipse中的源代码和arduino安装目录的源代码进行对比，发现arduino.h文件中有一句话不同。
 
-    			不知道为何，arduino.h文件中有这样一句话：#include "../variants/leonardo/pins_arduino.h"；于是修改为#include <pins_arduino.h>.
+  3. 经过对比发现确实arduinoIDE的编译命令和eclipse的有差别，但是不管怎样将eclipse的命令改成和arduino的一样，都不行，LED仍然是不闪。
+
+  4. 将arduino编译的o文件，cp到eclipse中来，连接程a文件，发现可以用。所以怀疑是o文件编译的问题。
+
+  5. 再次检查两边的编译命令，仍然没有突破，于是想到了排除法。
+
+  6. 将eclipse中的o文件全部替换成arduino的，使用命令连接：avr-ar rcs  "libSmartCarParkFront-Lib.a" *.o。连接出来的a文件是可以用的，led可以闪动。
+
+  7. 于是将eclipse编译的o文件一个一个替换进去，发现除了wiring_digital.o以外，其他的所有的替换到都是正常的。
+
+  8. 于是使用arduino的命令在命令行编译wiring_digital.c，使用eclipse的源文件，编译出来的不能用，于是怀疑源代码的问题。
+
+  9. 将eclipse中的源代码和arduino安装目录的源代码进行对比，发现arduino.h文件中有一句话不同。
+
+     不知道为何，arduino.h文件中有这样一句话：
+
+    #include "../variants/leonardo/pins_arduino.h"；
+    于是修改为#include <pins_arduino.h>.
   8. 一切正常了，而且ARDUINO_AVR_MEGA2560删除也没有问题。注：一定要将variants/mega/目录增加到编译的的Directors中。
 	3. 关于打印，可能出现打印乱码的问题，修改的办法是增加宏：F_CPU=16000000L，默认好像是F_CPU=16000000UL，这个在mega上好似有问题
 	4. avrdude: ser_open(): can't open device "/dev/ttyACM0": Permission denied
@@ -113,3 +152,6 @@ Ardunio mega2560
 
 6、我自己的环境
 	A、SmartCarParkFront-Lib：
+
+## On Vscode
+

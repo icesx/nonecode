@@ -216,3 +216,15 @@ d5135553=d5135553f1d643f2cf589197ae98fda740f4b709
 > ```
 > git rebase --abort  
 > ```
+
+### 迁移
+
+将一个project迁移到另外一个project下
+
+```
+git clone <old_url>
+cd <repo_dir_name>
+git remote add new_remote <new_url>
+git push --all new_remote
+```
+

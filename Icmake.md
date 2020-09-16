@@ -122,6 +122,32 @@ endforeach (sub)
    
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
    ```
+   
+7. 开启调试
+
+   ```cmake
+   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -g)
+   ```
+
+   
+
+### 编译选项
+
+1. 设置C、C++的编译选项
+
+   ```cmake
+   add_compile_options(-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes)
+   ```
+
+   ```cmake
+   ADD_DEFINITIONS("-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes)
+   ```
+
+2. 设置C或者C++编译选项
+
+   ```cmake
+   set(CMAKE_C_FLAGS "-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes)
+   ```
 
    
 

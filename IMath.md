@@ -259,7 +259,7 @@ $$
 `P(A|B) = (7/10)*(1/2) / (8/20) = 0.875`
 2. 全概率公式
 $$
-P(A)=\sum_i(P(B_i)*P(A|B_i)) 
+P(A)=\sum_i(P(B_i)*P(A|B_i))
 $$
 
 ### 66 协方差矩阵
@@ -331,27 +331,29 @@ $$
 3. 几个主要的参数
 >states:可能的隐含状态值
 >
->>states = ('Rainy', 'Sunny')
+>states = ('Rainy', 'Sunny')
 
 >observations:显性的观察值
 >
->>observations = ('walk', 'shop', 'clean')	
+>observations = ('walk', 'shop', 'clean')	
 
 >start_probability:初始的隐状态的发生概率
 >
->>start_probability = {'Rainy': 0.6, 'Sunny': 0.4}
+>start_probability = {'Rainy': 0.6, 'Sunny': 0.4}
 
 >transition_probability:隐状态的变化概率，是一个统计概率，相对固定【下雨到天晴的概率等】
->>transition_probability = {
-　　　'Rainy' : {'Rainy': 0.7, 'Sunny': 0.3},
-　　　'Sunny' : {'Rainy': 0.4, 'Sunny': 0.6},
-　　　}
+>
+>transition_probability = {
+>　　　'Rainy' : {'Rainy': 0.7, 'Sunny': 0.3},
+>　　　'Sunny' : {'Rainy': 0.4, 'Sunny': 0.6},
+>　　　}
 
 >emission_probability:隐状态下的发生观察值的概率
->>emission_probability = {
-　　　'Rainy' : {'walk': 0.1, 'shop': 0.4, 'clean': 0.5},
-　　　'Sunny' : {'walk': 0.6, 'shop': 0.3, 'clean': 0.1},
-　　　}
+>
+>emission_probability = {
+>　　　'Rainy' : {'walk': 0.1, 'shop': 0.4, 'clean': 0.5},
+>　　　'Sunny' : {'walk': 0.6, 'shop': 0.3, 'clean': 0.1},
+>　　　}
 
 ### DTW
 1. DTW算法又叫动态时间规整（ Dynamic Time Warping），是一个比较简单的dp算法。常用于不等长的离散的路径点的匹配问题，在孤立词语音识别、手势识别、数据挖掘和信息检索等领域有着很不错的表现
@@ -389,7 +391,7 @@ $$
 
 ### 先验概率
 
->>是指根据以往经验和分析得到的概率，如全概率公式，它往往作为"由因求果"问题中的"因"出现的概率
+>是指根据以往经验和分析得到的概率，如全概率公式，它往往作为"由因求果"问题中的"因"出现的概率
 
 ### 后验概率
 >后验概率是指在得到“结果”的信息后重新修正的概率，是“执果寻因”问题中的"果"

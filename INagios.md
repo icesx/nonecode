@@ -65,7 +65,7 @@ make install
 
 ​		slaver
 
-```
+```sh
 ./configure --prefix=/home/bjrdc/software/nagios-plugins-2.3.3 --with-nagios-user=bjrdc --with-nagios-group=bjrdc 
 make
 make install
@@ -89,7 +89,7 @@ http://bjrdc51/nagios
 
 2. 安装（主机）
 
-```
+```sh
 sudo apt install libssl-dev
 ./configure --prefix=/home/bjrdc/software/nagios-4.4.5 --with-nrpe-group=bjrdc --with-nrpe-user=bjrdc --with-nagios-user=bjrdc --with-nagios-group=bjrdc
 make all
@@ -327,7 +327,7 @@ define service {
 
 1. Prepare
 
-```
+```sh
 sudo apt install postfix mailutils
 echo "test message" | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com'
 #如果收到邮件说明邮件配置完成
@@ -385,7 +385,7 @@ sudo apt install postfix mailutils
 
 #### smtp密码配置
 
-```
+```sh
 echo [smtp.163.com]:465 username:password > /etc/postfix/sasl_password
 postmap /etc/postfix/sasl_passwd
 chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db

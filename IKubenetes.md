@@ -2449,6 +2449,7 @@ kubectl config view
 ```sh
 kubectl create -f xx.yaml
 kubectl create -f .
+kubectl create configmap redis-cluster-config  -n bjrdc-dev --from-file=redis.conf=./redis.conf --from-file=redis-cluster-boot.py=./redis-cluster-boot.py
 ```
 
 #### 获取资源
@@ -2552,7 +2553,7 @@ kubectl scale --replicas=3 -f foo.yaml
 kubectl scale --current-replicas=2 --replicas=3 deployment/mysql  
 # If the deployment named mysql's current size is 2, scale mysql to 3
 
-kubectl scale --replicas=5 rc/foo rc/bar rc/baz
+kubectl scale --replicas=3 statefulset/gitlab-ci-runner -n gitlab-runner
 ```
 
 #### 创建
@@ -4973,7 +4974,12 @@ TODO 安装自定义插件
    redis-cli -h redis-stateful-0.redis-stateful-headless.bjrdc-dev.svc.cluster.local -c  get 100
    ```
 
-   
+
+
+
+## CI
+
+> kubernetes 可以为ci提供运行环境，相关配置参考[IGitlab.md](./IGitlab.md)
 
 
 
@@ -5243,6 +5249,31 @@ spec:
 ## 关于jkube插件
 
 TODO
+
+
+
+## 其他
+
+### 自定义hosts
+
+kubernetes支持设置hostname，通过如下配置
+
+```yaml
+...
+spec:
+  restartPolicy: Never
+  hostAliases:
+  - ip: "127.0.0.1"
+    hostnames:
+    - "foo.local"
+    - "bar.local"
+  - ip: "10.1.2.3"
+    hostnames:
+    - "foo.remote"
+    - "bar.remote"
+  containers:
+ ...
+```
 
 
 

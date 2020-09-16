@@ -374,7 +374,20 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >delete pool
 >
 >```
+>ceph osd pool delete {pool-name} [{pool-name} --yes-i-really-really-mean-it]
+>```
 >
+>`Error EPERM: pool deletion is disabled; you must first set the mon_allow_pool_delete config option to true before you can destroy a pool`
+>
+>add content to `/etc/ceph/ceph.conf`
+>
+>```
+>[mon]
+>mon allow pool delete = true
+>```
+>
+>```
+>sudo systemctl restart ceph-mon.target
 >```
 >
 >
