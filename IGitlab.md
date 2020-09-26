@@ -478,6 +478,8 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
    </settings>
    ```
 
+9. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
+
    
 
 #### 问题处理

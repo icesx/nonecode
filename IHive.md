@@ -125,10 +125,35 @@ create external table cdc.hitlog(ip string,frank string,user_id string,time stri
 ```
 ### 相关命令
 
-```
-./hive --service hiveserver2
-show tables
-```
+1. 启动hiveserver2
+
+   > 基于JDBC等协议：启动hiveserver2，通过jdbc协议可以访问hive，hiveserver2支持高并发
+
+   ```sh
+   ./hive --service hiveserver2
+   ```
+
+2. 交互模式
+
+   ```
+   ./hive
+   show tables
+   ```
+
+3. 直接执行sql
+
+   ```
+   ./hive -e "select * from db_hive.student ;"
+   ./hive -f /opt/datas/hivef.sql 
+   ```
+
+4. 通过beeline链接hiveserver2
+
+   ```
+   ./beeline -u jdbc:hive2://bjrdc31:10000
+   ```
+
+   
 
 ### 兼容性
 ​	目前hive1.2.1 和hbase1.2不能兼容,hive-2.0.0已经兼容hbase1.x
@@ -138,7 +163,7 @@ mvn clean install -DskipTests
 
 	mvn clean package -DskipTests -Pdist
 	发现启动有一些问题，增加了hive-site.xml后问题未解决，虽然可以跑mapreduce但是select × from table 无法查询结果出来:
-```
+```xml
 
 		<configuration>
 		  <property>
@@ -172,13 +197,17 @@ mvn clean install -DskipTests
 
 ​	hive -hiveconf hive.root.logger=DEBUG,console
 
-```
+```sql
 	CREATE EXTERNAL TABLE cdc.phoenix_test(mykey string, mycolumn string) STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key,0:mycolumn")TBLPROPERTIES("hbase.table.name" = "PHOENIX_TEST");
 ```
-	select (*) from cdc.phoenix_test
-	Exception in thread "Thread-1" java.lang.OutOfMemoryError: PermGen space
-	在Hadoop的hadoop-env.sh 增加
-		export HADOOP_CLIENT_OPTS="-XX:MaxPermSize=256m $HADOOP_CLIENT_OPTS"
+
+
+```sql
+select (*) from cdc.phoenix_test
+Exception in thread "Thread-1" java.lang.OutOfMemoryError: PermGen space
+在Hadoop的hadoop-env.sh 增加
+	export HADOOP_CLIENT_OPTS="-XX:MaxPermSize=256m $HADOOP_CLIENT_OPTS"
+```
 
 ### 与hbase整合
 ​	A、注意大小写，当Hbase中字段为大写的时候，在创建Hivetable的时候，一定要讲mapping字段中写上大写的。
@@ -186,8 +215,8 @@ mvn clean install -DskipTests
 ### 问题处理
 + Caused by: org.apache.hadoop.hive.ql.metadata.HiveException: org.apache.hadoop.hive.serde2.SerDeException: HBase row key cannot be NULL
 这是因为在insert的时候，有rowkey为空，如下：
-```
-		 INSERT OVERWRITE TABLE cdc.CDC_ANALYSIS_APPEAR_OFTEN_GOODS_SITES
+```sql
+INSERT OVERWRITE TABLE cdc.CDC_ANALYSIS_APPEAR_OFTEN_GOODS_SITES
 		  --/*物品经常出现的场所*/
 		 select concat(mac,"_",lpad(string(size(time_d_col)),4,"0"),"_",rpad(string(rand()),16,"0")),mac,site_id,concat_ws(",",time_d_col)
 ```
@@ -200,8 +229,8 @@ FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTa
 	
 + hbase Attempt to do update or delete using transaction manager that does not support these operations
 https://cwiki.apache.org/confluence/display/Hive/Hive+Transactions#Configuration
-注：但是惊奇的发现，如果加上如下配置后，INSERT INTO TABLE cdc.CDC_NETWORK_AUDIT_CLEAN 就无法用了——hive2.0.0】
-```
+注：但是惊奇的发现，如果加上如下配置后，`INSERT INTO TABLE cdc.CDC_NETWORK_AUDIT_CLEAN` 就无法用了——hive2.0.0】
+```xml
 		hive-site.xml增加如下配置，重启hive
 		   <property>
 		    <name>hive.support.concurrency</name>

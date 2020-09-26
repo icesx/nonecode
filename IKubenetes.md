@@ -3808,7 +3808,11 @@ TODO 安装自定义插件
 >
 > google官方提供了一个自动配置的容器`mirrorgooglecontainers/kubernetes-zookeeper:1.0-3.4.10`，该容器自带 start-zookeeper的脚本能够自动设置相关参数。
 >
-> 安装详细过程如下
+> 安装zookeeper有两种方式，一种是使用kubernet提供的kubernetes-zookeeper镜像，另外一种是使用zookeeper官方的镜像，相信如下：
+
+#### kubernetes-zookeeper
+
+kubernetes提供了一个zookeeper镜像，用于方便的启动zookeeper，其中内置了一些脚本。详细安装过程如下。
 
 1. 仍然是配置storageclass（一旦有了storageclass，走遍天下都不怕）
 
@@ -3947,6 +3951,133 @@ TODO 安装自定义插件
    ZooKeeper JMX enabled by default
    Using config: /opt/zookeeper/bin/../conf/zoo.cfg
    Mode: leader
+   ```
+
+
+#### zookeeper
+
+kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版本的则需要使用zookeeper官方的镜像。使用官方的镜像安装的思路是使用脚本设置环境变量，然后启动zookeeper。
+
+1. storageclass（可选）
+
+   ```
+   cat 0-zookeeper-storageclass.yaml 
+   apiVersion: storage.k8s.io/v1
+   kind: StorageClass
+   metadata:
+     name: ceph-storageclass-zookeeper
+     namespace: bjrdc-dev
+   provisioner: ceph.com/rbd
+   parameters:
+     monitors: 172.16.15.208:6789
+     adminId: admin
+     adminSecretName: ceph-rbd-secret
+     adminSecretNamespace: bjrdc-dev
+     pool: k8s_pool_zookeeper_01
+     userId: admin
+     userSecretName: ceph-rbd-secret
+     fsType: ext4
+     imageFormat: "2"
+     imageFeatures: "layering"
+   ```
+
+   
+
+2. statefulset
+
+   ```
+   cat 1-zookeeper-cluster-statefulset.yaml 
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: zookeeper-stateful
+     namespace: bjrdc-dev
+   spec:
+     selector:
+       matchLabels:
+         app: zookeeper-stateful 
+     serviceName: zookeeper-stateful-headless
+     replicas: 3
+     template:
+       metadata:
+         labels:
+           app: zookeeper-stateful
+       spec: 
+         containers:
+         - name: zookeeper-stateful
+           image: bjrdc206.reg/library/zookeeper:3.6.1
+           command:
+           - sh
+           - "-c"
+           - |
+             set -ex
+             HOST=`hostname`
+             ZOO_MY_ID_=${HOST##*-}
+             export ZOO_MY_ID=$((ZOO_MY_ID_+1))
+             export ZOO_SERVERS="server.1=zookeeper-stateful-0.zookeeper-stateful-headless:2888:3888;2181 server.2=zookeeper-stateful-1.zookeeper-stateful-headless:2888:3888;2181 server.3=zookeeper-stateful-2.zookeeper-stateful-headless:2888:3888;2181"
+             bash /docker-entrypoint.sh
+             zkServer.sh start-foreground         
+           ports:
+           - containerPort: 2181
+             protocol: TCP
+           - containerPort: 2888
+             protocol: TCP
+           - containerPort: 3888
+             protocol: TCP
+           livenessProbe:
+             exec: 
+               command: 
+               - sh
+               - -c
+               - zookeeper-ready 2181  
+             initialDelaySeconds: 80
+             periodSeconds: 30
+           volumeMounts:
+           - name: zookeeper-data
+             mountPath: /data
+   
+     volumeClaimTemplates:
+     - metadata:
+         name: zookeeper-data
+       spec:
+         accessModes: [ "ReadWriteOnce" ]
+         storageClassName: ceph-storageclass-zookeeper
+         resources:
+           requests:
+             storage: 2Gi
+   ```
+
+3. headless
+
+   ```
+   cat 2-zookeeper-cluster-service.yaml 
+   # Headless service for stable DNS entries of StatefulSet members.
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: zookeeper-stateful-headless
+     namespace: bjrdc-dev
+     labels:
+       app: zookeeper-stateful
+   spec:
+     ports:
+     - name: zookeeper-stateful-port
+       port: 2181
+     - name: zookeeper-stateful-port2
+       port: 2888
+     - name: zookeeper-stateful-port3
+       port: 3888
+   
+   
+     clusterIP: None
+     selector:
+       app: zookeeper-stateful
+   ```
+
+4. 验证
+
+   ```
+    kubectl exec -it zookeeper-stateful-2 -n bjrdc-dev -- zkServer.sh status
    ```
 
    

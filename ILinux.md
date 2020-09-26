@@ -6,7 +6,7 @@ ubuntu
 
 > 安装linux推荐最小化安装，之后再通过命令安装需要的组件
 
-```
+```sh
 sudo apt install gcc make automake net-tools route zip unzip binutils
 ```
 ### 远程桌面
@@ -18,8 +18,8 @@ sudo apt install gcc make automake net-tools route zip unzip binutils
 2. 开启权限	
 $gsettings set org.gnome.Vino require-encryption false
 ### 本地ISO软件源
-	Ubuntu的软件源文件为/etc/apt/sources.list，我们可以先备份一下该文件，直接执行mv命令，这样就没有sources.list文件了。下面挂载ISO镜像，一般放了DVD会自动挂载，我们也可以手动挂载到/media/cdcrom
-```
+> Ubuntu的软件源文件为/etc/apt/sources.list，我们可以先备份一下该文件，直接执行mv命令，这样就没有sources.list文件了。下面挂载ISO镜像，一般放了DVD会自动挂载，我们也可以手动挂载到/media/cdcrom
+```sh
 $mount /dev/cdrom /media/cdrom 
 apt-cdrom -m -d=/media/cdrom add 
 保留 /etc/apt/sources.list中的第一行
@@ -31,7 +31,7 @@ $apt-get update
 
 #### ubuntu 16
 
-```
+```sh
 $vi /etc/network/interfaces
 auto eth0
 iface eth0 inet static
@@ -42,7 +42,7 @@ gateway 192.168.31.1
 
 修改NDS 
 
-```
+```sh
 sudo systemctl enable dnsmasq
 sudo vi /etc/dnsmasq.conf
 	server=114.114.114.114
@@ -53,8 +53,8 @@ sudo systemctl start dnsmasq
 
 #### ubuntu18
 
-	network配置发生变化，修改方式如下：
-```
+network配置发生变化，修改方式如下：
+```yaml
 solar@solarsystem:~$ cat /etc/netplan/01-netcfg.yaml 
 # This file describes the network interfaces available on your system
 # For more information, see netplan(5).
@@ -72,7 +72,7 @@ network:
 ```
 netplan 相关命令
 
-```
+```sh
 netplan apply
 netplan generate
 ```
@@ -83,7 +83,7 @@ DNS
 >
 > 1. 通过`resolvconf`来实现更新，（直接修改/etc/resolv.conf文件是会被系统自动覆盖的）相关方法如下**此方式不推荐**
 >
-> ```
+> ```sh
 > sudo apt install resolvconf
 > cat > /etc/resolvconf/resolv.conf.d/head <<EOF
 > nameserver 10.96.0.10
@@ -102,7 +102,7 @@ DNS
 >
 >    重启服务
 >
->    ```
+>    ```sh
 >    sudo systemctl restart systemd-resolved
 >    ```
 >
@@ -110,7 +110,7 @@ DNS
 >
 >    重建链接
 >
->    ```
+>    ```sh
 >    sudo rm -f /etc/resolv.conf
 >    sudo ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
 >    ```
@@ -148,7 +148,7 @@ iperf -c server
 
 ### systemd 基本命令
 
-```
+```sh
 # 列出正在运行的 Unit
 $ systemctl list-units
 

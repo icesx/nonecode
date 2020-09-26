@@ -3,7 +3,7 @@ activiti
 
 ### eclipse
 
-``` 
+``` http
 http://activiti.org/designer/update/
 https://www.activiti.org/designer/archived/
 /ICESX/workSpaceMoa/ministry-of-agriculture/doc/pig-transport/resources/eclipse-plugin/activiti-designer-5.18.0.zip
@@ -21,7 +21,7 @@ https://www.activiti.org/designer/archived/
 
 将 bpmn文件部署到数据库
 
-```
+```java
 	@Override
 	public Deployment deploy(String classpath) {
 		return repositoryService.createDeployment().addClasspathResource(classpath).deploy();
@@ -41,7 +41,7 @@ activiti 使用候选人和候选组的概念进行执行，提前需要通过
 
 通过代理人执行：assignee
 
-```
+```java
 @Test
 public void claimTask() {
   // 上面查询到user1的候选任务id为2505
@@ -65,14 +65,14 @@ public void claimTask() {
 
 ### spring-boot2
 
-```
+```java
 Caused by: java.lang.ArrayStoreException: sun.reflect.annotation.TypeNotPresentExceptionProxy
  
 Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'requestMappingHandlerMapping' defined in class path resource [org/springframework/boot/autoconfigure/web/servlet/WebMvcAutoConfiguration$EnableWebMvcConfiguration.class]: Invocation of init method failed; nested exception is java.lang.ArrayStoreException: sun.reflect.annotation.TypeNotPresentExceptionProxy
 
 ```
 
-```
+```java
 @SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 ```
 
