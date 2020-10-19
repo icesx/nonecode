@@ -33,10 +33,10 @@ Solr
   ```
 
 3. 请求地址相关
-  
+
   在solr/server/solr/mycore/conf/slorconfig.xml中由如下的相关篇日志需要关注
   `<requestHandler name="/select" class="solr.SearchHandler">`
-  
+
   ​	【使用solr的client进行调用的时候执行的http请求如：】
     			QueryResponse response = solr.query(
     			new SolrQuery().setRows(100).setSort("price", SolrQuery.ORDER.asc).set(CommonParams.Q, "price:*"));
@@ -44,7 +44,7 @@ Solr
     			对应的url为：
     			GET /solr/mycore/select?rows=100&sort=price+asc&q=price%3A*&wt=javabin&version=2
     ` <requestHandler name="/update/extract" startup="lazy"  class="solr.extraction.ExtractingRequestHandler" >`
-  
+
   【为另外一个url，可用于上传文件】
     			POST /solr/mycore/update/extract?fmap.content=attr_content&commit=true&softCommit=false&waitSearcher=true&wt=javabin&version=2
     C、几个关键字
@@ -90,17 +90,17 @@ Solr
 			</fieldtype>			
 		III、需要在/cloud/software/solr-5.3.1/dicpath目录下创建词库文件words.dic,并且词库文件每行一个单词，换行符需要使用windows的
 
-### 集群配置
-	### 主机启动
-		 ./solr -c -z hadoop7:2181
-	### 辅机启动
-		 ./solr -c -z hadoop7:2181
-	### 所有的节点的服务都启动后，在其中一个节点上创建collection
-		 ./solr create_collection -c cdcore -d ../server/solr/configsets/sample_techproducts_configs -shards 3 -replicationFactor 2【这个命令创建的collection可能无法通过api创建filetype】
-		./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs/ -shards 3 -replicationFactor 3
-	### 重启
+## 集群配置
+### 主机启动
+	./solr -c -z hadoop7:2181
+### 辅机启动
+	./solr -c -z hadoop7:2181
+### 所有的节点的服务都启动后，在其中一个节点上创建collection
+	./solr create_collection -c cdcore -d ../server/solr/configsets/sample_techproducts_configs -shards 3 -replicationFactor 2【这个命令创建的collection可能无法通过api创建filetype】
+	./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs/ -shards 3 -replicationFactor 3
+### 重启
 		./solr restart -c -z hadoop7 -m 1g
-	### 异常处理
+### 异常处理
 		org.apache.solr.common.SolrException: Error loading config name for collection
 		问题：如果链接不上zookeeper,则使用zookeeper的zoCli.sh rmr /clusterstate.json,重启solr，然后再删除server/solr/下的分片目录，再执行
 		./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs -shards 3 -replicationFactor 2 -
@@ -109,15 +109,15 @@ Solr
 		./solr create_collection -c cdcore -d ../server/solr/configsets/data_driven_schema_configs -shards 4 -replicationFactor 2
 	【在实地的使用中，由于share是挂在不同的机器上的，replication是复制的数量，多了影响创建索引的性能，所以可以将replicationFcator设置为2，这样就可以将数据分到4台机器上，每个数据有2个备份】
 	【replicationFactor】：发现设置为2的时候，第三台机器加进去没有出来，看样子是有多少个服务器，就设置多少个分片
-	### data_driven_schema_configs vs sample_techproducts_configs
+### data_driven_schema_configs vs sample_techproducts_configs
 		data_driven_schema_configs 可以修改schema
 		sample_techproducts_configs 会抛异常 errorMessages=schema is not editable
-	### 关于配置：
+### 关于配置：
 		solr在cloud模式下，创建core之后，相关的配置文件会提交到zookeeper，在zookeeper的"/configs/cdcore/"目录下
 		zookeeper由于会持久化这些配置，所以重启zookeeper后，这些配置仍然在
 		按照solr官方的推荐，是将这些配置文件下载下来作为版本控制
 		使用solr的javaapi可以下载这些配置，并可以上传，相关代码我已经实现
-	### 关于性能：
+### 关于性能：
 		由于在创建core的时候，设置了分片，所以在创建索引的时候，会产生重复的写
 		如果一个core有三个，则会将数据分成三块，这三块会分发到三个不同的主机上
 		如果一个share有三个分片，则这三个分片，相当于三个备份。

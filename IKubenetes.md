@@ -3960,7 +3960,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 
 1. storageclass（可选）
 
-   ```
+   ```yaml
    cat 0-zookeeper-storageclass.yaml 
    apiVersion: storage.k8s.io/v1
    kind: StorageClass
@@ -3983,10 +3983,33 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 
    
 
-2. statefulset
+2. configmap
 
+   ```yaml
+   cat 1-zookeeper-configmap.yaml 
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: zookeeper-config
+     namespace: bjrdc-dev
+   data:
+     zookeeper-start.sh:
+       #!/bin/bash
+       sleep 5;
+       HOST=`hostname`;
+       ZOO_MY_ID_=${HOST##*-};
+       export ZOO_MY_ID=$((ZOO_MY_ID_+1));
+       export ZOO_SERVERS="server.1=zookeeper-stateful-0.zookeeper-stateful-headless:2888:3888;2181 server.2=zookeeper-stateful-1.zookeeper-stateful-headless:2888:3888;2181 server.3=zookeeper-stateful-2.zookeeper-stateful-headless:2888:3888;2181";
+       bash /docker-entrypoint.sh;
+       zkServer.sh start-foreground;
    ```
-   cat 1-zookeeper-cluster-statefulset.yaml 
+   
+   
+   
+3. statefulset
+
+   ```yaml
+   cat 2-zookeeper-cluster-statefulset.yaml 
    apiVersion: apps/v1
    kind: StatefulSet
    metadata:
@@ -4011,12 +4034,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
            - "-c"
            - |
              set -ex
-             HOST=`hostname`
-             ZOO_MY_ID_=${HOST##*-}
-             export ZOO_MY_ID=$((ZOO_MY_ID_+1))
-             export ZOO_SERVERS="server.1=zookeeper-stateful-0.zookeeper-stateful-headless:2888:3888;2181 server.2=zookeeper-stateful-1.zookeeper-stateful-headless:2888:3888;2181 server.3=zookeeper-stateful-2.zookeeper-stateful-headless:2888:3888;2181"
-             bash /docker-entrypoint.sh
-             zkServer.sh start-foreground         
+             bash /zookeeper-start.sh
            ports:
            - containerPort: 2181
              protocol: TCP
@@ -4025,16 +4043,20 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
            - containerPort: 3888
              protocol: TCP
            livenessProbe:
-             exec: 
-               command: 
-               - sh
-               - -c
-               - zookeeper-ready 2181  
+             tcpSocket:
+               port: 2181
              initialDelaySeconds: 80
              periodSeconds: 30
            volumeMounts:
            - name: zookeeper-data
              mountPath: /data
+           - name: zookeeper-config
+             mountPath: /zookeeper-start.sh
+             subPath: zookeeper-start.sh
+         volumes:
+         - name: zookeeper-config
+           configMap:
+             name: zookeeper-config
    
      volumeClaimTemplates:
      - metadata:
@@ -4047,7 +4069,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
              storage: 2Gi
    ```
 
-3. headless
+4. headless
 
    ```
    cat 2-zookeeper-cluster-service.yaml 
@@ -4074,7 +4096,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
        app: zookeeper-stateful
    ```
 
-4. 验证
+5. 验证
 
    ```
     kubectl exec -it zookeeper-stateful-2 -n bjrdc-dev -- zkServer.sh status
