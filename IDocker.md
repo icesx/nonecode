@@ -217,11 +217,10 @@ docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 --link=hadoop-nam
 > docker默认需要sudo执行，可通过如下命令使其非sudo执行
 >
 > ```
-> sudo usermod -a -G docker jenkins
-> newgrp docker
+> sudo usermod -a -G docker bjrdc
 > docker run hello-world
 > ```
->
+> 
 
 ### Error response from daemon: Get https://bjrdc206.reg/v2/: x509: certificate signed by unknown authority
 
@@ -243,6 +242,40 @@ ADD target/${JAR_FILE} app.jar
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 EOF
 docker build -t xx:v1 .
+```
+
+## 开通远程
+
+### centos 7操作系统
+
+docker 启动配置在：/usr/lib/systemd/system/docker.service
+修改配置:
+
+```
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix://var/run/docker.sock
+```
+
+重启服务：
+
+```
+systemctl restart docker
+```
+
+### ubuntu 操作系统
+
+```
+vim /lib/systemd/system/docker.service
+
+
+找到ExecStart
+ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+```
+
+保存退出。
+
+```
+systemctl daemon-reload
+systemctl restart docker
 ```
 
 

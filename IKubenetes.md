@@ -1439,7 +1439,14 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 
 ### 11.RBAC
 
-> k8s提供的基于角色的权限管理。和RBAC相关的资源有如下三个
+> k8s提供的基于角色的权限管理。
+
+```
+kubectl auth  can-i get pods --as system:serviceaccount:gitlab-runner:gitlab-ci
+kubectl auth  can-i get pods -n bjrdc-dev --as system:serviceaccount:gitlab-runner:default
+```
+
+
 
  **ServiceAccount**
 
@@ -1471,31 +1478,78 @@ A StorageClass provides a way for administrators to describe the "classes" of st
 > kubectl get serviceaccounts -n bjrdc-dev
 > ```
 
->  **Role**
+#### Role
 
-TODO
+一个 `Role` 只可以用来对某一命名空间中的资源赋予访问权限
 
- **ClusterRole**
+定义到名称为 "default" 的命名空间，可以用来授予对该命名空间中的 Pods 的读取权限：
 
->创建clusterRole
->
->```yaml
->apiVersion: rbac.authorization.k8s.io/v1
->kind: ClusterRole
->metadata:
->name: aggregate-cron-tabs-edit
->labels:
-># 将这些权限添加到默认角色 "admin" 和 "edit" 中。
->rbac.authorization.k8s.io/aggregate-to-admin: "true"
->rbac.authorization.k8s.io/aggregate-to-edit: "true"
->rules:
->- apiGroups: ["stable.example.com"]
-> resources: ["crontabs"]
-> verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
->
->```
->
->
+```
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" 指定核心 API 组
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+```
+
+
+
+#### ClusterRole
+
+定义到集群中的角色。`ClusterRole` 可以授予的权限和 `Role` 相同， 但是因为 `ClusterRole` 属于集群范围，所以它也可以授予以下访问权限：
+
+- 集群范围资源 （比如 nodes）
+- 非资源端点（比如 "/healthz"）
+- 跨命名空间访问的有名字空间作用域的资源（如 Pods），比如运行命令`kubectl get pods --all-namespaces` 时需要此能力
+
+下面的 `ClusterRole` 示例可用来对某特定命名空间下的 Secrets 的读取操作授权， 或者跨所有命名空间执行授权（取决于它是如何[绑定](https://kubernetes.io/zh/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding)的）：
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # 此处的 "namespace" 被省略掉是因为 ClusterRoles 是没有命名空间的。
+  name: secret-reader
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "watch", "list"]
+```
+
+
+
+#### RoleBinding 
+
+一个 `RoleBinding` 可以引用同一的命名空间中的 `Role`,下面的例子 `RoleBinding` 将 "pod-reader" 角色授予在 "default" 命名空间中的用户 "jane"； 这样，用户 "jane" 就具有了读取 "default" 命名空间中 pods 的权限。
+
+`roleRef` 里的内容决定了实际创建绑定的方法。`kind` 可以是 `Role` 或 `ClusterRole`， `name` 将引用你要指定的 `Role` 或 `ClusterRole` 的名称。在下面的例子中，角色绑定使用 `roleRef` 将用户 "jane" 绑定到前文创建的角色 `Role`，其名称是 `pod-reader`。
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+# 此角色绑定使得用户 "jane" 能够读取 "default" 命名空间中的 Pods
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: User
+  name: jane # Name is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # 这里的名称必须与你想要绑定的 Role 或 ClusterRole 名称一致
+  apiGroup: rbac.authorization.k8s.io
+```
+
+#### ClusterRoleBinding
+
+
+
+
 
 
 ### 12.DNS

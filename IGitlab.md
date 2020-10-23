@@ -126,7 +126,7 @@ you must set your local's hostname is xx.net and add the correct ip with xx.net 
 
 
 
-## runner
+### runner
 
 > GitLab Runner is the open source project that is used to run your jobs and send the results back to GitLab. It is used in conjunction with [GitLab CI/CD](https://about.gitlab.com/stages-devops-lifecycle/continuous-integration/), the open-source continuous integration service included with GitLab that coordinates the jobs.
 
@@ -169,43 +169,38 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 2. rbac
 
    ```yaml
-   cat 0-gitlab-namespace.yaml 
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: gitlab-runner
-   bjrdc@bjrdc17:~/k8s_workspace/gitlab$ cat 1-gitlab-rabc.yaml 
+   cat 1-gitlab-rbac.yaml 
    apiVersion: v1
    kind: ServiceAccount
    metadata:
      name: gitlab-ci
      namespace: gitlab-runner
    ---
-   kind: Role
+   kind: ClusterRole
    apiVersion: rbac.authorization.k8s.io/v1
    metadata:
-     namespace: gitlab-runner
+   
      name: gitlab-ci
    rules:
-     - apiGroups: [""]
+     - apiGroups: ["", "extensions", "apps"]
        resources: ["*"]
        verbs: ["*"]
    ---
-   kind: RoleBinding
+   kind: ClusterRoleBinding
    apiVersion: rbac.authorization.k8s.io/v1
    metadata:
      name: gitlab-ci
-     namespace: gitlab-runner
+   
    subjects:
      - kind: ServiceAccount
        name: gitlab-ci
        namespace: gitlab-runner
    roleRef:
-     kind: Role
+     kind: ClusterRole
      name: gitlab-ci
      apiGroup: rbac.authorization.k8s.io
    ```
-
+   
 3. configmap-env 环境变量
 
    > 这个环境变量没有测试哪些是多余的
@@ -227,15 +222,16 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
      RUNNER_REQUEST_CONCURRENCY: "4"
      RUNNER_EXECUTOR: "kubernetes"
      KUBERNETES_NAMESPACE: "gitlab-runner"
+     KUBERNETES_SERVICE_ACCOUNT: "gitlab-ci"
      KUBERNETES_PRIVILEGED: "true"
      KUBERNETES_CPU_REQUEST: "250m"
      KUBERNETES_MEMORY_REQUEST: "256Mi"
      KUBERNETES_CPU_LIMIT: "1"
-     KUBERNETES_MEMORY_LIMIT: "1Gi"
+     KUBERNETES_MEMORY_LIMIT: "2Gi"
      KUBERNETES_SERVICE_CPU_REQUEST: "150m"
      KUBERNETES_SERVICE_MEMORY_REQUEST: "256Mi"
      KUBERNETES_SERVICE_CPU_LIMIT: "1"
-     KUBERNETES_SERVICE_MEMORY_LIMIT: "1Gi"
+     KUBERNETES_SERVICE_MEMORY_LIMIT: "2Gi"
      KUBERNETES_HELPER_CPU_REQUEST: "150m"
      KUBERNETES_HELPER_MEMORY_REQUEST: "100Mi"
      KUBERNETES_HELPER_CPU_LIMIT: "500m"
@@ -244,7 +240,10 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
      KUBERNETES_TERMINATIONGRACEPERIODSECONDS: "10"
      KUBERNETES_POLL_INTERVAL: "5"
      KUBERNETES_POLL_TIMEOUT: "360"
+     KUBERNETES_POLL_TIMEOUT: "360"
    ```
+
+   `KUBERNETES_SERVICE_ACCOUNT`设定的是rbac中设置的serviceaccount
 
 4. 配置script configmap-file
 
@@ -360,7 +359,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
            - name: RUNNER_PRE_CLONE_SCRIPT
              value: "echo '172.16.15.7 bjrdc7' >> /etc/hosts"
            - name: RUNNER_PRE_BUILD_SCRIPT
-             value: "echo '172.16.15.9 bjrdc9' >> /etc/hosts"
+             value: for i in {1..254}; do echo 172.16.15.$i bjrdc$i >> /etc/hosts;done
            ports:
            - containerPort: 9100
              name: http-metrics
@@ -380,7 +379,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
            - name: RUNNER_PRE_CLONE_SCRIPT
              value: "echo '172.16.15.7 bjrdc7' >> /etc/hosts"
            - name: RUNNER_PRE_BUILD_SCRIPT
-             value: "echo '172.16.15.9 bjrdc9' >> /etc/hosts"
+             value: for i in {1..254}; do echo 172.16.15.$i bjrdc$i >> /etc/hosts;done
    ```
 
    如上代码用于增加runner和maven的pod中需要域名
@@ -480,7 +479,84 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
 9. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
 
-   
+
+## jkube 插件
+
+```xml
+				<plugin>
+					<groupId>org.eclipse.jkube</groupId>
+					<artifactId>kubernetes-maven-plugin</artifactId>
+					<version>1.0.1</version>
+					<configuration>
+						<skip>true</skip>
+						<dockerHost>http://bjrdc218:2375</dockerHost>
+						<registry>${harbor.local}</registry>
+						<authConfig>
+							<username>admin</username>
+							<password>Harbor12345</password>
+						</authConfig>
+						<namespace>bjrdc-dev</namespace>
+						<kubernetesManifest>${project.build.directory}/jkube/kubernetes.yml</kubernetesManifest>
+						<targetDir>${project.build.directory}/jkube</targetDir>
+						<images>
+							<image>
+								<registry>${harbor.local}</registry>
+								<name>bjrdc-dev/${project.artifactId}:${project.version}</name>
+								<alias>${project.artifactId}</alias>
+								<build>
+									<assembly>
+										<name>${k8s.plugin.assemble.name}</name>
+									</assembly>
+									<contextDir>${project.basedir}</contextDir>
+									<dockerFile>${project.basedir}/src/main/docker/Dockerfile</dockerFile>
+									<!-- <cleanup>remove</cleanup> -->
+								</build>
+							</image>
+						</images>
+						<access>
+							<masterUrl>${k8s.master.url}</masterUrl>
+						</access>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<version>${spring-boot.version}</version>
+					<configuration>
+						<mainClass>${start-class}</mainClass>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>com.spotify</groupId>
+					<artifactId>dockerfile-maven-plugin</artifactId>
+					<version>1.4.13</version>
+					<executions>
+						<execution>
+							<id>default</id>
+							<goals>
+								<goal>build</goal>
+								<goal>push</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<skip>true</skip>
+						<repository>bjrdc206.reg/bjrdc-dev/${project.artifactId}</repository>
+						<tag>${project.version}</tag>
+						<buildArgs>
+							<JAR_FILE>target/${project.build.finalName}.jar</JAR_FILE>
+						</buildArgs>
+					</configuration>
+				</plugin>
+```
+
+执行
+
+```shell
+mvn clean package spring-boot:repackage  k8s:build  k8s:resource k8s:push k8s:undeploy k8s:deploy
+```
+
+
 
 #### 问题处理
 
@@ -497,7 +573,9 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
 就是因为没有这个文件了，这个文件需要mount进去，然后用`.gitlab-ci.yml`指定就可以了
 
+#### pending
 
+gitlab中的任务一直处于pending中
 
 
 
