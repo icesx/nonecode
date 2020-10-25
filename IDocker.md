@@ -244,7 +244,7 @@ EOF
 docker build -t xx:v1 .
 ```
 
-## 开通远程
+## 远程
 
 ### centos 7操作系统
 

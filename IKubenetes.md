@@ -5181,7 +5181,95 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
    redis-cli -h redis-stateful-0.redis-stateful-headless.bjrdc-dev.svc.cluster.local -c  get 100
    ```
 
+## zipkin
 
+> zipkin 可以使用 in kubernetes的模式，直接部署，而不是使用spring的application打包成docker后再启动。
+
+### 简单部署
+
+不设置存储
+
+```yaml
+cat 0-zipkin.yaml 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin
+  namespace: bjrdc-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zipkin
+  template:
+    metadata:
+      labels:
+        app: zipkin
+    spec:
+      containers:
+      - name: zipkin
+        image: bjrdc206.reg/bjrdc-dev/openzipkin/zipkin
+        imagePullPolicy: IfNotPresent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zipkin
+  namespace: bjrdc-dev
+spec:
+  ports:
+  - port: 9411
+  selector:
+    app: zipkin
+```
+
+### 复杂部署
+
+需要配置后端存储
+
+TODO
+
+### 使用
+
+在spring-cloud使用zipkin的时候，只需要在application.yaml中配置zipkin的参数（service或者地址），以及在pom.xml中关联依赖即可。
+
+pom.xml
+
+```xml
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zipkin</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+		</dependency>
+```
+
+application.yaml
+
+```yaml
+spring:
+  application:
+    name: consumer
+  zipkin:
+    service:
+      name: ${spring.application.name}
+    base-url: http://zipkin.bjrdc-dev.svc.cluster.local:9411
+```
+
+`但是实地的测试发现问题还是有的，主要是`
+
+1. 无法通过service名称实现zipkin的发现，官方给的配置如下：
+
+   If you want to find Zipkin through service discovery, you can pass the Zipkin’s service ID inside the URL, as shown in the following example for zipkinserver service ID:
+
+   ```
+   spring.zipkin.baseUrl: https://zipkinserver/
+   ```
+
+2. baseUrl 和base-url，在2.1.2.RELEASE版本上发现，baseUrl竟然不能用，只能用base-url
 
 
 ## CI
@@ -5347,8 +5435,8 @@ spec:
 
 ### 测试开发（Eclipse）
 
-> **spring-cloud on k8s**
->
+#### spring-cloud on k8s
+
 > 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
 >
 > 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
@@ -5357,14 +5445,14 @@ spec:
 
 
 
-> **spring-cloud in k8s**
->
+#### spring-cloud in k8s
+
 > 在spring-cloud in k8s的模式下，尚未测试。
 >
 > 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
 >
 > ```java
-> 	@Autowired
+>	@Autowired
 > 	private DiscoveryClient discoveryClient;
 > 
 > 	@GetMapping("/services")
@@ -5372,11 +5460,11 @@ spec:
 > 		return this.discoveryClient.getServices();
 > 	}
 > ```
->
+> 
 > 需要在pom.xml中配置如下
 >
 > ```xml
-> <dependency>
+><dependency>
 > <groupId>org.springframework.cloud</groupId>
 > <artifactId>spring-cloud-kubernetes-core</artifactId>
 > </dependency>
@@ -5389,32 +5477,32 @@ spec:
 > <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
 > </dependency>
 > ```
->
+> 
 > 使用如下方法测试
 >
 > service发现
 >
 > ```sh
-> curl localhost:8086/sc-k8s-consumer/services
+>curl localhost:8086/sc-k8s-consumer/services
 > ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
 > ```
->
+> 
 > 调用provider方法
 >
 > ```sh
-> curl localhost:8086/sc-k8s-provider/index/list
+>curl localhost:8086/sc-k8s-provider/index/list
 > ```
->
+> 
 > 将consumer也部署到k8s后，报如下错误
 >
 > ```
-> io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
+>io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
 > ```
->
+> 
 > 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
 >
 > ```yaml
-> apiVersion: rbac.authorization.k8s.io/v1
+>apiVersion: rbac.authorization.k8s.io/v1
 > kind: ClusterRole
 > metadata:
 > name: bjrdc-cr
@@ -5438,7 +5526,7 @@ spec:
 >   name: default
 >   namespace: bjrdc-dev
 > ```
->
+> 
 > 
 >
 > 在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
@@ -5455,9 +5543,7 @@ spec:
 
 ## 关于jkube插件
 
-TODO
-
-
+参考 [IGitlab.md](IGitlab.md)
 
 ## 其他
 

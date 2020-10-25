@@ -201,6 +201,16 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
      apiGroup: rbac.authorization.k8s.io
    ```
    
+   `gitlab-ci`为serviceaccount，该serviceaccount需要在gitlab-runner的环境变量`KUBERNETES_SERVICE_ACCOUNT`中进行设置。
+   
+   `- apiGroups: ["", "extensions", "apps"]`这里的apps和extensions是api的groups，如果没有apps，可能出现如下的问题
+   
+   ```
+   [ERROR] Failed to execute goal org.eclipse.jkube:kubernetes-maven-plugin:1.0.1:undeploy (default-cli) on project spring-cloud-k8s-provider: Execution default-cli of goal org.eclipse.jkube:kubernetes-maven-plugin:1.0.1:undeploy failed: Failure executing: DELETE at: https://172.16.15.17:6443/apis/apps/v1/namespaces/bjrdc-dev/deployments/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. deployments.apps "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:gitlab-runner:default" cannot delete resource "deployments" in API group "apps" in the namespace "bjrdc-dev". -> [Help 1]
+   ```
+   
+   这里的`system:serviceaccount:gitlab-runner:default`是默认的serviceaccount，如果在rbac中配置了其他的serviceaccount，需要在gitlab-runner的环境变量中设置。
+   
 3. configmap-env 环境变量
 
    > 这个环境变量没有测试哪些是多余的
@@ -479,8 +489,19 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
 9. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
 
+## kubernetes-maven-plugin 插件
 
-## jkube 插件
+使用kubernetes-maven-plugin插件进行项目打包可以将项目打包到docker，并部署到kubernetes中。
+
+`<dockerHost>http://bjrdc218:2375</dockerHost>`：远程docker的地址。
+
+`<registry>${harbor.local}</registry>`: redistry 地址
+
+`<dockerFile>${project.basedir}/src/main/docker/Dockerfile</dockerFile>`：打包的dockerFile路径
+
+`<masterUrl>${k8s.master.url}</masterUrl>`：kubernetes地址
+
+注：需要本地主机有`.kube/config`文件，用于访问kubernetes集群。否则需要在`access`中配置访问集群的帐号密码等。
 
 ```xml
 				<plugin>
@@ -556,9 +577,13 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 mvn clean package spring-boot:repackage  k8s:build  k8s:resource k8s:push k8s:undeploy k8s:deploy
 ```
 
+## 远程docker
 
+参考
 
-#### 问题处理
+[docker]: IDocker.md
+
+## 问题处理
 
 ##### fatal: unable to access https://git.exemple.io: Could not resolve host
 
