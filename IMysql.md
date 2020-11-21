@@ -802,5 +802,11 @@ exit 0;
 ### 查看链接状态
 `./mysqladmin  -uadmin -p -h10.140.1.1 status`
 
+### 修改链接数
+
+```
+set global max_connections=1000
+```
+
 
 

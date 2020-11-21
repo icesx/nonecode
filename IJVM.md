@@ -441,9 +441,35 @@ option参数
 -flags : 不需要args参数，输出所有JVM参数的值
 -sysprops : 输出系统属性，等同于System.getProperties()
 
-```
+```shell
 $ jinfo -flag 11494
 -XX:CMSInitiatingOccupancyFraction=80
 
 
 ```
+
+## jvisualVM
+
+### 配置方法
+
+通过如下命令配置`jmx`生效。
+
+```shell
+java -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -jar address-search-ms-0.0.1-SNAPSHOT.jar
+```
+
+通过jvisualVM链接到1099端口查看各项指标
+
+### 指标说明
+
+- `Self Time` is a *wall-clock time* spent in the method itself (**includes time waiting/sleeping**).
+
+- `Self Time (CPU)` is a time *processor time*, so it does **NOT include** time spent **waiting, sleeping**, etc.
+
+  
+
+- Both columns do NOT include time spent in methods invoked from that method.
+
+- Both `Self Time` and `Self Time (CPU)` in the sampler are *approximation* of actual data.
+
+- `Self Time [%]` refers to one of the two selected `Self Time [(CPU)]` columns.

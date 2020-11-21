@@ -62,7 +62,7 @@ public class MavenModleCodeModifyPlugin extends AbstractMojo {
 
 # nexus about 
 
-## 安装
+### 安装
 1. 官网下载最新版本，解压缩
 	https://www.sonatype.com/download-oss-sonatype
 2. 修改端口
@@ -101,12 +101,56 @@ http://maven.aliyun.com/nexus/content/groups/public
 在maven-public repository中增加 aliyun-public 
 
 # maven about
+### release 和 snapshot的管理
+
+1. 在maven中增加release的帐号，并将帐号增加到settings中
+
+   ```xml
+   <server>
+   	<id>nexus</id>
+   	<username>deploy</username>
+   	<password>zgjx@321</password>
+   </server>
+     <server>
+   	  <id>release</id>
+   	  <username>release</username>
+       <password>bjrdc!@#321!</password>
+     </server>
+   ```
+
+2. 在项目的pom.xml中增加发布地址
+
+   ```xml
+   	<distributionManagement>
+   		<snapshotRepository>
+   			<id>nexus</id>
+   			<url>http://bjrdc9:8099/repository/maven-snapshots</url>
+   		</snapshotRepository>
+   		<repository>
+   			<id>release</id>
+   			<name>release</name>
+   			<url>http://bjrdc9:8099/repository/maven-releases</url>
+   		</repository>
+   	</distributionManagement>
+   ```
+
+   
+
+3. 通过如下命令部署到nexus中
+
+   ```
+   mvn deploy
+   ```
+
+   > 注：如果是SNAPSHOT版本，则自动上传到SNAPSHOT仓库中。如果是release版本，则自动上传到release版本中。
+
 ### maven/conf/settings 
+
 ```
 <servers>
 <server>
 	<id>nexus</id>
-	<username>admin</username>
+	<username>deploy</username>
 	<password>zgjx@321</password>
 </server>
 </servers>

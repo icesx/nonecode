@@ -849,6 +849,41 @@ bjrdc-dev              hello-node                  ClusterIP   10.102.118.239   
 curl 10.102.118.239:3000
 ```
 
+### 负载均衡
+
+> 经实验通过headless service和普通的service均可以实现负载均衡的效果。
+
+#### 通过deployment的负载均衡
+
+他哦难过deployment部署了1个pod，通过scale伸缩为2个pod后，状态如下
+
+```
+kubectl get pod -n bjrdc-dev|grep spring-cloud-
+spring-cloud-k8s-configmap-7f466bcdf5-prjfp   1/1     Running   0          82m
+spring-cloud-k8s-consumer-7989fcf49c-h46rw    2/2     Running   0          29m
+spring-cloud-k8s-consumer-7989fcf49c-w6pbm    2/2     Running   0          11m
+spring-cloud-k8s-gateway-775777c6c7-ptnzn     1/1     Running   0          87m
+spring-cloud-k8s-provider-79f4585944-2npmk    1/1     Running   0          33m
+```
+
+通过deployment的service访问pod，发现请求会随机发送到2个pod上来。说明service+deployment是具有负载均衡效果的。
+
+```
+kubectl logs --tail=20 spring-cloud-k8s-consumer-7989fcf49c-h46rw -c spring-cloud-k8s-consumer-server -n bjrdc-dev -f
+```
+
+```
+curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/feign/list
+```
+
+通过jmeter测试发现，在一个pod的时候，10000个请求下来，throughtpt=600/sec，scale到2后，可以达到800/sec。
+
+
+
+#### 通过statefulset的负载均衡
+
+
+
 ### 5.Configmap
 
 >configmap 是k8s的配置服务，一个简单的配置如下
@@ -2546,6 +2581,7 @@ kubectl describe pod/mysql-statefulset-0 -n bjrdc-dev
 kubectl logs pod xxxx -n kube-system -f
 kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 #查看pod/mysql-statefulset-1下的容器 cone-mysql的日志
+kubectl logs --tail=20 spring-cloud-k8s-consumer-7989fcf49c-h46rw -c spring-cloud-k8s-consumer-server -n bjrdc-dev -f
 ```
 
 #### lable
@@ -2600,7 +2636,9 @@ kubectl diff -f ./my-manifest.yaml
 ```sh
 kubectl scale --replicas=3 rs/foo                                 
 # Scale a replicaset named 'foo' to 3
-
+kubectl scale --replicas=2 deployment spring-cloud-k8s-consumer -n bjrdc-dev
+# scale a depolyment spring-cloud-k8s-consumer to 2
+# 伸缩后的deployment下的pod是可以起到负载均衡的效果的。通过service访问
 kubectl scale --replicas=3 -f foo.yaml                            
 # Scale a resource specified in "foo.yaml" to 3
 
@@ -5374,6 +5412,16 @@ spec:
    没有常驻进程，也就是服务可能没有启动
    
 6. Failed to update endpoint bjrdc-dev/redis-stateful-headless: Operation cannot be fulfilled on endpoints "redis-stateful-headless": the object has been modified; please apply your changes to the latest version and try again
+
+7. 集群重启后出现pod无法启动的问题
+
+   ```
+   MountVolume.SetUp failed for volume "default-token" : secret "default-token" not found
+   ```
+
+   不知道原因，可能是pod启动的时候default-token尚未准备好
+
+   简单处理版本是重启pod就可以了
 
    
 

@@ -1,6 +1,11 @@
 ### 安装插件
 
-1. scala，下载scla-ide插件，在eclipse中安装
+### scala
+
+下载scla-ide插件，在eclipse中安装
+
+http://download.scala-ide.org/sdk/lithium/e47/scala212/stable/update-site.zip
+
 #### subclipse[fine]
 1. 在eclipse market安装就可以了
 2. 安装的时候可能缺少svnkit，windows下安装slike-subversion.msi

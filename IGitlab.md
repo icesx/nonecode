@@ -604,3 +604,187 @@ gitlab中的任务一直处于pending中
 
 
 
+## 备份
+
+### 基本命令
+
+gitlab提供的备份命令为gitlab-rake，备份命令使用如下:
+
+```shell
+gitlab-rake gitlab:backup:create
+```
+
+该命令会备份gitlab仓库、数据库、用户、用户组、用户密钥、权限等信息。
+
+备份完成后备份文件会出现在`/var/opt/gitlab/backups/`
+
+### 修改备份目录
+
+vim /etc/gitlab/gitlab.rb
+
+修改上图`backup_path`的值即可，之后使用`gitlab-ctl reconfigure`使得配置生效
+
+
+
+
+
+## 版本管理
+
+> 通过gitlab CI/CD maven nexus进行自动化开发的时候，需要进行版本管理，防止在发布或者开发过程中，nexus中的版本被人修改。
+
+### 基本原则
+
+1. snapshot版本是开发人员可以自动进行发布的。
+2. release版本只能通过gitlab进行发布，开发人员没有release版本发布的密码。
+3. 版本号格式`major.minor.version`-`[RELEASE|SNAPSHOT]`
+   1. major：如果去掉接口、类或者功能的版本，需要对major+1
+   2. minor：如果增加接口，但是保持向下兼容，需要minor+1
+   3. version：修改bug后，发布的版本version+1。`一次发布version+1，不是修改一个bug就+1`
+4. 每个项目的master分支的版本必须是release版本，版本的规范为`major.minor.version-RELEASE`
+5. 每个项目的开发分支的版本好可以自定义如`dev`、`dev-xxx`等
+6. 每个项目需要发布的带版本的项目必须是``major.minor.version`-`[RELEASE|SNAPSHOT]`
+7. release版本只能通过master发布，并且只能通过gitlab发布，snapshot可以手动或者gitlab发表。
+8. 正式发布的版本最好依赖release版本的，release版本一般不更新，但凡有更新，需要版本好变化，如此可以保证老系统的未定性。
+9. snapshot的版本，可以由开发人员自行发布，没有太多限制。
+10. snapshot版本稳定后，需要merge到master分支，并发布master分支新版本。
+
+### 开发流程
+
+1. 在gitlab上创建项目后，创建`0.0.1-SNAPSHOT`分支，如此项目将有两个分支`0.0.1-SNAPSHOT`和`master`
+
+2. master分支：在master分支下创建`.gitlab-ci.yml`文件，内容如下。
+
+   > 告知gitlab按照如下build/test/deploy过程进行自动构建。如果不需要deploy可以删除depoly节点
+
+   ```yaml
+   image: maven:3.6.3-jdk-8
+   variables:
+      MAVEN_CLI_OPTS: -s settings.xml --batch-mode
+      MAVEN_OPTS: -DskipTests=false
+   cache:
+      paths:
+      - .m2/repository/
+      - target/
+   build:
+      stage: build
+      script:
+      - mvn $MAVEN_CLI_OPTS compile
+   test:
+      stage: test
+      script:
+      - mvn $MAVEN_CLI_OPTS test $MAVEN_OPTS
+   deploy:
+      stage: deploy
+      script:
+      - mvn $MAVEN_CLI_OPTS -DskipTests=true deploy
+      only:
+      - 0.0.1-SNAPSHOT
+   ```
+
+3. `0.0.1-SNAPSHOT`分支下增加`.gitlab-ci.yml`文件，内容如下
+
+   ```
+   image: maven:3.6.3-jdk-8
+   variables:
+      MAVEN_CLI_OPTS: -s settings.xml --batch-mode
+      MAVEN_OPTS: -DskipTests=false
+   cache:
+      paths:
+      - .m2/repository/
+      - target/
+   build:
+      stage: build
+      script:
+      - mvn $MAVEN_CLI_OPTS compile
+   test:
+      stage: test
+      script:
+      - mvn $MAVEN_CLI_OPTS test $MAVEN_OPTS
+   deploy:
+      stage: deploy
+      script:
+      - mvn $MAVEN_CLI_OPTS -DskipTests=true deploy
+      only:
+      - 0.0.1-SNAPSHOT
+   ```
+
+4. 在两个分支下都增加`settings.xml`文件，内容如下
+
+   > 告诉maven按照如下配置进行自动的打包和deploy
+
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+   	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+   	<localRepository>.m2/repository</localRepository>
+   	<pluginGroups>
+   	</pluginGroups>
+   	<proxies>
+   	</proxies>
+   	<servers>
+   		<server>
+   			<id>nexus</id>
+   			<username>${env.MAVEN_REPO_USER}</username>
+   			<password>${env.MAVEN_REPO_PASS}</password>
+   		</server>
+   		<server>
+   			<id>release</id>
+   			<username>${env.MAVEN_RELEASE_USER}</username>
+   			<password>${env.MAVEN_RELEASE_PASS}</password>
+   		</server>
+   	</servers>
+   	<mirrors>
+   		<mirror>
+   			<id>nexus</id>
+   			<mirrorOf>*</mirrorOf>
+   			<name>nexus component</name>
+   			<url>http://bjrdc9:8099/repository/maven-public</url>
+   		</mirror>
+   	</mirrors>
+   	<profiles>
+   		<profile>
+   			<id>nexus</id>
+   			<repositories>
+   				<repository>
+   					<id>nexus</id>
+   					<url>http://bjrdc9:8099/repository/maven-public</url>
+   					<releases>
+   						<enabled>true</enabled>
+   					</releases>
+   					<snapshots>
+   						<enabled>true</enabled>
+   						<updatePolicy>always</updatePolicy>
+   					</snapshots>
+   				</repository>
+   			</repositories>
+   			<activation>
+   				<activeByDefault>true</activeByDefault>
+   				<jdk>1.8</jdk>
+   			</activation>
+   			<properties>
+   				<maven.compiler.source>1.8</maven.compiler.source>
+   				<maven.compiler.target>1.8</maven.compiler.target>
+   				<maven.compiler.compilerVersion>1.8</maven.compiler.compilerVersion>
+   			</properties>
+   		</profile>
+   	</profiles>
+   	<activeProfiles>
+   		<activeProfile>nexus</activeProfile>
+   	</activeProfiles>
+   </settings>
+   ```
+
+5. 如果有需要可以在创建其他开发分支，用于临时开发，开发分支一旦合并到`NAPSHOT`支后需要删除不需要的开发分支。
+
+6. 如有必要可以增加`SNAPSHOT`分支，最多保留3个`SNAPSHOT`。
+
+7. `SNAPSHOT`分支稳定后，通过在gitlab上提交`merge request`来申请将`SNAPTSHOT`分支合并到master分支，作为release版本。
+
+8. `release`分支测试完成并发布后，进行打TAG的操作。
+
+### 注意点
+
+1. 链接库如common、api等最好是依赖到`RELEASE`分支。
+2. 如果要将`SNAPSHOT`中的功能发布到`RELEASE`需要进行`merge request`
+3. 分支规范需要按照`major.minor.version`-`[RELEASE|SNAPSHOT]`，临时分支可以不按照次规范。

@@ -17,13 +17,27 @@ HBase
 	D、启动zookeeper
 		bin/zkServer.sh start
 ### Hbase安装
-	A、配置 JAVA_HOME
-		hbase_env.sh中增加
-			export JAVA_HOME=/home/docker/software/jdk1.7.0_71_linux_x64
-			export HBASE_MANAGES_ZK=false
-	B、配置hbase-site.xml
+```sh
+A、配置 JAVA_HOME
+	hbase_env.sh中增加
+		export JAVA_HOME=/home/docker/software/jdk1.7.0_71_linux_x64
+		export HBASE_MANAGES_ZK=false
+B、配置hbase-site.xml
+```
+
+vi /bin/hbase
+
+```
+# Add libs to CLASSPATH
+for f in $HBASE_HOME/lib/*.jar; do
+  CLASSPATH=${CLASSPATH}:$f;
+done
+```
+
+
 
 ### 问题处理
+
 	A、2015-09-24 07:29:36,012 INFO  [regionserver/hadoop5/172.16.1.5:16020] regionserver.HRegionServer: reportForDuty to master=localhost,16000,1443079581248 with port=16020, startcode=1443079582628
 	修改主机hostname 为实地host，并和/etc/hosts中的ip地址对应
  	B、 regionserver running as process
@@ -56,15 +70,23 @@ HBase
 
 ## Hbase shell
 
-```
+
+
+```sql
 create  'xjgz_portal',{NAME=>'portal'}
-	put 'PHOENIX_TEST',"\x80\x00\x00\x00",'0:newcolumn','nnnnneeeeewwwww'
-	get 'PHOENIX_TEST',"\x80\x00\x00\x00"	【"\x80\x00\x00\x00" 为rowkey】
-	scan 'PHOENIX_TEST',{LIMIT=>5}
-	create 'KeyPerson','CDC'
-	put 'KeyPerson','610123190011234624','CDC:name','zhangzongchang'
+put 'PHOENIX_TEST',"\x80\x00\x00\x00",'0:newcolumn','nnnnneeeeewwwww'
+get 'PHOENIX_TEST',"\x80\x00\x00\x00"	【"\x80\x00\x00\x00" 为rowkey】
+scan 'PHOENIX_TEST',{LIMIT=>5}
+create 'KeyPerson','CDC'
+put 'KeyPerson','610123190011234624','CDC:name','zhangzongchang'
+list
+scan 'hbase:meta',{STARTROW=>'COMPONENT.PHOENIX_TEST',LIMIT=>2}
+deleteall 'hbase:meta','COMPONENT.PHOENIX_TEST'
 ```
+
+
 ### 单独启动region
+
 	./hbase-daemon.sh start regionserver
 	./hbase-daemon.sh stop regionserver
 ### region无法完全启动的问题
@@ -167,3 +189,73 @@ $ bin/hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns=a,b,
 
 3. 查看结果
 	./hbase org.apache.hadoop.hbase.mapreduce.RowCounter 'tableName'
+
+
+
+## Hbase2
+
+### HBCK2
+
+hbase2 已经不支持hbck了，需要下载hbck2，并将jar放到hbase/lib/下
+
+`https://github.com/apache/hbase-operator-tools/tree/master/hbase-hbck2`
+
+#### 一次恢复meta的过程
+
+> 在搞协处理的时候，将hbase搞的无法启动了，后来就手动的将phoenix_test表删除，并将`SYSTEM.CATALOG`也删除了，导致整个phoenix不能用了。
+>
+> 由于安装的是hbase2.0.2导致`hbase hbck`命令不明用了。后来查找资料后发现是需要用HBCK2
+>
+> 于是作如下操作
+
+1. 将hdfs上的/hbase目录mv到/hbase-back
+
+   ```
+   hadoop-3.0.3/bin/hdfs dfs -mv /hbase /hbase-back
+   ```
+
+2. 升级hbase到hbase2.2.6
+
+   在hbase-site.xml中增加，“不确定是否有效”
+
+   ```xml
+   <property>
+               <name>hbase.assignment.skip.empty.regions</name>
+                   <value>false</value>
+           </property>
+   </configuration>
+   ```
+
+   
+
+3. 下载并编译hbck2，并将jar放到hbase2.2.6/lib下
+
+4. 启动hbse2.2.6后验证环境ok
+
+5. 将/hbase-back下的文件mv到hbase下
+
+   ```
+   hadoop-3.0.3/bin/hdfs dfs -mv /hbase-back/default/* /hbase/default/
+   ```
+
+6. 启动重启hbase后发现所有的增加的表没有region
+
+   日志中有如下错误
+
+   ```
+   org.apache.hadoop.hbase.NotServingRegionException: hbase:namespace,1558205786137.40562c48c9210c06813adce48773cb6a. is not online on node1,16020,1596957741742
+   ```
+
+7. 在hbck2的官方查询到相关的处理办法：
+
+   ```
+   ./stop-hbase.sh 
+   ./hbase org.apache.hbase.hbck1.OfflineMetaRepair
+   ./start-hbase.sh 
+   ./hbase org.apache.hbase.HBCK2 assigns  e555e672cb58d3f4e16600d60f6e9f0b
+   ./stop-hbase.sh 
+   ./start-hbase.sh 
+   ```
+
+8. 将所有的table enable即可
+

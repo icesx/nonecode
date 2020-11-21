@@ -742,8 +742,10 @@ sudo apt install nfs-kernel-server
 cat >>/etc/exports <<EOF
 /cloud/nfs-root *(rw,sync,no_subtree_check)
 EOF
-sudo systemctl restart nfs-kernel-server.service
+sudo chmod 777 /cloud/nfs-root
+sudo systemctl restart nfs-kernel-server
 sudo showmount -e localhost
+sudo apt install nfs-common
 sudo mount bjrdc216:/cloud/nfs-root temp/
 ```
 

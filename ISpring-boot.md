@@ -18,6 +18,9 @@ https://start.spring.io/
 
 ### War
 mvn clean package
+
+mvn clean spring-boot:repackage
+
 ### actuator
 #### 依赖
 
@@ -92,6 +95,29 @@ public class Application {
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+### plugin
+
+```
+<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>1.4.2.RELEASE</version>
+				<configuration>
+					<fork>true</fork>
+					<mainClass>${mainClass}</mainClass>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+```
+
+
 
 ## swagger
 
