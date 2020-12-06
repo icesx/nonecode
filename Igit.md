@@ -228,3 +228,45 @@ git remote add new_remote <new_url>
 git push --all new_remote
 ```
 
+### 删除历史大文件
+
+https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/removing-sensitive-data-from-a-repository
+
+1. 查找大文件
+
+   ```sh
+   git verify-pack -v .git/objects/pack/pack-*.idx | sort -k 3 -g | tail -10
+   git rev-list --objects --all |grep 8ddb959457d756df414737e5e95181a01148722d
+   ```
+
+2. 删除目录
+
+   check 分支
+
+   ```sh
+   for i in `git branch  -r|grep -v HEAD` ; do git checkout --track $i; done
+   ```
+
+   
+
+   删除`doc`目录
+   
+   ```sh
+   git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch --ignore-unmatch doc' --prune-empty --tag-name-filter cat -- --all
+```
+   
+删除本地缓存
+   
+   ```sh
+   git reflog expire --expire=now --all && git gc --prune=now --aggressive
+   rm -Rf .git/logs .git/refs/original
+```
+   
+   提交
+   
+   ```sh
+   git push origin --all --force
+   git push origin --tags --force
+   ```
+   
+   

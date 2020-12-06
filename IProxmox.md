@@ -5,6 +5,11 @@ proxmox
 + 下载官方镜像
 + 刻录usb
 + 安装
+
+```
+dd bs=1M conv=fdatasync if=./proxmox-ve_*.iso of=/dev/XYZ
+```
+
 + https://ip:8006/
 
 ### 修改默认22端口
@@ -17,6 +22,12 @@ change 22 port to what you want
 ```
 
 
+
+## 国内镜像
+
+```
+deb https://mirrors.ustc.edu.cn/proxmox/debian/pve buster pve-no-subscription
+```
 
 ## 虚拟机安装
 
@@ -117,7 +128,75 @@ wget http://download.proxmox.com/images/system/debian-10.0-standard_10.0-1_amd64
 cp debian-10.0-standard_10.0-1_amd64.tar.gz /var/lib/vz/template/cache/
 ```
 
+## 升级
+
+### 5 升级到6
+
+参考地址
+
+https://pve.proxmox.com/wiki/Upgrade_from_5.x_to_6.0
+
+### pve5to6
+
+检查是否满足升级条件
+
+```
+pve5to6
+```
+
+### upgrade to Corosync 3 first
+
+```
+systemctl stop pve-ha-lrm
+systemctl stop pve-ha-crm
+echo "deb http://download.proxmox.com/debian/corosync-3/ stretch main" > /etc/apt/sources.list.d/corosync3.list
+apt update
+apt dist-upgrade
+systemctl start pve-ha-lrm
+systemctl start pve-ha-crm
+```
+
+### 升级到6
+
+```
+sed -i 's/stretch/buster/g' /etc/apt/sources.list
+apt update
+apt dist-upgrade
+```
+
+如果慢的话，可以使用aliyun和科大镜像加速
+
+```
+cat /etc/apt/sources.list
+deb http://mirrors.aliyun.com/debian buster main contrib
+
+deb http://mirrors.aliyun.com/debian buster-updates main contrib
+
+# PVE pve-no-subscription repository provided by proxmox.com,
+# NOT recommended for production use
+#deb http://download.proxmox.com/debian/pve buster pve-no-subscription
+deb https://mirrors.ustc.edu.cn/proxmox/debian/pve buster pve-no-subscription
+# security updates
+deb http://mirrors.aliyun.com buster/updates main contrib
+```
+
+
+
+## 集群
+
+### 将已有机器添加到集群
+
+1. 如果当前主机下又虚拟机，是无法将当前主机添加到集群中的，因为可能又vmid相同。
+2. 备份本机的`/etc/pve/nodes/${node_name}`目录，其中有相关虚拟机和lxc的配置信息
+3. 删除`/etc/pve/nodes/${node_name}`，重新刷新webui，会发现所有的虚拟机都没有了
+4. 重新将当前机器添加的cluster，会发现所有的虚拟机又出来了。
+
 ## 用户
 
 ### 添加用户
 
+
+
+## 注意事项
+
+1. 
