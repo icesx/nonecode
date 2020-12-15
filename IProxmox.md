@@ -186,10 +186,25 @@ deb http://mirrors.aliyun.com buster/updates main contrib
 
 ### 将已有机器添加到集群
 
-1. 如果当前主机下又虚拟机，是无法将当前主机添加到集群中的，因为可能又vmid相同。
+1. 如果当前主机下有虚拟机，是无法将当前主机添加到集群中的，因为可能又vmid相同。
 2. 备份本机的`/etc/pve/nodes/${node_name}`目录，其中有相关虚拟机和lxc的配置信息
 3. 删除`/etc/pve/nodes/${node_name}`，重新刷新webui，会发现所有的虚拟机都没有了
 4. 重新将当前机器添加的cluster，会发现所有的虚拟机又出来了。
+5. 如果没有回来，把备份文件还原到`/etc/pve/nodes/`
+
+### 撤离集群
+
+```
+systemctl stop pve-cluster.service
+systemctl stop corosync.service
+pmxcfs  -l
+rm /etc/pve/corosync.conf
+rm -rf /etc/corosync/*
+killall pmxcfs
+systemctl start pve-cluster.service
+```
+
+
 
 ## 用户
 
@@ -200,3 +215,14 @@ deb http://mirrors.aliyun.com buster/updates main contrib
 ## 注意事项
 
 1. 
+
+## 问题处理
+
+### Host key verification failed.
+
+参考地址 https://forum.proxmox.com/threads/host-key-verification-failed-when-migrate.41666/
+
+```
+ssh -o 'HostKeyAlias=bj3' root@192.168.86.44
+```
+

@@ -618,6 +618,27 @@ gitlab-rake gitlab:backup:create
 
 备份完成后备份文件会出现在`/var/opt/gitlab/backups/`
 
+**该目录的权限必须是**，否则会有错误`Errno::EACCES: Permission denied - /git/backups/gitlab/db/database.sql.gz`
+
+```
+drwxr-xr-x  5 git   git   4096 Dec 14 22:00 gitlab
+```
+
+
+
+### 恢复命令
+
+`1537261122_2018_09_18_9.2.5`对应的`1607369941_2020_12_08_13.3.6-ee_gitlab_backup.tar`
+
+```
+gitlab-ctl stop unicorn
+gitlab-ctl stop sidekiq
+gitlab-rake gitlab:backup:restore BACKUP=1607959169_2020_12_14_13.3.6-ee
+gitlab-ctl start
+```
+
+
+
 ### 修改备份目录
 
 vim /etc/gitlab/gitlab.rb

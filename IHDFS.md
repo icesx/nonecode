@@ -25,7 +25,7 @@ HDFS
 4. slow readProcessor read fields took 。。。ms
 
 5. There appears to be a gap in the edit log
-  -recover
+    -recover
 
 6. 离开safemode
 
@@ -35,5 +35,14 @@ HDFS
 
 ### 设置分片
 	$hadoop dfs -setrep -w 2 -R /hbase/data/default/CDC_PARTY_SCORE
+### 回复文件
+
+```
+ ./hdfs debug recoverLease -path /hbase/oldWALs/pv2-00000000000000000478.log
+```
+
+
+
 ### Slow BlockReceiver write packet to mirror
+
 可能是网线降速了，检查网线是不是变黄了

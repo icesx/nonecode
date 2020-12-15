@@ -510,6 +510,70 @@ tcpdump tcp port 8088 -s 0 -v -w hsvod.pcap
 
 ```
 
+## resync
+
+### 断点续传
+
+```sh
+rsync  -P -rsh=ssh -e 'ssh -p 60212' 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@192.168.86.46:/cloud/
+```
+
+后台执行
+
+```sh
+ctrl+z
+[1]+  Stopped                 rsync -P -rsh=ssh -e 'ssh -p 60212' 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@192.168.86.46:/cloud/
+root@bj3:~# bg %1
+[1]+ rsync -P -rsh=ssh -e 'ssh -p 60212' 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@192.168.86.46:/cloud/ &
+```
+
+1为ctrl+z后显示的pid号
+
+完整命令
+
+```sh
+bjrdc@fw:/cloud$ rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git 
+sending incremental file list
+1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar
+        140.03M   0%   23.49MB/s    0:29:57  ^Z
+[1]+  Stopped                 rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git
+bjrdc@fw:/cloud$ bg %1
+[1]+ rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git &
+bjrdc@fw:/cloud$ jobs
+[1]+  Running                 rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git &
+bjrdc@fw:/cloud$ fg %1
+rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git
+        631.56M   1%   20.05MB/s    0:34:41 
+```
+
+## 前后台切换
+
+### jobs
+
+```
+bjrdc@fw:/cloud$ jobs
+[1]+  Running                 rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git &
+```
+
+
+
+### bg
+
+```
+bjrdc@fw:/cloud$ bg %1 
+[1]+ rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git &
+```
+
+
+
+### fg
+
+```
+bjrdc@fw:/cloud$ fg %1
+rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7:/git
+        631.56M   1%   20.05MB/s    0:34:41 
+```
+
 
 
 ### install fonts

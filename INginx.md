@@ -170,3 +170,44 @@ http {
     }
 ```
 
+## cache
+
+### 官方样例配置
+
+```nginx
+http {
+    proxy_cache_path  /data/nginx/cache  levels=1:2    keys_zone=STATIC:10m
+    inactive=24h  max_size=1g;
+    server {
+        location / {
+            proxy_pass             http://1.2.3.4;
+            proxy_set_header       Host $host;
+            proxy_buffering        on;
+            proxy_cache            STATIC;
+            proxy_cache_valid      200  1d;
+            proxy_cache_use_stale  error timeout invalid_header updating
+                                   http_500 http_502 http_503 http_504;
+        }
+    }
+}
+```
+
+### 自己测试成功的配置
+
+```nginx
+location /moa-static-demo/ {
+	proxy_pass  http://bjrdc82:10800/;
+	proxy_cache image_cache;
+	add_header X-Cache-Status $upstream_cache_status;
+	proxy_cache_valid      200  1d;
+}
+```
+
+### 只针对图片缓存
+
+```
+
+```
+
+
+
