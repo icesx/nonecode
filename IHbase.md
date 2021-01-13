@@ -40,16 +40,16 @@ done
 
 	A、2015-09-24 07:29:36,012 INFO  [regionserver/hadoop5/172.16.1.5:16020] regionserver.HRegionServer: reportForDuty to master=localhost,16000,1443079581248 with port=16020, startcode=1443079582628
 	修改主机hostname 为实地host，并和/etc/hosts中的ip地址对应
- 	B、 regionserver running as process
+	B、 regionserver running as process
 	C、org.apache.zookeeper.KeeperException$SessionExpiredException: KeeperErrorCode = Session expired
 		 <property>
-                      <name>zookeeper.session.timeout</name>
-                      <value>1200000</value>
-                   </property>
-                   <property>
-                      <name>hbase.zookeeper.property.tickTime</name>
-                      <value>6000</value>
-                   </property>
+	                  <name>zookeeper.session.timeout</name>
+	                  <value>1200000</value>
+	               </property>
+	               <property>
+	                  <name>hbase.zookeeper.property.tickTime</name>
+	                  <value>6000</value>
+	               </property>
 	D、如果有一些region没有online的时候
 		```#./hbase hbck -repair```
 		如果不行的话，再查看master的日志。如果出现：java.io.IOException: error or interrupted while splitting logs in。这样的异常，那么就可能是异常关集群引起的，修复办法是：
@@ -200,6 +200,41 @@ hbase2 已经不支持hbck了，需要下载hbck2，并将jar放到hbase/lib/下
 
 `https://github.com/apache/hbase-operator-tools/tree/master/hbase-hbck2`
 
+可以使用如下命令
+
+```
+./hbase org.apache.hbase.HBCK2   -h
+./hbase org.apache.hbase.HBCK2   fixMeta
+./hbase org.apache.hbase.HBCK2   setTableState COMPONENT.PHOENIX_TEST ENABLED
+./hbase org.apache.hbase.HBCK2   addFsRegionsMissingInMeta BDP.BDP_COMPRESS_IMG
+./hbase org.apache.hbase.HBCK2 assigns  e555e672cb58d3f4e16600d60f6e9f0b
+./hbase org.apache.hbase.HBCK2  filesystem -f
+```
+
+### 一次恢复表的过程
+
+参考地址https://stackoverflow.com/questions/22098754/inconsistency-in-hbase-tableregion-not-deployed-on-any-region-server
+
+```
+./hbase hbck |grep "ERROR: Region"|awk '{print $6}'
+SYSTEM.LOG,\x1C\x00\x00\x00,1585395688453.f896901738f12fc5c8077f24a18e0ce2.,
+SYSTEM.LOG,\x0A\x00\x00\x00,1585395688453.67800946e1f4a2a20c7b6e17be7cafb8.,
+SYSTEM.LOG,\x1D\x00\x00\x00,1585395688453.669a4ac1231d6ddcfa24dc074ab2d62f.,
+SYSTEM.SEQUENCE,,1585395685488.cce4ec2af61ae6babc44bf3cc22bc240.,
+SYSTEM.LOG,\x03\x00\x00\x00,1585395688453.cfba075adedff23600b889fbc7d5afac.,
+SYSTEM.LOG,\x07\x00\x00\x00,1585395688453.3de27b7be3c9b57ec84ad703e7be88ba.,
+SYSTEM.CATALOG,,1585395681073.a4900f31fd9e686f9b2de8c394a20aed.,
+SYSTEM.LOG,\x04\x00\x00\x00,1585395688453.ddd56dc28486bd1a3b94459992d01c37.,
+SYSTEM.LOG,\x13\x00\x00\x00,1585395688453.71afc4f10fd8da7e954588e4e3d04154.,
+```
+
+```
+hbase shell
+assign '71afc4f10fd8da7e954588e4e3d04154'
+```
+
+
+
 #### 一次恢复meta的过程
 
 > 在搞协处理的时候，将hbase搞的无法启动了，后来就手动的将phoenix_test表删除，并将`SYSTEM.CATALOG`也删除了，导致整个phoenix不能用了。
@@ -258,4 +293,22 @@ hbase2 已经不支持hbck了，需要下载hbck2，并将jar放到hbase/lib/下
    ```
 
 8. 将所有的table enable即可
+
+### 数据备份与恢复
+
+#### name 备份
+
+```sh
+cat name_backup.sh 
+set -x
+workdir=/moa/backups/
+rmfile=`ls -t $workdir|grep _backup.tar|tail -1`
+if [ ! -n "$rmfile" ];then
+        echo "empty"
+else
+        echo $workdir$rmfile
+        rm -f $workdir$rmfile
+fi
+tar -czvf $workdir/`date "+%Y_%m_%d_%H_%M_%S"`_name_backup.tar.gz /moa/HDFS-YARN/name
+```
 

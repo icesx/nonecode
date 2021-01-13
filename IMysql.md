@@ -3,7 +3,7 @@ mysql
 
 ## 安装
 ### 简单安装
-```
+```sh
 $tar –zxvf mysql-enterprise-5.0.30-linux-i686-glibc23.tar.gz –C /usr/local/
 $cd /usr/local/
 $ln –s /cloud/mysql-enterprise-5.0.30-linux-i686-glibc23 mysql
@@ -17,11 +17,13 @@ $cp /usr/local/mysql/support-files/my-medium.cnf /etc/my.cnf
 $sudo ./mysqld_safe --user=mysql& 
 ```
 ### 配置
-```
+```sh
 $sudo cp my-default.cnf /etc/my.cnf
 $vi /etc/my.cnf
 ```
-```
+
+
+```mysql
 [mysqld]
 character-set-server=utf8
 collation-server=utf8_general_ci
@@ -29,13 +31,11 @@ collation-server=utf8_general_ci
 
 [client]
 default-character-set=utf8
-
-
 ```
 
 ### systemd
 
-```
+```mysql
 cat >mysql.service <<EOF
 [Unit]
 Description=mysql
@@ -77,7 +77,7 @@ EOF
    
 4. 编译安装
 
-```
+```sh
 cmake . -DCMAKE_INSTALL_PREFIX=/moa/mysql -DMYSQL_DATADIR=/moa/mysql/data/ -DWITH_BOOST=/home/bjrdc/software/boost_1_59_0 -DSYSCONFDIR=/moa/mysql/etc -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_PARTITION_STORAGE_ENGINE=1 -DWITH_FEDERATED_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_MYISAM_STORAGE_ENGINE=1 -DENABLED_LOCAL_INFILE=1 -DENABLE_DTRACE=0 -DDEFAULT_CHARSET=utf8mb4 -DDEFAULT_COLLATION=utf8mb4_general_ci -DWITH_EMBEDDED_SERVER=1 -DMYSQL_TCP_PORT=3308
 ```
 
@@ -230,7 +230,7 @@ cmake . -DCMAKE_INSTALL_PREFIX=/moa/mysql -DMYSQL_DATADIR=/moa/mysql/data/ -DWIT
 
 5. 初始化
 
-```
+```sh
 mysqld --initialize [with random root password]
 
 mysqld --initialize-insecure [with blank root password]
@@ -246,20 +246,20 @@ You must reset your password using ALTER USER statement before executing this st
 
 解决办法：
 
-```
+```sh
 set password=password('zgjx@321');
 ```
 
 ## 密码权限
 
-```
+```sql
 create database cdc default charset uft8;
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'bjrdc'@'%' IDENTIFIED BY  'xxxx@123';
 ```
 
 
 
-```
+```sql
 GRANT ALL PRIVILEGES ON dbt2.* TO 'bjrdc'@'%';
 ```
 
@@ -275,7 +275,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 2. 安装
 
-```
+```sh
   sudo apt install autoconf
   ./configure --prefix=/home/bjrdc/software/dbt2 --with-mysql --with-mysql-includes=/moa/mysql/include --with-mysql-libs=/moa/mysql/lib
   make
@@ -284,7 +284,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 3. 使用
 
-```
+```sh
 ./datagen -w 3 -d ./dbt2-w3 --mysql
 ./mysql_load_db.sh --path ../dbt2-w3 --host localhost --mysql-path /moa/mysql/bin/mysql --password dbt2
 ```
@@ -299,7 +299,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 #### 准备工作
 
-```
+```sql
 create database dbt2
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON dbt2.* TO 'bjrdc'@'%' IDENTIFIED BY  'zgjx@321';
 flush privileges;
@@ -311,7 +311,7 @@ flush privileges;
 
 > 测试脚本
 >
-> ```
+> ```sh
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
@@ -350,7 +350,7 @@ flush privileges;
 
 > 测试脚本
 >
-> ```
+> ```sh
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
@@ -390,7 +390,7 @@ flush privileges;
 
 > 测试脚本
 >
-> ```
+> ```sh
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
@@ -430,7 +430,7 @@ flush privileges;
 
 > 测试脚本
 >
-> ```
+> ```sh
 > ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
 >
@@ -479,7 +479,7 @@ flush privileges;
 >
 >测试脚本
 >
->```
+>```sh
 >./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3309 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 >```
 >
@@ -533,20 +533,19 @@ flush privileges;
 
 1. my.cnf,add config as blow
 
-   ```
+   ```mysql
    server-id = 1
    log_bin = /usr/local/mysql/data/mysql-bin.log
    log_bin_index =/usr/local/mysql/data/mysql-bin.log.index
    relay_log = /usr/local/mysql/data/mysql-relay-bin
    relay_log_index = /usr/local/mysql/data/mysql-relay-bin.index
-   
    ```
-
+   
 2. 重启mysql
 
 3. set privileges
 
-   ```
+   ```sql
    create user 'replication_user'@'%' identified by 'PASSWORD';
    GRANT REPLICATION SLAVE ON *.* TO 'replication_user'@'%';
    FLUSH PRIVILEGES;
@@ -554,7 +553,7 @@ flush privileges;
 
 4. 查看master状态
 
-   ```
+   ```sql
    mysql> show master status;
    +------------------+-----------+--------------+------------------+-------------------+
    | File             | Position  | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
@@ -571,7 +570,7 @@ flush privileges;
 
 1. my.cnfg
 
-   ```
+   ```mysql
    server-id = 2
    log_bin = /usr/local/mysql/data/mysql-bin.log
    log_bin_index =/usr/local/mysql/data/mysql-bin.log.index
@@ -583,7 +582,7 @@ flush privileges;
 
 3. set privielges
 
-   ```
+   ```sql
    stop slave
    CHANGE MASTER TO MASTER_HOST = 'bjrdc100', MASTER_USER = 'replication_user', MASTER_LOG_FILE = 'mysql-bin.000010', MASTER_LOG_POS =82985581 , MASTER_PASSWORD = 'PASSWORD';
    start slave
@@ -605,14 +604,14 @@ flush privileges;
 
 1. 第一种
 
-```
+```sqlite
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON cdc.* TO 'docker'@'%' IDENTIFIED BY  'xxxx@123';
 
 GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON bdp.* TO 'bjrdc'@'%' IDENTIFIED BY  'xxxx@123';
 ```
 2. 第二种
 
-```
+```sql
 CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'zgjx@321';
 GRANT ALL PRIVILEGES ON * . * TO 'bjrdc'@'%';
 ```
@@ -657,21 +656,21 @@ chown -R mysql data
 chgrp -R mysql . 
 ```
 ### 参数调整
-```
+```mysql
 log-queries-not-using-indexes = nouseindex.log 
 log-error=log-error.log
 log=log-query.log
-log-queries-not-using-indexes
 log-warnings=2
-log-slow-queries=log-slow-query.log
-log-update=log-update.log
+log-queries-not-using-indexes
+slow_query_log=1
 long_query_time=2
+log-update=log-update.log
 
 general_log=ON
 general_log_file=/tmp/mysql.log
 ```
 ### 删除多余链接
-```
+```sh
 for i in `mysql -u root -pgehua -e "show processlist;"|grep Sleep|awk '{print $1}'`; do mysql -uroot -pgehua -e "kill $i;";done; 
 ```
 ### 动态调整参数
@@ -739,7 +738,7 @@ mysql> show variables like '%sort_buffer_size%';
 ### 自动备份
 
 #### imysql_backup[mine].sh
-```
+```sh
 #!/bin/bash
 #mql_backup.sh: backup mysql databases and keep newest 5 days backup.
 #

@@ -630,7 +630,7 @@ drwxr-xr-x  5 git   git   4096 Dec 14 22:00 gitlab
 
 `1537261122_2018_09_18_9.2.5`对应的`1607369941_2020_12_08_13.3.6-ee_gitlab_backup.tar`
 
-```
+```sh
 gitlab-ctl stop unicorn
 gitlab-ctl stop sidekiq
 gitlab-rake gitlab:backup:restore BACKUP=1607959169_2020_12_14_13.3.6-ee
@@ -645,7 +645,21 @@ vim /etc/gitlab/gitlab.rb
 
 修改上图`backup_path`的值即可，之后使用`gitlab-ctl reconfigure`使得配置生效
 
+### 一个备份脚本
 
+```sh
+cat gitlab-backup.sh 
+set -x
+workdir=/backups/gitlab/
+rmfile=`su - git -c "ls -t $workdir|grep backup.tar|tail -1"`
+if [ ! -n "$rmfile" ];then
+        echo "empty"
+else
+        echo $rmfile
+        su - git -c "rm -f $workdir/$rmfile"
+fi
+/opt/gitlab/bin/gitlab-rake gitlab:backup:create
+```
 
 
 

@@ -20,7 +20,7 @@ sudo apt-get install libpcre3 libpcre3-dev zlib1g-dev gcc make
 
 ### sub_filter
 
-```	
+```	nginx
 location / {
     proxy_set_header Accept-Encoding "";#防止压缩引起的无法过滤
 	sub_filter '52.4.1.145:8090' '58.42.241.252:8000';#将页面上的所有的52.4.1.145:8090 替换为 58.42.241.252:8000
@@ -30,58 +30,27 @@ location / {
 	sub_filter '52.4.1.145:18567' '58.42.241.252:8000';
 	sub_filter_once off;
 	sub_filter_types application/json application/javascript text/javascript;#针对这三总mime，这些mime需要通过抓包或者浏览器的调试工具获取
-
+}
 ```
 ### proxy
-```
+```nginx
 location / {
 		#http://52.4.1.176:8980/;
 	        	root html;
 			index  index.html index.htm;
 	    }
-	location /cas{
-		proxy_pass http://52.4.1.176:8980/cas;
+	location /cas/{
+		proxy_pass http://52.4.1.176:8980/cas/;
 	}
 	location /cdc-manager{
-		proxy_pass http://52.4.1.145:18567/cdc-manager;
-	}
-	location /cdc-search-app{
-		proxy_pass http://52.4.1.145:8089/cdc-search-app;
-	}
-	location /upload{
-		proxy_pass http://52.4.1.145:8090/upload;
-	}
-	location /cloudatacenter{
-		proxy_pass http://52.4.1.145:8090/cloudatacenter;
-	}
-	location /cdc-place-analysis{
-		proxy_pass http://52.4.1.145:8089/cdc-place-analysis;
-	}
-	location /cdc-pre-alarm{
-		proxy_pass http://52.4.1.145:8089/cdc-pre-alarm;
-	}
-	location /cdc-http-api{
-		proxy_pass http://52.4.1.145:8089/cdc-http-api;
-	}
-	location /cdc-map-api{
-		proxy_pass http://52.4.1.145:8089/cdc-map-api;
-	}
-	location /cdc-charts-api{
-		proxy_pass http://52.4.1.145:8089/cdc-charts-api;
-	}
-	    #error_page  404              /404.html;
-	location /scitydatacenter{
-		proxy_pass http://52.4.1.176:8080/scitydatacenter;
-	}
-	location /cdc-subscribe{
-		proxy_pass http://52.4.1.145:8089/cdc-subscribe;
+		proxy_pass http://52.4.1.145:18567;
 	}
 ```
 ### mp4
 ```
 --with-http_mp4_module
 ```
-```
+```nginx
 location /video/ {
 mp4;
 mp4_buffer_size
@@ -98,9 +67,9 @@ Context:
 location
 Reference: mp4
 Enables the mp4 streaming feature.
-```
+```nginx
 location /video {
-mp4 on;
+	mp4 on;
 }
 ```
 #### mp4_buffer_size
@@ -131,7 +100,7 @@ Sets the maxium buffer size used for processing mp4 file. If the meta data excee
 
 ## 日志切割
 
-```
+```sh
 vi logcron.sh
 log_dir="/logs/nginx"
 pid="/logs/nginx/nginx.pid"
@@ -147,7 +116,7 @@ kill -USR1 `cat ${pid}`
 >
 >**ngx_http_limit_req_module**：用于限制每一个定义的密钥的请求的处理速率，特别是从一个单一的IP地址的请求的处理速率。使用“泄漏桶”方法进行限制．指令：limit_req_zone和limit_req．
 
-```
+```nginx
 # 限制单个IP的连接数示例
 http { 
   limit_conn_zone $binary_remote_addr zone=addr：10m; 
@@ -158,7 +127,7 @@ http {
       
 ```
 
-```
+```nginx
 #限制来自单个IP地址的请求的处理速率
 http {
   limit_req_zone $binary_remote_addr zone=perip:10m rate=10r/s;
@@ -170,9 +139,103 @@ http {
     }
 ```
 
+## location 匹配
+
+http://nginx.org/en/docs/http/ngx_http_core_module.html#location
+
+### 基本语法
+
+```
+Syntax:	location [ = | ~ | ~* | ^~ ] uri { ... }
+location @name { ... }
+Default:	—
+Context:	server, location
+```
+
+Let’s illustrate the above by an example:
+
+> ```nginx
+> location = / {
+>     [ configuration A ]
+> }
+> 
+> location / {
+>     [ configuration B ]
+> }
+> 
+> location /documents/ {
+>     [ configuration C ]
+> }
+> 
+> location ^~ /images/ {
+>     [ configuration D ]
+> }
+> 
+> location ~* \.(gif|jpg|jpeg)$ {
+>     [ configuration E ]
+> }
+> ```
+
+The “`/`” request will match configuration A, 
+
+the “`/index.html`” request will match configuration B, 
+
+the “`/documents/document.html`” request will match configuration C,
+
+ the “`/images/1.gif`” request will match configuration D, and the “`/documents/1.jpg`” request will match configuration E.
+
+
+
+### 符号说明
+
+| ~    | 正则匹配，区分大小写                                         |
+| ---- | ------------------------------------------------------------ |
+| ~*   | 正则匹配，不区分大小写                                       |
+| ^~   | 普通字符匹配，如果该选项匹配，则，只匹配改选项，不再向下匹配其他选项 |
+| =    | 普通字符匹配，精确匹配                                       |
+| @    | 定义一个命名的 location，用于内部定向，例如 error_page，try_files |
+
+### 示例
+
+1. 匹配/
+
+   ```
+   location = /
+   ```
+
+2. 匹配js下的所有js文件
+
+   ```
+   location ~* /js/.*/.js
+   ```
+
+3. 精确匹配 / ，主机名后面不能带任何字符串
+
+   ```
+   location  /
+   ```
+
+4. 匹配任何以 /documents/ 开头的地址，匹配符合以后，还要继续往下搜索
+
+   ```
+   location /documents/
+   ```
+
+5. 匹配任何以 /images/ 开头的地址，匹配符合以后，停止往下搜索正则，采用这一条
+
+   ```
+   location ^~ /images/
+   ```
+
+6. 匹配所有以 gif,jpg或jpeg 结尾的请求
+
+   ```
+   location ~* .(gif|jpg|jpeg)$
+   ```
+
 ## cache
 
-### 官方样例配置
+### 简单配置
 
 ```nginx
 http {
@@ -191,8 +254,7 @@ http {
     }
 }
 ```
-
-### 自己测试成功的配置
+ 自己测试成功的配置
 
 ```nginx
 location /moa-static-demo/ {
@@ -203,11 +265,122 @@ location /moa-static-demo/ {
 }
 ```
 
-### 只针对图片缓存
+### timeout
 
+```nginx
+http{
+    send_timeout 15s;
+    proxy_connect_timeout 60s;
+    proxy_read_timeout 60s;
+}
 ```
 
+### log_format
+
+```nginx
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for" '
+                      '"$request_time " "$upstream_response_time" ';
+    access_log  logs/access.log  main;
+}
 ```
 
 
+
+### 针对图片缓存（包含反向代理）
+
+```nginx
+    upstream backserver {
+      ip_hash;
+      server bjrdc251:8080 weight=10;
+      server bjrdc252:8080 weight=2;
+    }
+    proxy_cache_path  /home/bjrdc/cache/nginx  levels=1:2    keys_zone=image_cache:10m
+    inactive=24h  max_size=1g;
+    server {
+        listen       9080;
+        server_name  localhost;
+    location ~* /back/.*\.(jpg|jpeg|gif|png)$ {
+        proxy_pass  http://backserver;
+        proxy_cache image_cache;
+        add_header X-Cache-Status $upstream_cache_status;
+        proxy_cache_valid      200  1d;
+    }
+    location /back {
+        proxy_pass http://backserver;
+    }
+```
+
+> 如果通过正则表达式匹配地址的时候，`proxy_pass` 后的路径不能待url和/
+
+## 负载均衡
+
+### 基本配置
+
+```nginx
+cat ../conf/nginx.conf
+worker_processes  1;
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+upstream backserver { 
+    hash $request_uri; 
+    server bjrdc251:8080 weight=10; 
+    server bjrdc252:8080 weight=2; 
+}
+    server {
+        listen       9080;
+        server_name  localhost;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+    location /back/ {
+        proxy_pass http://backserver/back/;
+        add_header Access-Control-Allow-Origin *;
+    }
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+
+     
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+
+    }
+}
+```
+
+代理机器上如下配置
+
+```nginx
+    server {
+        listen       8080;
+        }
+```
+
+
+
+不需要作其他配置自动实现负载均衡和健康检测
+
+```
+ for i in {1..10000}; do curl bjrdc250:9080/back/index.html; done
+```
 

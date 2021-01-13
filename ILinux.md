@@ -214,6 +214,41 @@ User=以什么用户执行命令
 WantedBy=multi-user.target
 ```
 
+### 增加自启动
+
+1. 创建service文件
+
+   ```sh
+   cat harbor.service 
+   [Unit]
+   Description=Redis
+   After=network.target
+   
+   [Service]
+   ExecStart=/usr/local/bin/docker-compose -f /docker/harbor/docker-compose.yml start 
+   
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   
+
+2. 服务质量harbor.service
+
+   ```sh
+   cp harbor/harbor.service /lib/systemd/system/
+   ```
+
+   
+
+3. enable service
+
+   ```sh
+   systemctl enable harbor
+   ```
+
+   
+
 
 
 ## journalctl
@@ -824,3 +859,12 @@ xx,..,zz
 
 ```
 
+## ss
+
+You can forcibly close sockets with `ss` command; the `ss` command is a tool used to dump socket statistics and displays information in similar fashion (although simpler and faster) to netstat.
+
+To kill any socket in CLOSE_WAIT state, run this (as root)
+
+```
+$ ss --tcp state CLOSE-WAIT --kill
+```

@@ -226,3 +226,12 @@ systemctl start pve-cluster.service
 ssh -o 'HostKeyAlias=bj3' root@192.168.86.44
 ```
 
+## 常用命令
+
+1. 关闭虚拟机
+
+   ```sh
+   qm stop 100
+   ```
+
+2. 

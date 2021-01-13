@@ -2701,7 +2701,7 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
 
 5. Generate an x509 v3 extension file
 
-   ```
+   ```sh
    cat > v3.ext <<EOF
    authorityKeyIdentifier=keyid,issuer
    basicConstraints=CA:FALSE
@@ -2713,6 +2713,8 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
    DNS.1=bjrdc206.reg
    EOF
    ```
+
+   
 
 6. Use the `v3.ext` file to generate a certificate for your Harbor host.
 
@@ -2767,6 +2769,7 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
    ```sh
    sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
    sudo chmod +x /usr/local/bin/docker-compose
+   
    ```
 
 3. 修改 harbor.yml
@@ -2793,7 +2796,61 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
    ./install.sh
    ```
 
+
+### 自启动
+
+1. 创建service文件
+
+   ```sh
+   cat harbor.service 
+   [Unit]
+   Description=Redis
+   After=network.target
    
+   [Service]
+   ExecStart=/usr/local/bin/docker-compose -f /docker/harbor/docker-compose.yml start 
+   
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   
+
+2. 服务质量harbor.service
+
+   ```sh
+   cp harbor/harbor.service /lib/systemd/system/
+   ```
+
+   
+
+3. enable service
+
+   ```sh
+   systemctl enable harbor
+   ```
+
+   
+
+#### 问题处理
+
+1. :failed to connect to tcp://postgresql:5432
+
+   查看日志时,发现错误:failed to connect to tcp://postgresql:5432
+   解决办法:
+
+   ```sh
+   cd /docker/harbor
+   sudo docker-compose down -v
+   docker-compose up -d
+   ```
+
+   
+
+```
+停止并删除docker容器:docker-compose down -v
+启动所有docker容器:docker-compose up -d
+```
 
 ### push
 

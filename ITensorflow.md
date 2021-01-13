@@ -3,7 +3,7 @@ tensorflow
 ## on ubuntu
 ### install
 
-```
+```sh
 sudo apt install python3 python3-pip
 pip3 install tensorflow 
 #非gpu版本
@@ -16,7 +16,7 @@ pip3 install tensorflow
 
 ### install
 
-```
+```sh
 sudo apt install python3-pip
 #尽量用python3，因为python2 2020年就不维护了
 pip3 install tensorflow
@@ -32,7 +32,7 @@ pip3 install tensorflow-1.13.1-cp35-none-linux_armv7l.whl
 
 ### object_detection
 
-```
+```sh
 mkdir ts
 cd ts
 git clone --recurse-submodules https://github.com/tensorflow/models.git
@@ -53,7 +53,7 @@ models/research/object_detection/
 ## 编译安装
 ### prepare
 
-1. 显卡驱动
+1. 下载显卡驱动
 NVIDIA-Linux-x86_64-430.40.run
 
 ```
@@ -64,12 +64,17 @@ sudo bash -c "echo blacklist nouveau > /etc/modprobe.d/blacklist-nvidia-nouveau.
 sudo bash -c "echo options nouveau modeset=0 >> /etc/modprobe.d/blacklist-nvidia-nouveau.conf"
 ```
 
-2. cuda 库（安装runtime和dev两个）
-libcudnn7_7.6.2.24-1+cuda10.1_amd64.deb
-libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
-3. pip3 install numpy 
+2. cuda安装
+
+  从novida[官网](https://developer.nvidia.com/cuda-toolkit-archive)下载并按照说明安装cuda
+
+3. cudann 库（安装runtime和dev两个）
+    libcudnn7_7.6.2.24-1+cuda10.1_amd64.deb
+  libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
+
+4. pip3 install numpy 
 ### 问题处理
-#### 找不到cuda头文件
+#### 1. 找不到cuda头文件
 安装dev版本的cuda
 
 #### Illegal ambiguous match on configurable attribute “deps” in 
@@ -77,10 +82,14 @@ libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
 
 2. Do you want to use clang as CUDA compiler? [y/N] choose N, here you use nvcc as the backend cuda code compiler, then you can use command: bazel build --config=opt --config=cuda //tensorflow/tools/pip_package:build_pip_package.
 
+#### 2. libcudart.so 
+
+> 没有安装cuda
+
 ## pip 安装
 
 ```
-
+pip install tensorflow-gpu
 ```
 
 
@@ -128,14 +137,22 @@ tf2的版本去掉了session，另外还有较大的改动。官方推荐使用k
 
 ### 几个模型训练的参数
 
-batchsize：中文翻译为批大小（批尺寸）。在深度学习中，一般采用SGD训练，即每次训练在训练集中取batchsize个样本训练；
-iteration：中文翻译为迭代，1个iteration等于使用batchsize个样本训练一次；
-一个迭代 = 一个正向通过+一个反向通过
-epoch：迭代次数，1个epoch等于使用训练集中的全部样本训练一次；
-一个epoch = 所有训练样本的一个正向传递和一个反向传递
-举个例子，训练集有1000个样本，batchsize=10，那么：
-训练完整个样本集需要：
-100次iteration，1次epoch。
+1. batchsize
+
+   > 中文翻译为批大小（批尺寸）。在深度学习中，一般采用SGD训练，即每次训练在训练集中取batchsize个样本训练；
+
+2. iteration
+
+   > 中文翻译为迭代，1个iteration等于使用batchsize个样本训练一次；
+   > 一个迭代 = 一个正向通过+一个反向通过
+
+3. epoch
+
+   > 迭代次数，1个epoch等于使用训练集中的全部样本训练一次；
+   > 一个epoch = 所有训练样本的一个正向传递和一个反向传递
+   > 举个例子，训练集有1000个样本，batchsize=10，那么：
+   > 训练完整个样本集需要：
+   > 100次iteration，1次epoch。
 
 
 
