@@ -18,7 +18,7 @@ export IDF_TOOLS_PATH=/TOOLS/SDK/esp32/espressif
 
 安装ninja
 
-```
+```shell
 sudo apt install ninja-build
 ```
 
@@ -213,5 +213,162 @@ F1->ESP-IDF:create project->template-app，项目建成后，会自动打开`ONB
 
 ## 开发
 
-### 目录结构
+## vscode+cmake
+
+使用纯粹的vscode+cmake的方式，进行开发，花2天时间将环境配置好，但是编译的时候，由于缺少了一些宏变量，无法编译通过，暂时放弃。待后续通过其他方式编译好了后，在回头调整。
+
+
+
+## arduino
+
+> [arduino esp扩展](https://github.com/espressif/arduino-esp32)
+
+使用ttgo官方推荐的arduino进行开发，通过各种配置后，最终也无法编译成功。。。。
+
+## platformIO
+
+[官网](https://docs.platformio.org/en/latest/)
+
+使用PIO，大概话费3个小时编译成功。总结经验如下：
+
+### 基本概念
+
+PIO中对于一种平台包含三总定义：
+
+1. platform
+
+   描述软硬件平台，如`platform = espressif32`
+
+2. board 
+
+   开发版，如`board=esp32dev`
+
+3. framework
+
+   开发框架，如`framework = arduino`
+
+### 插件安装
+
+> 在vscode中直接搜索platformIO，在搜索的结构中选择安装即可。
+
+### .platformio目录
+
+默认platformio会在`$HOME/.platformio`下安装需要的平台、编译环境、框架文件等。为了防止`HOME`爆满，可以通过软件链接的方式将文件存储到其他目录
+
+
+
+### 基本原理
+
+原理不能深究，简单来说有如下几点
+
+1. arduino 框架怎么回事
+
+   `at platformio/packages/framework-arduinoespressif32/cores/esp32/main.cpp`
+
+   ```c++
+   #include "freertos/FreeRTOS.h"
+   #include "freertos/task.h"
+   #include "esp_task_wdt.h"
+   #include "Arduino.h"
+   
+   TaskHandle_t loopTaskHandle = NULL;
+   
+   #if CONFIG_AUTOSTART_ARDUINO
+   
+   bool loopTaskWDTEnabled;
+   
+   void loopTask(void *pvParameters)
+   {
+       setup();
+       for(;;) {
+           if(loopTaskWDTEnabled){
+               esp_task_wdt_reset();
+           }
+           loop();
+       }
+   }
+   
+   extern "C" void app_main()
+   {
+       loopTaskWDTEnabled = false;
+       initArduino();
+       xTaskCreateUniversal(loopTask, "loopTask", 8192, NULL, 1, &loopTaskHandle, CONFIG_ARDUINO_RUNNING_CORE);
+   }
+   
+   #endif
+   ```
+
+   而在`platformio/packages/framework-arduinoespressif32/tools/sdk/sdkconfig`中定义了这个宏`CONFIG_AUTOSTART_ARDUINO`
+
+   ```ini
+   #
+   # Arduino Configuration
+   #
+   CONFIG_ENABLE_ARDUINO_DEPENDS=y
+   CONFIG_AUTOSTART_ARDUINO=y
+   ```
+
+2. 何为sdkconfig
+
+   >Application developers can open a terminal-based project configuration menu with the `idf.py menuconfig` build target.After being updated, this configuration is saved inside `sdkconfig` file in the project root directory. Based on `sdkconfig`, application build targets will generate `sdkconfig.h` file in the build directory, and will make sdkconfig options available to the project build system and source files
+
+3. 如何编译的？
+
+   PIO 使用自己的`pio`命令进行编译，具体逻辑尚不明确。pio命令是一个python写的脚本
+
+4. 关于platfromio.ini
+
+   ```ini
+   ; PlatformIO Project Configuration File
+   ;
+   ;   Build options: build flags, source filter
+   ;   Upload options: custom upload port, speed and extra flags
+   ;   Library options: dependencies, extra library storages
+   ;   Advanced options: extra scripting
+   ;
+   ; Please visit documentation for the other options and examples
+   ; https://docs.platformio.org/page/projectconf.html
+   
+   [env:esp32dev]
+   platform = espressif32
+   board = esp32dev
+   framework = arduino
+   #I add this 
+   monitor_speed = 115200
+   build_flags =
+     -Os
+     -DCORE_DEBUG_LEVEL=ARDUHAL_LOG_LEVEL_DEBUG
+     -DUSER_SETUP_LOADED=1
+     -DST7789_DRIVER=1
+     -DTFT_WIDTH=135
+     -DTFT_HEIGHT=240
+     -DCGRAM_OFFSET=1
+     -DTFT_MISO=-1
+     -DTFT_MOSI=19
+     -DTFT_SCLK=18
+     -DTFT_CS=5
+     -DTFT_DC=16
+     -DTFT_RST=23
+     -DTFT_BL=4
+     -DTFT_BACKLIGHT_ON=1
+     -DLOAD_GLCD=1
+     -DLOAD_FONT2=1
+     -DLOAD_FONT4=1
+     -DLOAD_FONT6=1
+     -DLOAD_FONT7=1
+     -DLOAD_FONT8=1
+     -DLOAD_GFXFF=1
+     -DSMOOTH_FONT=1
+     -DSPI_FREQUENCY=40000000
+     -DSPI_READ_FREQUENCY=6000000
+   lib_deps =
+       TFT_eSPI
+       Button2
+   ```
+
+   `build_flags`为编译的宏
+
+   `lib_deps`为依赖库，通过pio插件查询后（[也可以通过在线查询地址查询](https://platformio.org/lib)）可以配置在这里，在进行编译的时候，会自动下载。下载完成后会放到项目根目录的/lib目录下。
+
+   
 

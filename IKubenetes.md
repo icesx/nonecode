@@ -92,7 +92,31 @@ https://github.com/cncf/landscape
 
 在`k8s.gcr.io/kubernetes-zookeeper:1.0-3.4.10`可以映射为`mirrorgooglecontainers/kubernetes-zookeeper:1.0-3.4.10`
 
+映射下来的的镜像可以通过docker tag, docker push 到私有的harbor中再进行使用。
 
+特别是在kubernet1.20后默认配置的pause用的是`k8s.gcr.io/pause:3.1`，这个镜像没有下载下来的话，节点无法上线。可以使用如下方式
+
+1. docker
+
+   ```sh
+   docker pull mirrorgooglecontainers/pause:3.1
+   docker tag mirrorgooglecontainers/pause:3.1 bjrdc206.reg/gcr/pause:3.1
+   docker push
+   ```
+
+2. 修改/etc/containerd/config/toml
+
+   ```toml
+     [plugins."io.containerd.grpc.v1.cri"]
+       disable_tcp_service = true
+       stream_server_address = "127.0.0.1"
+       stream_server_port = "0"
+       stream_idle_timeout = "4h0m0s"
+       enable_selinux = false
+       sandbox_image = "bjrdc206.reg/gcr/pause:3.1"
+   ```
+
+   
 
 ## Kubernetes install
 
@@ -182,9 +206,9 @@ sudo systemctl start kubelet.service
 
 [hub.docker.com](https://hub.docker.com/)
 
-## 配置
+### 配置
 
-### master
+#### master
 
 1. disable swap
    
@@ -229,7 +253,22 @@ sudo systemctl start kubelet.service
 
 ​      
 
-   4. 初始化
+   4. 安装
+
+      ```sh
+      sudo su root
+      curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
+      # 添加 k8s 镜像源
+      sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+      deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+      EOF
+      sudo apt update
+sudo apt-get install -y kubectl kubeadm
+      ```
+      
+      
+
+   5. 初始化
 
       ```sh
       kubeadm init \
@@ -237,7 +276,7 @@ sudo systemctl start kubelet.service
       --image-repository registry.aliyuncs.com/google_containers \
       --pod-network-cidr=10.244.0.0/16 \
       --kubernetes-version=v1.18.0
-      #如果无法下载，需要设置--kubernetes-version为当然registry服务器上有的版本
+      #如果无法下载，需要设置--kubernetes-version为当前registry服务器上有的版本
       ```
 
       ```sh
@@ -252,7 +291,7 @@ sudo systemctl start kubelet.service
 
       
 
-   5. .kube/config
+   6. .kube/config
 
       ```sh
       mkdir -p $HOME/.kube
@@ -260,7 +299,7 @@ sudo systemctl start kubelet.service
       sudo chown $(id -u):$(id -g) $HOME/.kube/config
       ```
 
-   6. 部署 flannel 网络
+   7. 部署 flannel 网络
 
       > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
       >
@@ -272,7 +311,7 @@ sudo systemctl start kubelet.service
       >
       > **打通pod与集群**
 
-   7. 查看pod
+   8. 查看pod
 
       ```sh
       kubectl get pod --all-namespaces
@@ -289,6 +328,8 @@ sudo systemctl start kubelet.service
 
 #### Node
 
+​	<span id="node_install">node_install</span>
+
 1. 环境准备
 
    disable swap
@@ -301,6 +342,7 @@ sudo systemctl start kubelet.service
    sysctl
 
    ```sh
+   sudo  modprobe br_netfilter
    cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
    net.bridge.bridge-nf-call-ip6tables = 1
    net.bridge.bridge-nf-call-iptables = 1
@@ -308,7 +350,7 @@ sudo systemctl start kubelet.service
    sudo sysctl --system
    ```
 
-   docker
+   docker*如果使用containerd则不需要安装docker*
 
    ```shell
    sudo apt install -y docker.io
@@ -328,7 +370,7 @@ sudo systemctl start kubelet.service
 
    
 
-2. 安装kubectl
+2. 安装kubectl kubeadm
 
    ```sh
    sudo su root
@@ -356,6 +398,58 @@ sudo systemctl start kubelet.service
    ```sh
    kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
    ```
+   
+4. 增加内核插件(使用containerd时)
+
+   ```sh
+   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+   overlay
+   br_netfilter
+   EOF
+   ```
+
+   
+
+5. 修改环境变量
+
+   如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
+
+   ```sh
+   cat >/var/lib/kubelet/kubeadm-flags.env <<EOF
+   KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+   EOF
+   ```
+
+   如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，需要如下配置
+
+   1. docker
+
+      ```sh
+      docker pull mirrorgooglecontainers/pause:3.1
+      docker tag mirrorgooglecontainers/pause:3.1 bjrdc206.reg/gcr/pause:3.1
+      docker push
+      ```
+
+   2. 修改/etc/containerd/config/toml
+
+      ```toml
+        [plugins."io.containerd.grpc.v1.cri"]
+          disable_tcp_service = true
+          stream_server_address = "127.0.0.1"
+          stream_server_port = "0"
+          stream_idle_timeout = "4h0m0s"
+          enable_selinux = false
+          sandbox_image = "bjrdc206.reg/gcr/pause:3.1"
+      ```
+
+   3. 记得重新load
+
+      ```sh
+      sudo systemctl daemon-reload
+      sudo systemctl restart kubelet
+      ```
+
+      
 
 ### 安装其他组件
 
@@ -1309,6 +1403,8 @@ A StorageClass provides a way for administrators to describe the "classes" of st
    3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 详细见如下issue，需要安装rdb-provisoner
 
       [https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 ](https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 )
+      
+      
    
 9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*可以的
 
@@ -2541,6 +2637,25 @@ kubectl create -f .
 kubectl create configmap redis-cluster-config  -n bjrdc-dev --from-file=redis.conf=./redis.conf --from-file=redis-cluster-boot.py=./redis-cluster-boot.py
 ```
 
+#### node
+
+>Cluster Management Commands:
+>certificate   Modify certificate resources.
+>cluster-info  Display cluster info
+>top           Display Resource (CPU/Memory/Storage) usage.
+>cordon        Mark node as unschedulable
+>uncordon      Mark node as schedulable
+>drain         Drain node in preparation for maintenance
+>taint         Update the taints on one or more nodes
+
+```sh
+kubectl get nodes 
+kubectl cordon bjrdc207
+kubectl uncordon bjrdc207
+```
+
+
+
 #### 获取资源
 
 ```sh
@@ -2549,7 +2664,6 @@ kubectl get pod -n bjrdc-dev --watch
 kubectl get nodes
 kubectl get namespace
 kubectl get pod
-kubectl get pods --all-namespaces
 kubectl get cs
 kubectl get svc
 kubectl get all --all-namespaces
@@ -2753,7 +2867,13 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
    update-ca-certificates
    ```
 
-   
+10. 下载ca.crt到本地，添加到浏览器中，并信任后，即可通过浏览器访问
+
+    ```
+    https://bjrdc206.reg
+    ```
+
+    
 
 #### 使用docker安装
 
@@ -2774,8 +2894,10 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
 
 3. 修改 harbor.yml
 
+   hostname `bjrdc206.reg` 必须和证书的hostname相同
+   
    ```yaml
-   hostname: bjrdc206
+   hostname: bjrdc206.reg
    
    # http related config
    http:
@@ -2789,9 +2911,9 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
      # The path of cert and key files for nginx
      certificate: /docker/cert/bjrdc206.reg.crt
      private_key: /docker/cert/bjrdc206.reg.key
-     ...
+    ...
    ```
-
+   
    ```sh
    ./install.sh
    ```
@@ -5806,7 +5928,341 @@ spec:
 
 
 
+## kubernetes1.20
 
+> 1.20版本开始弃用dockershim，个中原因夹杂政治、利益、技术等等，详细可以围观
+>
+> [](https://blog.kelu.org/tech/2020/10/09/the-diff-between-docker-containerd-runc-docker-shim.html)
+
+![kubernetes 与 docker](/ICESX/ISunflower/nonecode/images/k8s-1.webp)
+
+### without docker
+
+1. OCI
+
+   Linux基金会于2015年6月成立OCI（Open Container Initiative）组织，旨在围绕容器格式和运行时制定一个开放的工业化标准，目前主要有两个标准文档：容器运行时标准 （runtime spec）和 容器镜像标准（image spec）
+
+2. CRI
+
+   Container Runtime Interface，CRI 是对容器操作的一组抽象，只要每种容器运行时都实现这组接口，kubelet 就能通过这组接口来适配所有的运行时。
+
+3. containerd
+
+   
+
+4. cri-o
+
+   
+
+### 容器基础
+
+1. Cgroup
+
+   控制组提供了一种机制，可以将任务集及其所有将来的子级集合/划分为具有特殊行为的分层组。
+
+2. namespace
+
+   以一种抽象方式包装全局系统资源，使它在命名空间中的进程中看起来像它们具有自己的隔离的全局资源实例。
+
+   Linux Namespace是Linux提供的一种内核级别环境隔离的方法。不知道你是否还记得很早以前的Unix有一个叫chroot的系统调用（通过修改根目录把用户jail到一个特定目录下），chroot提供了一种简单的隔离模式：chroot内部的文件系统无法访问外部的内容。Linux Namespace在此基础上，提供了对UTS、IPC、mount、PID、network、User等的隔离机制。
+
+1. chroot
+2. lxc
+
+### 容器运行时
+
+1. containerd
+2. CRI-O
+3. Docker
+
+### containerd-shim
+
+>containerd-shim 是一个真实运行容器的载体，每启动一个容器都会起一个新的 containerd-shim 的一个进程， 它直接通过指定的三个参数：容器 id，boundle 目录（containerd 对应某个容器生成的目录，一般位于：/var/run/docker/libcontainerd/containerID，其中包括了容器配置和标准输入、标准输出、标准错误三个管道文件），运行时二进制（默认为 runC）来调用 runc 的 api 创建一个容器，上面的 docker 进程图中可以直观的显示。其主要作用是：它允许容器运行时(即 runC)在启动容器之后退出，简单说就是不必为每个容器一直运行一个容器运行时(runC)
+>即使在 containerd 和 dockerd 都挂掉的情况下，容器的标准 IO 和其它的文件描述符也都是可用的
+>向 containerd 报告容器的退出状态
+>
+>有了它就可以在不中断容器运行的情况下升级或重启 dockerd，对于生产环境来说意义重大。
+>运行是二进制（默认为 runc）来调用 runc 的 api 创建一个容器（比如创建容器：最后拼装的命令如下：runc create 。。。。。）
+
+### 相关命令
+
+#### crictl
+
+[官方地址](https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md）
+
+> *crictl* 是CRI 兼容的容器运行时命令行接口
+
+crictl by default connects on Unix to:
+
+- `unix:///var/run/dockershim.sock` or
+- `unix:///run/containerd/containerd.sock` or
+- `unix:///run/crio/crio.sock`
+
+相关命令
+
+```
+crictl pods
+sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
+```
+
+注:如果`ctr pull`了镜像，则在crictl中是可以看到的。
+
+#### containerd/ctr
+
+> ctr is an unsupported debug and administrative client for interacting
+> with the containerd daemon. Because it is unsupported, the commands,
+> options, and operations are not guaranteed to be backward compatible or
+> stable from release to release of the containerd project
+
+1. 创建配置文件
+
+   ```sh
+   sudo containerd config default|sudo tee /etc/containerd/config.toml
+   ```
+
+2. 修改配置
+
+   1. 非root执行
+
+      config.toml中设置uid和gid
+
+      ```toml
+      [grpc]
+        address = "/run/containerd/containerd.sock"
+        tcp_address = ""
+        tcp_tls_cert = ""
+        tcp_tls_key = ""
+        uid = 1000
+        gid = 1000
+      ```
+
+   2. register服务器
+
+      http://hub-mirror.c.163.com
+
+3. pull
+
+   ```sh
+   ctr image pull --skip-verify bjrdc206.reg/bjrdc-dev/java:8-jdk-bjrdc-v1.0.1
+   ctr images pull hub-mirror.c.163.com/library/redis:alpine
+   ctr  images pull hub.c.163.com/library/nginx:latest
+   ```
+
+   如果没有安装bjrdc206.reg的证书的话会报错误
+
+   `x509: certificate signed by unknown authority`
+
+   解决办法是下载bjrdc206.reg的证书`/etc/docker/certs.d/bjrdc206.reg/ca.crt`，并安装到本地
+
+   ```sh
+   cp ca.crt /etc/ca-certificates/update.d
+   sudo update-ca-certificates
+   ```
+
+4. run
+
+   ```sh
+   bjrdc@bjrdc105:~$ ctr images ls
+   REF                                                             TYPE                                                      DIGEST                                                                  SIZE      PLATFORMS                                                                                LABELS 
+   hub-mirror.c.163.com/library/redis:alpine                       application/vnd.docker.distribution.manifest.list.v2+json sha256:2cd821f730b90a197816252972c2472e3d1fad3c42f052580bc958d3ad641f96 10.1 MiB  linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x -      
+   hub.c.163.com/library/nginx:latest                              application/vnd.oci.image.manifest.v1+json                sha256:8eeb06742b41fb67514e4b14049f6740dc582520486d7a1612e78c55b1dbe40e 41.2 MiB  linux/amd64 
+   ```
+
+   ```sh
+   sudo ctr run hub-mirror.c.163.com/library/redis:alpine redis-v1
+   1:C 20 Jan 2021 01:56:25.900 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+   ...
+   ```
+
+   ctr run 相关参数
+
+   ```
+   sudo ctr run -h
+   NAME:
+      ctr run - run a container
+   
+   USAGE:
+      ctr run [command options] [flags] Image|RootFS ID [COMMAND] [ARG...]
+   
+   OPTIONS:
+      --rm                      remove the container after running
+      --null-io                 send all IO to /dev/null
+      --log-uri value           log uri
+      --detach, -d              detach from the task after it has started execution
+      --fifo-dir value          directory used for storing IO FIFOs
+      --cgroup value            cgroup path (To disable use of cgroup, set to "" explicitly)
+      --platform value          run image for specific platform
+      --snapshotter value       snapshotter name. Empty value stands for the default value. [$CONTAINERD_SNAPSHOTTER]
+      --config value, -c value  path to the runtime-specific spec config file
+      --cwd value               specify the working directory of the process
+      --env value               specify additional container environment variables (i.e. FOO=bar)
+      --env-file value          specify additional container environment variables in a file(i.e. FOO=bar, one per line)
+      --label value             specify additional labels (i.e. foo=bar)
+      --mount value             specify additional container mount (ex: type=bind,src=/tmp,dst=/host,options=rbind:ro)
+      --net-host                enable host networking for the container
+      --privileged              run privileged container
+      --read-only               set the containers filesystem as readonly
+      --runtime value           runtime name (default: "io.containerd.runc.v2")
+      --tty, -t                 allocate a TTY for the container
+      --with-ns value           specify existing Linux namespaces to join at container runtime (format '<nstype>:<path>')
+      --pid-file value          file path to write the task's pid
+      --gpus value              add gpus to the container (default: 0)
+      --allow-new-privs         turn off OCI spec's NoNewPrivileges feature flag
+      --memory-limit value      memory limit (in bytes) for the container (default: 0)
+      --device value            add a device to a container
+      --seccomp                 enable the default seccomp profile
+      --rootfs                  use custom rootfs that is not managed by containerd snapshotter
+      --no-pivot                disable use of pivot-root (linux only)
+   ```
+
+5. ls/rm
+
+   ```
+   ctr c ls
+   ctr c rm nginx-test-1
+   ```
+
+6. task
+
+   ```
+   ctr task ls
+   sudo ctr task attach redis-v1
+   ```
+
+   
+
+#### runc
+
+### 替换docker 为containerd
+
+#### 净安装
+
+v1.20.x之后的版本，不安装docker，按照上文描述的安装节点即可。[node_install](#node_install)
+
+#### 替换
+
+
+
+## 集群升级
+
+[参考地址](https://kubernetes.io/zh/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
+
+使用操作系统自带的`apt`升级只能升级kubectl kubeadm不能升级组件，所以升级需要进行手动升级。
+
+**如果已经通过操作系统的apt升级后，可以进行降级再进行升级**
+
+### 升级原理
+
+> 首先通过apt升级kubeadm，再通过kubeadm升级其他组件具体操作如下。
+>
+> 然后通过apt升级kubelet
+
+1. 腾空控制节点
+
+   ```
+   kubectl drain bjrdc17 --ignore-daemonsets
+   ```
+
+   
+
+2. 升级kubeadm
+
+   ```sh
+   sudo apt-cache policy kubeadm|more
+   #查看可升级版本
+   sudo apt-get install --allow-change-held-packages kubeadm=1.20.2-00
+   #升级kubeadm到1.20.2
+   ```
+
+3. 查看升级plan
+
+   ```
+   sudo kubeadm upgrade plan                                          
+   [upgrade/config] Making sure the configuration is correct:
+   [upgrade/config] Reading configuration from the cluster...
+   [upgrade/config] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+   [preflight] Running pre-flight checks.
+   [upgrade] Running cluster health checks
+   [upgrade] Fetching available versions to upgrade to
+   [upgrade/versions] Cluster version: v1.20.0
+   [upgrade/versions] kubeadm version: v1.20.2
+   [upgrade/versions] Latest stable version: v1.20.2
+   [upgrade/versions] Latest stable version: v1.20.2
+   [upgrade/versions] Latest version in the v1.20 series: v1.20.2
+   [upgrade/versions] Latest version in the v1.20 series: v1.20.2
+   
+   Components that must be upgraded manually after you have upgraded the control plane with 'kubeadm upgrade apply':
+   COMPONENT   CURRENT       AVAILABLE
+   kubelet     3 x v1.20.0   v1.20.2
+               1 x v1.20.2   v1.20.2
+   
+   Upgrade to the latest version in the v1.20 series:
+   
+   COMPONENT                 CURRENT    AVAILABLE
+   kube-apiserver            v1.20.0    v1.20.2
+   kube-controller-manager   v1.20.0    v1.20.2
+   kube-scheduler            v1.20.0    v1.20.2
+   kube-proxy                v1.20.0    v1.20.2
+   CoreDNS                   1.7.0      1.7.0
+   etcd                      3.4.13-0   3.4.13-0
+   
+   You can now apply the upgrade by executing the following command:
+   
+           kubeadm upgrade apply v1.20.2
+   
+   _____________________________________________________________________
+   
+   
+   The table below shows the current state of component configs as understood by this version of kubeadm.
+   Configs that have a "yes" mark in the "MANUAL UPGRADE REQUIRED" column require manual config upgrade or
+   resetting to kubeadm defaults before a successful upgrade can be performed. The version to manually
+   upgrade to is denoted in the "PREFERRED VERSION" column.
+   
+   API GROUP                 CURRENT VERSION   PREFERRED VERSION   MANUAL UPGRADE REQUIRED
+   kubeproxy.config.k8s.io   v1alpha1          v1alpha1            no
+   kubelet.config.k8s.io     v1beta1           v1beta1             no
+   _____________________________________________________________________
+   ```
+
+4. 升级到1.20.2
+
+   ```
+   sudo kubeadm upgrade apply v1.20.2
+   ```
+
+5. 升级kubelet、kubectl
+
+   ```sh
+   sudo apt-get install --allow-change-held-packages kubelet=1.20.2-00
+   sudo apt-get install --allow-change-held-packages kubectl=1.20.2-00
+   ```
+
+6. 去掉控制节点保护
+
+   ```
+   kubectl uncordon bjrdc17
+   ```
+
+7. 问题处理
+    this version of kubeadm only supports deploying clusters with the control plane version >= 1.19.0. Current version: v1.18.15
+
+   先降级到1.18.0，然后在逐步升级。
+
+   Specified version to upgrade to "v1.19.7" is higher than the kubeadm version "v1.19.0". Upgrade kubeadm first using the tool you used to install kubeadm
+
+   需要将kubeadm先使用apt升级再进行集群升级。
+
+   
+
+   [preflight] Some fatal errors occurred:
+   [ERROR CoreDNSUnsupportedPlugins]: CoreDNS cannot migrate the following plugins:
+   [Option "max_concurrent" in plugin "forward" is unsupported by this migration tool in 1.6.7.]
+
+   ```
+   sudo kubeadm upgrade apply v1.19.0 --ignore-preflight-errors=CoreDNSUnsupportedPlugins
+   ```
+
+   
 
 ## 附件
 

@@ -2,7 +2,7 @@ Docker
 ========
 ###  安装
 
-```
+```sh
 sudo apt install docker.io
 ```
 
@@ -29,7 +29,7 @@ EOF
 
 ### 基本命令
 
-```
+```sh
 docker rm hadoop-name0
 docker rmi 7b7bbf4afbf0
 docker rm b5b7ead8f2fc
@@ -77,7 +77,7 @@ docker logs -f -t --tail 10 redis
 
 	和LXC相比，对container的是隔离的，image是不会发生变化的。而lxc则是改动都会变化到image中。
 	可以通过commit一个image，而之后的container使用这个image来创建的方式，实现对image修改的保留。
-```
+```sh
 sudo docker commit --author="i" --message="ssh docker software hadoop " hadoop-data00 xjgz/ubuntu:v9
 docker stop hadoop-data00
 ```
@@ -234,7 +234,7 @@ docker run -i -t --hostname=hadoop-data00 --name=hadoop-data00 --link=hadoop-nam
 
 ## Dockerfile
 
-```
+```dockerfile
 cat > Dockerfile <<EOF
 FROM java:8-jdk
 ARG JAR_FILE

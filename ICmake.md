@@ -24,17 +24,6 @@ include_directories(
 )
 ```
 
-### 链接库
-
-在CMakeLists.txt中可以设置链接库的查找路径代码如下
-
-```cmake
-link_directories(
-    ${PROJECT_BINARY_DIR}/lib_cpp_shard
-    ${PROJECT_BINARY_DIR}/lib_c_shard
-)
-```
-
 
 
 ### 变量设置
@@ -107,29 +96,89 @@ endforeach (sub)
    message("SHARD_PATH=${SHARD_PATH}")
    ```
 
-2. set 设置环境变量
+2. set 
 
-3. set( CMAKE_VERBOSE_MAKEFILE on ) 打开更详细的打印
+   设置变量，如
 
-4. cmake_minimum_required(VERSION 3.0.0)
+   ```cmake
+   set( CMAKE_VERBOSE_MAKEFILE on ) 打开更详细的打印
+   ```
 
-5. project(ILC VERSION 0.1.0)
+   
 
-6. 设置编译选项
+3. cmake_minimum_required(VERSION 3.0.0)
+
+4. project(ILC VERSION 0.1.0)
+
+5. 设置编译选项
 
    ```cmake
    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
    
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
    ```
-   
-7. 开启调试
+
+6. 开启调试
 
    ```cmake
    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -g)
    ```
 
+7. aux_source_directory
+
+   ```cmake
+   aux_source_directory(. DIR_LIB_SRCS)
+   ```
+
+   收集指定目录中所有源文件的名称，并将列表存储在提供的`DIR_LIB_SRCS`变量中。 该命令旨在供使用显式模板实例化的项目使用。
+
+8. add_library
+
+   ```cmake
+   add_library(<name> [STATIC | SHARED | MODULE]
+               [EXCLUDE_FROM_ALL]
+               source1 [source2 ...])
+   ```
+
    
+
+   ```cmake
+   add_library(struct ${DIR_LIB_SRCS})
+   ```
+
+   构建libstruct.so库，并添加到工程中去，使用变量`DIR_LIB_SRCS`中设置的源文件
+
+9. add_executable
+
+   ```cmake
+   add_executable(< name> [WIN32] [MACOSX_BUNDLE]
+   [EXCLUDE_FROM_ALL]
+   source1 source2 … sourceN)
+   ```
+
+    使用给定的源文件，为工程引入一个可执行文件
+
+10. target_link_libraries
+
+    ```cmake
+    target_link_libraries(<target> [item1] [item2] [...]
+                          [[debug|optimized|general] <item>] ...)
+    ```
+
+    将目标文件`target`与库文件`item1-2..`进行链接。
+
+11. link_directories
+
+    ```cmake
+    link_directories(
+        ${PROJECT_BINARY_DIR}/lib_cpp_shard
+        ${PROJECT_BINARY_DIR}/lib_c_shard
+    )
+    ```
+
+    添加需要链接的库文件目录
+
+12. 
 
 ### 编译选项
 

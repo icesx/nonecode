@@ -26,7 +26,7 @@ LXC
 
   > ​	安装需要的程序文件 
 
-  ```
+  ```sh
   sudo apt-get install lxc bridge-utils debootstrap libcap-dev
   ```
 
@@ -36,7 +36,7 @@ LXC
 
   > #将从http://archive.ubuntu.com/ubuntu/dists/utopic 下载文件，下载到当前目录的rootfs.ubuntu.utopic文件夹下
 
-  ```
+  ```sh
 sudo debootstrap --arch amd64 utopic rootfs.ubuntu.utopic http://ubuntu.cn99.com/ubuntu
   ```
 
@@ -56,7 +56,7 @@ sudo debootstrap --arch amd64 utopic rootfs.ubuntu.utopic http://ubuntu.cn99.com
   >
   >安装container内的软件
   >
-  >```
+  >```sh
   >apt-get install openssh-server vim rsyslog sudo
   >echo "ilxc" > /etc/hostname
   >echo "127.0.0.1 localhost" > /etc/hosts
