@@ -26,9 +26,9 @@ https://github.com/cncf/landscape
 
 ![](https://landscape.cncf.io/images/serverless.png)
 
-
-
 ## 体验Docker
+
+> kubernetes 1.20.x后将逐步去掉docker，改用containerd作为ori
 
 1. hello-world
 
@@ -39,7 +39,7 @@ https://github.com/cncf/landscape
 2. node.js
 
    server.js 代码
-   
+
    ```js
    cat > server.js <<EOF 
    var http = require('http');
@@ -53,7 +53,7 @@ https://github.com/cncf/landscape
    www.listen(8080);
    EOF
    ```
-   
+
    Dockerfile
 
    ```dockerfile
@@ -64,26 +64,26 @@ https://github.com/cncf/landscape
    CMD [ "node", "server.js" ]
    EOF
    ```
-   
+
    制作镜像
 
    ```sh
    docker build -t bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1 .
    ```
-   
+
    执行
-   
+
    ```shell
    docker run -p 8080:8080 bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
    docker run -p 8080:8080 -d bjrdc206.reg/bjrdc-dev/hello-node:v1.0.1
    ```
-   
+
    访问
-   
+
    ```shell
    curl localhost:8080
    ```
-   
+
    
 
 ## 国内镜像
@@ -145,68 +145,11 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 
 
-#### 按照安装官方教程安装（需要梯子）
-
-```bash
-sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-```
-
-#### 自己手动安装（需要梯子）
-
-官方教程中无法访问google，需要手动安装
-
-```shell
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add 
-```
-
-增加source 
-
-```shell
-cat <<EOF | sudo  /etc/apt/sources.list.d/kubernetes.list
-deb https://apt.kubernetes.io/ kubernetes-xenial main
-EOF
-sudo apt-get install -y kubelet kubeadm kubectl
-```
-
-#### 通过aliyun安装（推荐）
-
-```sh
-sudo su root
-curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
-sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-EOF
-sudo apt-get install -y kubelet kubeadm kubectl
-```
-
-> 注： 如果是在node上不用安装，不需要安装kubectl
->
-> ```sh
-> sudo apt-get install -y kubelet kubeadm
-> ```
->
-> 
-
-### 启动服务
-
-```
-sudo systemctl start kubelet.service
-```
-
-
-
 ### 镜像搜索
 
 [hub.docker.com](https://hub.docker.com/)
 
-### 配置
+### 安装
 
 #### master
 
@@ -263,9 +206,22 @@ sudo systemctl start kubelet.service
       deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
       EOF
       sudo apt update
-sudo apt-get install -y kubectl kubeadm
+      sudo apt-get install -y kubectl kubeadm kubelet
       ```
-      
+
+       按照安装官方教程安装（需要梯子）
+
+      ```bash
+      sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+      cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      deb https://apt.kubernetes.io/ kubernetes-xenial main
+      EOF
+      sudo apt-get update
+      sudo apt-get install -y kubelet kubeadm kubectl
+      sudo apt-mark hold kubelet kubeadm kubectl
+      ```
+
       
 
    5. 初始化
@@ -324,6 +280,8 @@ sudo apt-get install -y kubectl kubeadm
    kubectl create -f recommended.yaml 
    ```
 
+#### 多master
+
 
 
 #### Node
@@ -380,24 +338,28 @@ sudo apt-get install -y kubectl kubeadm
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
    sudo apt update
-   sudo apt-get install -y kubectl kubeadm
+   sudo apt-get install -y kubelet kubeadm
    ```
 
 3. join
 
    1. on master
 
-   ```sh
-   kubeadm token list
-   kubeadm token create --print-join-command
-   kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
-   ```
+      ```
+      kubeadm token list
+      kubeadm token create --print-join-command
+      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
+      ```
+
+      
 
    2. on node
-
-   ```sh
-   kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
-   ```
+   
+      ```
+      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
+      ```
+   
+      
    
 4. 增加内核插件(使用containerd时)
 
@@ -406,6 +368,8 @@ sudo apt-get install -y kubectl kubeadm
    overlay
    br_netfilter
    EOF
+   modprobe overlay
+   modprobe br_netfilter
    ```
 
    
@@ -422,7 +386,9 @@ sudo apt-get install -y kubectl kubeadm
 
    如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，需要如下配置
 
-   1. docker
+   1. 准备镜像
+
+      找一台安装有docker的机器，使用如下命令准备pause镜像
 
       ```sh
       docker pull mirrorgooglecontainers/pause:3.1
@@ -430,20 +396,16 @@ sudo apt-get install -y kubectl kubeadm
       docker push
       ```
 
-   2. 修改/etc/containerd/config/toml
+      
 
-      ```toml
-        [plugins."io.containerd.grpc.v1.cri"]
-          disable_tcp_service = true
-          stream_server_address = "127.0.0.1"
-          stream_server_port = "0"
-          stream_idle_timeout = "4h0m0s"
-          enable_selinux = false
-          sandbox_image = "bjrdc206.reg/gcr/pause:3.1"
+   2. 修改node节点服务器的 `/etc/containerd/config/toml`
+
+      ```sh
+      sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
       ```
-
+      
    3. 记得重新load
-
+   
       ```sh
       sudo systemctl daemon-reload
       sudo systemctl restart kubelet
@@ -451,7 +413,7 @@ sudo apt-get install -y kubectl kubeadm
 
       
 
-### 安装其他组件
+### master 上安装其他组件
 
 #### dashborader
 
@@ -486,80 +448,80 @@ sudo apt-get install -y kubectl kubeadm
 
 4. 访问
 
-   >下载生成的kubecfg.p12文件，并导入浏览器
-   >
-   >使用浏览器打开
-   >
-   >```http
-   >https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
-   >```
-   >
-   >在master上通过如下命令获取token
-   >
-   >```shell
-   >kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-   >```
-   >
-   >在登录界面输入token完成登录
+   下载生成的kubecfg.p12文件，并导入浏览器
+   
+   使用浏览器打开
+   
+   ```http
+   https://bjrdc17:6443/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+   ```
+   
+   在master上通过如下命令获取token
+   
+   ```shell
+   kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+   ```
+   
+   在登录界面输入token完成登录
 
 5. 角色绑定
 
-   > 此时登录将会没有权限看到resources，使用如下方式为admin-user用户绑定权限
-   >
-   > 创建角色admin-user.rbac.yaml
-   >
-   > **创建名为admin-user的serviceaccount，放到kube-system namespace下，并将用户绑定到名称为cluster-admin的ClusterRole下**
-   >
-   > ```yaml
-   > apiVersion: v1
-   > kind: ServiceAccount
-   > metadata:
-   > name: admin-user
-   > namespace: kube-system
-   > ---
-   > # Create ClusterRoleBinding
-   > apiVersion: rbac.authorization.k8s.io/v1
-   > kind: ClusterRoleBinding
-   > metadata:
-   > 	name: admin-user
-   > roleRef:
-   > apiGroup: rbac.authorization.k8s.io
-   > kind: ClusterRole
-   > name: cluster-admin
-   > subjects:
-   > - kind: ServiceAccount
-   >   name: admin-user
-   >   namespace: kube-system
-   > ```
-   >
-   > 执行该权限
-   >
-   > ```sh
-   > kubectl  create -f admin-user.rbac.yaml 
-   > ```
-   >
-   > 查询token
-   >
-   > ```sh
-   > kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
-   > 
-   > ')
-   > Name:         admin-user-token-w4knf
-   > Namespace:    kube-system
-   > Labels:       <none>
-   > Annotations:  kubernetes.io/service-account.name: admin-user
-   >               kubernetes.io/service-account.uid: 65323ead-467f-448d-b7ee-1c52a002f3c2
-   > 
-   > Type:  kubernetes.io/service-account-token
-   > 
-   > Data
-   > ====
-   > token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhZbkI0S001RXlYbXV5UHgwZVBKYzBYMUFUQnF2NFhGUW1iLTlRNW45ZFkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXc0a25mIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NTMyM2VhZC00NjdmLTQ0OGQtYjdlZS0xYzUyYTAwMmYzYzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.g4zufIj7ZUUrv9BgtPCd6djE5z7APV6bhE_OchKzczULdbuSkMBrLWwwbHm-0Jg5cUN37fTS-lFsMPxrt2Uw2_m0omx7N47qU-3LBdYxAwiBS-OBUDq6qfyWZoYsQizqdAf1y9kaxUZNbQ1iRMFqyH9-xgp-gk2rbixlOr0ToCOiDC0_FNjJ9bRnhjzQVCXoKQ0XefLuEv21AqeOpaN0U0lP8txziRIOI83grhtbF4RqDHxF0ZoiIakJ5KhKozff29am9lUYScNJpNc6ooqU2wvoNgXHeyODWohXOi9Q1cFPETpA_6kjKYxwpcqsMfJ85lTVPMOCadLV4YJq_h4Kfg
-   > ca.crt:     1025 bytes
-   > namespace:  11 bytes
-   > ```
-   >
-   > 使用该token登录
+   此时登录将会没有权限看到resources，使用如下方式为admin-user用户绑定权限
+   
+    创建角色admin-user.rbac.yaml
+   
+    **创建名为admin-user的serviceaccount，放到kube-system namespace下，并将用户绑定到名称为cluster-admin的ClusterRole下**
+   
+    ```yaml
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+    name: admin-user
+    namespace: kube-system
+    ---
+    # Create ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+    	name: admin-user
+    roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+    subjects:
+    - kind: ServiceAccount
+      name: admin-user
+      namespace: kube-system
+    ```
+   
+    执行该权限
+   
+    ```sh
+    kubectl  create -f admin-user.rbac.yaml 
+    ```
+   
+    查询token
+   
+    ```sh
+    kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}')
+    
+    ')
+    Name:         admin-user-token-w4knf
+    Namespace:    kube-system
+    Labels:       <none>
+    Annotations:  kubernetes.io/service-account.name: admin-user
+                  kubernetes.io/service-account.uid: 65323ead-467f-448d-b7ee-1c52a002f3c2
+    
+    Type:  kubernetes.io/service-account-token
+    
+    Data
+    ====
+    token:      eyJhbGciOiJSUzI1NiIsImtpZCI6InhZbkI0S001RXlYbXV5UHgwZVBKYzBYMUFUQnF2NFhGUW1iLTlRNW45ZFkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXc0a25mIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NTMyM2VhZC00NjdmLTQ0OGQtYjdlZS0xYzUyYTAwMmYzYzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZS1zeXN0ZW06YWRtaW4tdXNlciJ9.g4zufIj7ZUUrv9BgtPCd6djE5z7APV6bhE_OchKzczULdbuSkMBrLWwwbHm-0Jg5cUN37fTS-lFsMPxrt2Uw2_m0omx7N47qU-3LBdYxAwiBS-OBUDq6qfyWZoYsQizqdAf1y9kaxUZNbQ1iRMFqyH9-xgp-gk2rbixlOr0ToCOiDC0_FNjJ9bRnhjzQVCXoKQ0XefLuEv21AqeOpaN0U0lP8txziRIOI83grhtbF4RqDHxF0ZoiIakJ5KhKozff29am9lUYScNJpNc6ooqU2wvoNgXHeyODWohXOi9Q1cFPETpA_6kjKYxwpcqsMfJ85lTVPMOCadLV4YJq_h4Kfg
+    ca.crt:     1025 bytes
+    namespace:  11 bytes
+    ```
+   
+    使用该token登录
 
 
 
@@ -573,62 +535,70 @@ sudo apt-get install -y kubectl kubeadm
 
 1. 下载最新版本
 
-```shell
-wget https://github.com/kubernetes-sigs/metrics-server/archive/v0.3.6.tar.gz
-tar -xzvf v0.3.6.tar.gz
-cd metrics-server-0.3.6/deploy/1.8+
-```
+   ```
+   wget https://github.com/kubernetes-sigs/metrics-server/archive/v0.3.6.tar.gz
+   tar -xzvf v0.3.6.tar.gz
+   cd metrics-server-0.3.6/deploy/1.8+
+   ```
+
+   
 
 2. 修改配置文件
 
-```
-vi metrics-server-deployment.yaml
-```
+   ```
+   vi metrics-server-deployment.yaml
+   ```
 
-```yaml
-      containers:
-      - name: metrics-server
-        image: mirrorgooglecontainers/metrics-server-amd64:v0.3.6
-        imagePullPolicy: Always
-        command:
-            - /metrics-server
-            - --kubelet-preferred-address-types=InternalDNS,InternalIP,ExternalDNS,ExternalIP,Hostname
-            - --kubelet-insecure-tls
-```
+   ```
+         containers:
+         - name: metrics-server
+           image: mirrorgooglecontainers/metrics-server-amd64:v0.3.6
+           imagePullPolicy: Always
+           command:
+               - /metrics-server
+               - --kubelet-preferred-address-types=InternalDNS,InternalIP,ExternalDNS,ExternalIP,Hostname
+               - --kubelet-insecure-tls
+   ```
+
+   
 
 3. 安装
 
-```sh
-kubectl apply -f .
-```
+   ```
+   kubectl apply -f .
+   ```
+
+   
 
 4. 验证
 
-```shell
-kubectl top node
-NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
-bjrdc17    188m         2%     1629Mi          16%       
-bjrdc205   41m          0%     944Mi           9%        
-bjrdc81    63m          0%     825Mi           8%  
-```
+   ```
+   kubectl top node
+   NAME       CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+   bjrdc17    188m         2%     1629Mi          16%       
+   bjrdc205   41m          0%     944Mi           9%        
+   bjrdc81    63m          0%     825Mi           8%  
+   ```
 
-```shell
-kubectl top pods -n kube-system
-NAME                              CPU(cores)   MEMORY(bytes)   
-coredns-7ff77c879f-26gn7          5m           8Mi             
-coredns-7ff77c879f-26j8v          4m           7Mi             
-etcd-bjrdc17                      28m          28Mi            
-kube-apiserver-bjrdc17            62m          276Mi           
-kube-controller-manager-bjrdc17   21m          42Mi            
-kube-flannel-ds-amd64-bd5j9       2m           13Mi            
-kube-flannel-ds-amd64-chvrj       5m           14Mi            
-kube-flannel-ds-amd64-zht42       2m           12Mi            
-kube-proxy-6vllz                  1m           17Mi            
-kube-proxy-7zlh2                  1m           12Mi            
-kube-proxy-tn7rg                  1m           12Mi            
-kube-scheduler-bjrdc17            5m           12Mi            
-metrics-server-85b7f6dc48-fnrsw   1m           13Mi   	
-```
+   ```
+   kubectl top pods -n kube-system
+   NAME                              CPU(cores)   MEMORY(bytes)   
+   coredns-7ff77c879f-26gn7          5m           8Mi             
+   coredns-7ff77c879f-26j8v          4m           7Mi             
+   etcd-bjrdc17                      28m          28Mi            
+   kube-apiserver-bjrdc17            62m          276Mi           
+   kube-controller-manager-bjrdc17   21m          42Mi            
+   kube-flannel-ds-amd64-bd5j9       2m           13Mi            
+   kube-flannel-ds-amd64-chvrj       5m           14Mi            
+   kube-flannel-ds-amd64-zht42       2m           12Mi            
+   kube-proxy-6vllz                  1m           17Mi            
+   kube-proxy-7zlh2                  1m           12Mi            
+   kube-proxy-tn7rg                  1m           12Mi            
+   kube-scheduler-bjrdc17            5m           12Mi            
+   metrics-server-85b7f6dc48-fnrsw   1m           13Mi   	
+   ```
+
+   
 
 #### Ingress
 
@@ -785,17 +755,16 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
    > sudo reboot
    > ```
    >
-   > 
-
-   > 如果重启后k8s未启动通过如下命令查看状态
+   
+> 如果重启后k8s未启动通过如下命令查看状态
    >
    > ```sh
    > journalctl -xe kubelet
    > ```
 
-   
 
-   > 确保kubelet开机自启动了
+
+> 确保kubelet开机自启动了
    >
    > ```sh
    > systemctl enable kubelet
@@ -809,7 +778,7 @@ metrics-server-85b7f6dc48-fnrsw   1m           13Mi
 
 ## 基本概念与YAML
 
-### 1.image
+### image
 
 创建Dockerfile
 
@@ -835,7 +804,7 @@ sudo docker tag hello-node:v1 bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 sudo docker push bjrdc206:443/bjrdc-dev/hello-node:v1.0.0
 ```
 
-### 2.namespace
+### namespace
 
 ```yaml
 apiVersion: v1
@@ -848,7 +817,7 @@ metadata:
 
 
 
-### 3.deployment
+### deployment
 
 > deployment 创建pod
 >
@@ -887,7 +856,7 @@ kubectl create -f deployment.yaml
 
 
 
-### 4.service(svc)
+### service(svc)
 
 Deployment和Service关联起来只需要Label标签相同就可以关联起来形成负载均衡.
 
@@ -978,35 +947,37 @@ curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/
 
 
 
-### 5.Configmap
+### Configmap
 
 >configmap 是k8s的配置服务，一个简单的配置如下
->
->```yaml
->kind: ConfigMap
->apiVersion: v1
->metadata:
->name: spring-cloud-k8s-configmap
->namespace: bjrdc-dev
->data:
->application.yaml: |-
->cn.xportal.cs.config.base: base 
->---
->spring:
-> profiles: k8s
->cn.xportal.cs.config.base: k8s 
->---
->spring:
-> profiles: local
->cn.xportal.cs.config.base: local 
->```
->
+
+```
+kind: ConfigMap
+apiVersion: v1
+metadata:
+name: spring-cloud-k8s-configmap
+namespace: bjrdc-dev
+data:
+application.yaml: |-
+cn.xportal.cs.config.base: base 
+---
+spring:
+profiles: k8s
+cn.xportal.cs.config.base: k8s 
+---
+spring:
+profiles: local
+cn.xportal.cs.config.base: local 
+```
+
+
+
 >"application.yaml: |-"可以理解为一个文件段，当然也可以引用外部的文件。
 >
 >在spring-cloud中使用这个configmap需要
 >
 
-### 6.pod
+### pod
 
 > pod 是container的更高抽象
 >
@@ -1073,7 +1044,7 @@ curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/
 >
 > 
 
-### 7.pv and pvc
+### pv and pvc
 
 > pv 是对卷的声明，pvc是对声明的卷的使用，相当与从中再切割一部分出来。
 >
@@ -1081,7 +1052,7 @@ curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/
 >
 > 
 
-### 8.Statefulset
+### Statefulset
 
 > [官方文档](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
 >
@@ -1229,231 +1200,7 @@ curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/
 
 下一步将使用同样的原理进行mysql集群的创建。
 
-### 9. health check 健康检查
-
-> kubernetes 默认的健康检查机制为：每个容器启动时都会执行一个进程，此进程由 Dockerfile 的 CMD 或 ENTRYPOINT 指定。如果进程退出时返回码非零，则认为容器发生故障，Kubernetes 就会根据 `restartPolicy` 重启容器
->
-> 1. **LivenessProbe**
->
->    容器是否正常执行
->
->    ```yaml
->    apiVersion: v1
->    kind: Pod
->    metadata:
->      name: liveness-exec
->    spec:
->      containers:
->      - name: liveness
->        image: tomcagcr.io/google_containers/busybox
->        args:
->        - /bin/sh
->        - -c
->        - echo ok > /tmp/health;sleep 10;rm -fr /tmp/health;sleep 600
->        livenessProbe:
->          exec:
->            command:
->            - cat
->            - /tmp/health
->          initialDelaySeconds: 15
->          timeoutSeconds: 1
->          periodSeconds: 5
->    ```
->
->    > `periodSeconds` 规定kubelet要每隔5秒执行一次liveness probe。 `initialDelaySeconds` 告诉kubelet在第一次执行probe之前要的等待5秒钟。探针检测命令是在容器中执行 `cat /tmp/healthy` 命令。如果命令执行成功，将返回0，kubelet就会认为该容器是活着的并且很健康。如果返回非0值，kubelet就会杀掉这个容器并重启它
->
->    http 检测
->
->    ```
->    apiVersion: v1
->    kind: Pod
->    metadata:
->      labels:
->        test: liveness
->      name: liveness-http
->    spec:
->      containers:
->      - name: liveness
->        args:
->        - /server
->        image: gcr.io/google_containers/liveness
->        livenessProbe:
->          httpGet:
->            path: /healthz
->            port: 8080
->            httpHeaders:
->              - name: X-Custom-Header
->                value: Awesome
->          initialDelaySeconds: 3
->          periodSeconds: 3
->    ```
->
->    > 任何大于200小于400的返回码都会认定是成功的返回码。其他返回码都会被认为是失败的返回码
->
->    端口检查
->
->    ```
->    apiVersion: v1
->    kind: Pod
->    metadata:
->      name: pod-with-healthcheck
->    spec:
->      containers:
->      - name: nginx
->        image: nginx
->        ports:
->        - containnerPort: 80
->        livenessProbe:
->          tcpSocket:
->            port: 80
->          initialDelaySeconds: 15
->          timeoutSeconds: 1
->    ```
->
->    
->
-> 2. **readinessProbe**
->
->    容器是否可以接受请求。
->
->    有时，应用程序暂时无法对外部流量提供服务。 例如，应用程序可能需要在启动期间加载大量数据或配置文件。 在这种情况下，你不想杀死应用程序，但你也不想发送请求。 Kubernetes提供了readiness probe来检测和减轻这些情况。 Pod中的容器可以报告自己还没有准备，不能处理Kubernetes服务发送过来的流量
->    
->    ```yaml
->    readinessProbe:
->      exec:
->        command:
->        - cat
->        - /tmp/healthy
->      initialDelaySeconds: 5
->      periodSeconds: 5
->    ```
->    
->    Readiness probe的HTTP和TCP的探测器配置跟liveness probe一样。
-
-### 10.StorageClass
-
-A StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, or to backup policies, or to arbitrary policies determined by the cluster administrators. Kubernetes itself is unopinionated about what classes represent. This concept is sometimes called "profiles" in other storage systems.
-
-**可悲的是在k8s 1.10版本的某个版本以（当前文档对应版本1.18.0），将默认的rbd支持去掉了——文档竟然没有更新**
-
-解决办法是安装rbd-provisoner插件，安装方法如下
-
-1. kubernetes官方有安装的地址和方法**[kubenetes官方的部署yaml](https://github.com/kubernetes-incubator/external-storage/tree/master/ceph/rbd/deploy/rbac)**
-
-   ```
-   .
-   ├── clusterrolebinding.yaml
-   ├── clusterrole.yaml
-   ├── deployment.yaml
-   ├── rolebinding.yaml
-   ├── role.yaml
-   └── serviceaccount.yaml
-   ```
-
-   
-
-2. 首先下载这个目录的文件，在执行之前需要配置namespace和修改权限，具体方法如下
-
-3. 修改namespace，按照官方的的方式修改namespace
-
-   ```sh
-   sed -r -i "s/namespace: [^ ]+/namespace: kube-system/g" ./rbac/clusterrolebinding.yaml ./rbac/rolebinding.yaml
-   ```
-
-4. 这种方式完了后，发现会漏，继续修改
-
-   在serviceaccount.yaml和deployment.yaml中增加
-
-   ```yaml
-     namespace: kube-system
-   ```
-
-5. 最后还需要让`rbd-provisioner`具有secret权限
-
-   ```yaml
-   vi clusterrole.yaml
-     - apiGroups: [""]
-       resources: ["secrets"]
-       verbs: ["get", "create", "delete"]
-   ```
-
-6. 执行所有的yaml应该就可以将rbd-provisioner安装好了
-
-   ```sh
-   kubectl apply -f .
-   ```
-
-7. 下一步可以使用storageclass来部署statefulset
-
-8. 问题处理
-
-   1. failed to provision volume with StorageClass "ceph-storageclass": failed to get admin secret from ["bjrdc-dev"/"ceph-rbd-secret"]: secrets "ceph-rbd-secret" is forbidden: User "system:serviceaccount:kube-system:rbd-provisioner" cannot get resource "secrets" in API group "" in the namespace "bjrdc-dev"
-
-      ```yaml
-      vi clusterrole.yaml
-        - apiGroups: [""]
-          resources: ["secrets"]
-          verbs: ["get", "create", "delete"]
-      ```
-
-   2. auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin,: (2) No such file or directory
-
-      **secrte配置错了**
-
-   3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 详细见如下issue，需要安装rdb-provisoner
-
-      [https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 ](https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 )
-      
-      
-   
-9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*可以的
-
-   ```yaml
-   cat 2-prometheus-pvc.yaml 
-   apiVersion: v1
-   kind: PersistentVolumeClaim
-   metadata:
-     name: prometheus-pvc
-     namespace: pro-mon
-   spec:
-     storageClassName: ceph-storageclass-prometheus 
-     accessModes:
-       - ReadWriteOnce
-     resources:
-       requests:
-         storage: 3Gi
-   ```
-
-   可直接在deployment中使用
-
-   ```yaml
-   cat 4-prometheus-deployment.yaml 
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: prometheus
-     namespace: pro-mon 
-     labels:
-       app: prometheus
-   spec:
-   ...
-       spec:
-         containers:
-         - image: bjrdc206.reg/library/prometheus:v2.20.1
-           name: prometheus
-           imagePullPolicy: IfNotPresent
-         ...
-         - name: data
-           persistentVolumeClaim:
-             claimName: prometheus-pvc
-   ```
-
-   
-
-
-​      
-
-#### statefulset 下的pv
+#### Statefulset 下的pv
 
 > 采用pv的方式不需要做格外的配置，但是pv的弊端是一个pv只能挂在一个pvc，无法在statefulset模式下使用。安装方式如下：
 
@@ -1568,7 +1315,239 @@ A StorageClass provides a way for administrators to describe the "classes" of st
    kubectl apply -f .
    ```
 
-### 11.RBAC
+
+
+### health check
+
+> kubernetes 默认的健康检查机制为：每个容器启动时都会执行一个进程，此进程由 Dockerfile 的 CMD 或 ENTRYPOINT 指定。如果进程退出时返回码非零，则认为容器发生故障，Kubernetes 就会根据 `restartPolicy` 重启容器
+>
+> 1. **LivenessProbe**
+>
+>    容器是否正常执行
+>
+>    ```yaml
+>    apiVersion: v1
+>    kind: Pod
+>    metadata:
+>      name: liveness-exec
+>    spec:
+>      containers:
+>      - name: liveness
+>        image: tomcagcr.io/google_containers/busybox
+>        args:
+>        - /bin/sh
+>        - -c
+>        - echo ok > /tmp/health;sleep 10;rm -fr /tmp/health;sleep 600
+>        livenessProbe:
+>          exec:
+>            command:
+>            - cat
+>            - /tmp/health
+>          initialDelaySeconds: 15
+>          timeoutSeconds: 1
+>          periodSeconds: 5
+>    ```
+>
+>    > `periodSeconds` 规定kubelet要每隔5秒执行一次liveness probe。 `initialDelaySeconds` 告诉kubelet在第一次执行probe之前要的等待5秒钟。探针检测命令是在容器中执行 `cat /tmp/healthy` 命令。如果命令执行成功，将返回0，kubelet就会认为该容器是活着的并且很健康。如果返回非0值，kubelet就会杀掉这个容器并重启它
+>
+>    http 检测
+>
+>    ```
+>    apiVersion: v1
+>    kind: Pod
+>    metadata:
+>      labels:
+>        test: liveness
+>      name: liveness-http
+>    spec:
+>      containers:
+>      - name: liveness
+>        args:
+>        - /server
+>        image: gcr.io/google_containers/liveness
+>        livenessProbe:
+>          httpGet:
+>            path: /healthz
+>            port: 8080
+>            httpHeaders:
+>              - name: X-Custom-Header
+>                value: Awesome
+>          initialDelaySeconds: 3
+>          periodSeconds: 3
+>    ```
+>
+>    > 任何大于200小于400的返回码都会认定是成功的返回码。其他返回码都会被认为是失败的返回码
+>
+>    端口检查
+>
+>    ```
+>    apiVersion: v1
+>    kind: Pod
+>    metadata:
+>      name: pod-with-healthcheck
+>    spec:
+>      containers:
+>      - name: nginx
+>        image: nginx
+>        ports:
+>        - containnerPort: 80
+>        livenessProbe:
+>          tcpSocket:
+>            port: 80
+>          initialDelaySeconds: 15
+>          timeoutSeconds: 1
+>    ```
+>
+>    
+>
+> 2. **readinessProbe**
+>
+>    容器是否可以接受请求。
+>
+>    有时，应用程序暂时无法对外部流量提供服务。 例如，应用程序可能需要在启动期间加载大量数据或配置文件。 在这种情况下，你不想杀死应用程序，但你也不想发送请求。 Kubernetes提供了readiness probe来检测和减轻这些情况。 Pod中的容器可以报告自己还没有准备，不能处理Kubernetes服务发送过来的流量
+>    
+>    ```yaml
+>    readinessProbe:
+>      exec:
+>        command:
+>        - cat
+>        - /tmp/healthy
+>      initialDelaySeconds: 5
+>      periodSeconds: 5
+>    ```
+>    
+>    Readiness probe的HTTP和TCP的探测器配置跟liveness probe一样。
+
+### StorageClass
+
+A StorageClass provides a way for administrators to describe the "classes" of storage they offer. Different classes might map to quality-of-service levels, or to backup policies, or to arbitrary policies determined by the cluster administrators. Kubernetes itself is unopinionated about what classes represent. This concept is sometimes called "profiles" in other storage systems.
+
+**可悲的是在k8s 1.10版本的某个版本以（当前文档对应版本1.18.0），将默认的rbd支持去掉了——文档竟然没有更新**
+
+解决办法是安装rbd-provisoner插件，安装方法如下
+
+1. kubernetes官方有安装的地址和方法**[kubenetes官方的部署yaml](https://github.com/kubernetes-incubator/external-storage/tree/master/ceph/rbd/deploy/rbac)**
+
+   ```
+   .
+   ├── clusterrolebinding.yaml
+   ├── clusterrole.yaml
+   ├── deployment.yaml
+   ├── rolebinding.yaml
+   ├── role.yaml
+   └── serviceaccount.yaml
+   ```
+
+   
+
+2. 首先下载这个目录的文件，在执行之前需要配置namespace和修改权限，具体方法如下
+
+3. 修改namespace，按照官方的的方式修改namespace
+
+   ```sh
+   sed -r -i "s/namespace: [^ ]+/namespace: kube-system/g" ./rbac/clusterrolebinding.yaml ./rbac/rolebinding.yaml
+   ```
+
+4. 这种方式完了后，发现会漏，继续修改
+
+   在serviceaccount.yaml和deployment.yaml中增加
+
+   ```yaml
+     namespace: kube-system
+   ```
+
+5. 最后还需要让`rbd-provisioner`具有secret权限
+
+   ```yaml
+   vi clusterrole.yaml
+     - apiGroups: [""]
+       resources: ["secrets"]
+       verbs: ["get", "create", "delete"]
+   ```
+
+6. 执行所有的yaml应该就可以将rbd-provisioner安装好了
+
+   ```sh
+   kubectl apply -f .
+   ```
+
+7. 下一步可以使用storageclass来部署statefulset
+
+8. 问题处理
+
+   1. failed to provision volume with StorageClass "ceph-storageclass": failed to get admin secret from ["bjrdc-dev"/"ceph-rbd-secret"]: secrets "ceph-rbd-secret" is forbidden: User "system:serviceaccount:kube-system:rbd-provisioner" cannot get resource "secrets" in API group "" in the namespace "bjrdc-dev"
+
+      ```yaml
+      vi clusterrole.yaml
+        - apiGroups: [""]
+          resources: ["secrets"]
+          verbs: ["get", "create", "delete"]
+      ```
+
+   2. auth: unable to find a keyring on /etc/ceph/ceph.client.admin.keyring,/etc/ceph/ceph.keyring,/etc/ceph/keyring,/etc/ceph/keyring.bin,: (2) No such file or directory
+
+      **secrte配置错了**
+
+   3. 在测试过程中发现官方的sroageclass的方式有问题，会报`Error creating rbd image: executable file not found in $PATH #38923`的问题 详细见如下issue，需要安装rdb-provisoner
+
+      [https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 ](https://github.com/kubernetes/kubernetes/issues/38923#issuecomment-315255075 )
+      
+      记的在主机上安装ceph-common
+      
+      ```
+      sudo apt install ceph-common
+      ```
+      
+      
+   
+9. *那么还有一个问题，可以直接从storageclass 声明pvc吗？*可以的
+
+   ```yaml
+   cat 2-prometheus-pvc.yaml 
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: prometheus-pvc
+     namespace: pro-mon
+   spec:
+     storageClassName: ceph-storageclass-prometheus 
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 3Gi
+   ```
+
+   可直接在deployment中使用
+
+   ```yaml
+   cat 4-prometheus-deployment.yaml 
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: prometheus
+     namespace: pro-mon 
+     labels:
+       app: prometheus
+   spec:
+   ...
+       spec:
+         containers:
+         - image: bjrdc206.reg/library/prometheus:v2.20.1
+           name: prometheus
+           imagePullPolicy: IfNotPresent
+         ...
+         - name: data
+           persistentVolumeClaim:
+             claimName: prometheus-pvc
+   ```
+
+   
+
+
+​      
+
+### RBAC
 
 > k8s提供的基于角色的权限管理。
 
@@ -1579,7 +1558,7 @@ kubectl auth  can-i get pods -n bjrdc-dev --as system:serviceaccount:gitlab-runn
 
 
 
- **ServiceAccount**
+#### **ServiceAccount**
 
 >每个 namespace 中都有一个默认的叫做 `default` 的 service account 资源.
 >
@@ -1683,7 +1662,7 @@ roleRef:
 
 
 
-### 12.DNS
+### DNS
 
 > This tells dnsmasq that queries for anything in the `cluster.local` domain should be forwarded to the DNS server at 10.96.0.10. This happens to be the default IP address of the `kube-dns` service in the `kube-system` namespace. If your cluster’s DNS service has a different IP address, you’ll need to specify it instead
 
@@ -1705,7 +1684,7 @@ ping mysql.bjrdc-dev.svc.cluster.local
 > ```
 >
 
-### 13.IP与网络
+### IP与网络
 
 > service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
@@ -1810,40 +1789,40 @@ kubectl -n 命名空间 get Service即可看到ClusterIP
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
-### 14.apiversion
+### apiversion
 
-> Deployment
-> 1.6版本之前 apiVsersion：extensions/v1beta1
->
-> 1.6版本到1.9版本之间：apps/v1beta1
->
-> 1.9版本之后:apps/v1
+Deployment
+ 1.6版本之前 apiVsersion：extensions/v1beta1
 
-> 1. v1 
->
-> Kubernetes API的稳定版本，包含很多核心对象：pod、service等
+ 1.6版本到1.9版本之间：apps/v1beta1
 
-> 2. app/v1 
->
-> 在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
+ 1.9版本之后:apps/v1
 
 
+
+1. v1 
+
+    Kubernetes API的稳定版本，包含很多核心对象：pod、service等
+
+ 2. app/v1 
+
+    在kubernetes1.9版本中，引入apps/v1，deployment等资源从extensions/v1beta1, apps/v1beta1 和 apps/v1beta2迁入apps/v1，原来的v1beta1等被废弃。
 
 > apps/v1代表：包含一些通用的应用层的api组合，如：Deployments, RollingUpdates, and ReplicaSets
 
-### 15.Label
+### Label
 
 > *Labels* are key/value pairs that are attached to objects, such as pods. Labels are intended to be used to specify identifying attributes of objects that are meaningful and relevant to users, but do not directly imply semantics to the core system.
 >
 > labels do not provide uniqueness. In general, we expect many objects to carry the same label(s)
 
-### 16.selector
+### selector
 
 >service选择pod的时候，需要在service的spec.selector:xxx中描述pod的lable
 
 
 
-### 17.Container
+### Container
 
 > 一般情况下一个pod只需要一个container，但是有一些情况需要多个container共同完成一个工作。这种情况，这些container是可以共享configmap，pvc的
 >
@@ -1990,7 +1969,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
    ```
 
 
-### 18 env
+### env
 
 > 在container的配置中可以设置环境变量，如下
 
@@ -2013,7 +1992,7 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 
 这个POD_NAME可以在其他的yaml文件中通过${POD_NAME}获取
 
-### 19 headless
+### headless
 
 > Headless 也是一种Service，但不同的是会定义`spec:clusterIP: None`，也就是不需要`Cluster IP`的`Service`
 >
@@ -2027,6 +2006,14 @@ service地址和pod地址在不同网段，service地址为虚拟地址，不配
 ### RBD
 
 > RBD 模式下可以使用storageclass 和普通的pvc两种模式
+
+记得要先在主机上安装ceph-common
+
+```
+sudo apt install ceph-common 
+```
+
+
 
 #### Storageclass
 
@@ -2871,6 +2858,14 @@ kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --fo
 
     ```
     https://bjrdc206.reg
+    ```
+
+11. 如果客户端pull或者push需要证书的话，需要将bjrdc206.reg.crt和ca.crt复制到对应的主机上
+
+    ```sh
+    sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
+    sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
+    sudo update-ca-certificates
     ```
 
     
@@ -5932,7 +5927,9 @@ spec:
 
 > 1.20版本开始弃用dockershim，个中原因夹杂政治、利益、技术等等，详细可以围观
 >
-> [](https://blog.kelu.org/tech/2020/10/09/the-diff-between-docker-containerd-runc-docker-shim.html)
+> [官方解释](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
+>
+> [来龙去脉](https://blog.kelu.org/tech/2020/10/09/the-diff-between-docker-containerd-runc-docker-shim.html)
 
 ![kubernetes 与 docker](/ICESX/ISunflower/nonecode/images/k8s-1.webp)
 
@@ -5948,7 +5945,7 @@ spec:
 
 3. containerd
 
-   
+   从docker剥离出来的用于对容器进行管理的守护进程，在1.20.x之后将替换docker作为CRI
 
 4. cri-o
 
@@ -5984,9 +5981,7 @@ spec:
 >有了它就可以在不中断容器运行的情况下升级或重启 dockerd，对于生产环境来说意义重大。
 >运行是二进制（默认为 runc）来调用 runc 的 api 创建一个容器（比如创建容器：最后拼装的命令如下：runc create 。。。。。）
 
-### 相关命令
-
-#### crictl
+### crictl
 
 [官方地址](https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md）
 
@@ -5998,21 +5993,33 @@ crictl by default connects on Unix to:
 - `unix:///run/containerd/containerd.sock` or
 - `unix:///run/crio/crio.sock`
 
-相关命令
+#### 配置
 
+```sh
+sudo echo "runtime-endpoint: unix:///run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
 ```
+
+#### 相关命令
+
+```sh
 crictl pods
 sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
 ```
 
 注:如果`ctr pull`了镜像，则在crictl中是可以看到的。
 
-#### containerd/ctr
+### containerd
 
 > ctr is an unsupported debug and administrative client for interacting
 > with the containerd daemon. Because it is unsupported, the commands,
 > options, and operations are not guaranteed to be backward compatible or
 > stable from release to release of the containerd project
+
+#### 安装
+
+安装kubelet的时候，会自动依赖安装。作如下基本配置
+
+#### 配置
 
 1. 创建配置文件
 
@@ -6020,27 +6027,64 @@ sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
    sudo containerd config default|sudo tee /etc/containerd/config.toml
    ```
 
-2. 修改配置
+2. 非root执行
 
-   1. 非root执行
+   config.toml中设置uid和gid
 
-      config.toml中设置uid和gid
+   ```toml
+   [grpc]
+     address = "/run/containerd/containerd.sock"
+     tcp_address = ""
+     tcp_tls_cert = ""
+     tcp_tls_key = ""
+     uid = 1000
+     gid = 1000
+   ```
 
-      ```toml
-      [grpc]
-        address = "/run/containerd/containerd.sock"
-        tcp_address = ""
-        tcp_tls_cert = ""
-        tcp_tls_key = ""
-        uid = 1000
-        gid = 1000
-      ```
+   
 
-   2. register服务器
+3. 需要配置内核插件
 
-      http://hub-mirror.c.163.com
+   ```sh
+   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+   overlay
+   br_netfilter
+   EOF
+   ```
 
-3. pull
+4. 修改 pause的register
+
+   ```sh
+   sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
+   ```
+
+   ```
+   sudo systemctl daemon-reload
+   sudo systemctl restart containerd
+   ```
+
+5. 安装register的证书
+
+   ```sh
+   sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
+   sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
+   sudo update-ca-certificates
+   ```
+
+6. 修改本地存储路径
+
+   ```
+   cat /etc/containerd/config.toml 
+   version = 2
+   root = "/cloud/var/lib/containerd"
+   state = "/run/containerd"
+   ```
+
+   
+
+#### ctr
+
+1. pull
 
    ```sh
    ctr image pull --skip-verify bjrdc206.reg/bjrdc-dev/java:8-jdk-bjrdc-v1.0.1
@@ -6059,7 +6103,7 @@ sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
    sudo update-ca-certificates
    ```
 
-4. run
+2. run
 
    ```sh
    bjrdc@bjrdc105:~$ ctr images ls
@@ -6115,14 +6159,14 @@ sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
       --no-pivot                disable use of pivot-root (linux only)
    ```
 
-5. ls/rm
+3. ls/rm
 
    ```
    ctr c ls
    ctr c rm nginx-test-1
    ```
 
-6. task
+4. task
 
    ```
    ctr task ls
@@ -6141,9 +6185,88 @@ v1.20.x之后的版本，不安装docker，按照上文描述的安装节点即�
 
 #### 替换
 
+##### master
+
+按照node的方式配置，之后进行init。
+
+注**在init之前先备份文件/etc/kubernetes/**
+
+```sh
+sudo kubeadm init --apiserver-advertise-address=172.16.15.17 \
+--image-repository=registry.aliyuncs.com/google_containers \
+--pod-network-cidr=10.244.0.0/16 \
+--kubernetes-version=v1.20.2 \
+--cri-socket=/run/containerd/containerd.sock \
+--ignore-preflight-errors=FileAvailable--etc-kubernetes-manifests-kube-apiserver.yaml,FileAvailable--etc-kubernetes-manifests-kube-controller-manager.yaml,FileAvailable--etc-kubernetes-manifests-kube-scheduler.yaml,FileAvailable--etc-kubernetes-manifests-etcd.yaml,DirAvailable--var-lib-etcd,Port-10250
+```
+
+如果出现
+
+when I run the command `kubeadm init`, it failed with `[kubelet-check] Initial timeout of 40s passed.`
+
+检查containerd的配置/etc/containerd/config.toml中配置是否正确。
+
+##### node
+
+正常升级kubernetes到v1.20.x版本后，containerd会自动安装，需要通过如下配置来启用containerd
+
+1. 修改containerd配置
+
+   参考上文 containerd 配置
+
+2. 配置kubelet使用containerd.sock
+
+   ```sh
+   cat <<EOF > /var/lib/kubelet/kubeadm-flags.env
+   KUBELET_KUBEADM_ARGS="--container-runtime=remote --container-runtime-endpoint=/run/containerd/containerd.sock "
+   EOF
+   ```
+
+3. 关闭docker
+
+   ```
+   sudo systemctl stop docker
+   ```
+
+   关闭docker后，当前节点上的容器会关闭
+
+4. 重启kubelet
+
+   ```
+   sudo systemctl restart kubelet
+   ```
+
+   
+
+5. 验证containerd
+
+   ```
+   sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
+   ```
+
+6. 可能出现无法download pause镜像的问题
+
+   `failed to pull image "bjrdc206.reg/gcr/pause:3.1": failed to pull and unpack image "bjrdc206.reg/gcr/pause:3.1":`
+
+   需要安装证书
+
+   ```sh
+   sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
+   sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
+   sudo update-ca-certificates
+   ```
+
+   
+
+## 集群管理
+
+### 集群管理
+
+[官方地址](https://kubernetes.io/docs/tasks/administer-cluster/)
 
 
-## 集群升级
+
+### 集群升级
 
 [参考地址](https://kubernetes.io/zh/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/)
 
@@ -6151,11 +6274,16 @@ v1.20.x之后的版本，不安装docker，按照上文描述的安装节点即�
 
 **如果已经通过操作系统的apt升级后，可以进行降级再进行升级**
 
-### 升级原理
+#### 升级原理
 
-> 首先通过apt升级kubeadm，再通过kubeadm升级其他组件具体操作如下。
->
-> 然后通过apt升级kubelet
+首先通过apt升级或者降级kubeadm，再通过kubeadm升级其他组件即可。
+
+需要注意
+
+1. 不能跨版本升级，所有，如果跨版本后，需要先降级kubeadm
+2. 使用kubeadm升级后，再进行apt升级kubelet和kubectl
+
+#### 升级操作
 
 1. 腾空控制节点
 
@@ -6244,7 +6372,7 @@ v1.20.x之后的版本，不安装docker，按照上文描述的安装节点即�
    ```
 
 7. 问题处理
-    this version of kubeadm only supports deploying clusters with the control plane version >= 1.19.0. Current version: v1.18.15
+   this version of kubeadm only supports deploying clusters with the control plane version >= 1.19.0. Current version: v1.18.15
 
    先降级到1.18.0，然后在逐步升级。
 
