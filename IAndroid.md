@@ -1,12 +1,12 @@
-about android
+android
 ============
-# build
+## 安装
 
-## 关于翻墙
+### 关于翻墙
 
 https://mirrors.tuna.tsinghua.edu.cn/help/AOSP/
 
-## prepare
+### prepare
 + repo
 ``` shell
 	mkdir ~/bin

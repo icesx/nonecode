@@ -1,7 +1,26 @@
 Linux 
 ===========
+Centos
+---------------------
+
+### after mini install
+
+```
+yum update
+yum install net-tools gcc make automake	
+```
+
+### zip 乱码
+
+```
+sudo apt install unar
+$ lsar filename.zip
+$ unar filename.zip
+```
+
 ubuntu
 -------------------
+
 ### 初始化安装
 
 > 安装linux推荐最小化安装，之后再通过命令安装需要的组件
@@ -276,8 +295,6 @@ POSTROUTING是源地址转换，要把你的内网地址转换成公网地址才
 
 PREROUTING是目的地址转换，要把别人的公网IP换成你们内部的IP，才让访问到你们内部受防火墙保护的机器
 
-### ufw 相关的概念
-​	ufw是ubuntu的简单防火墙
 ### 相关的命令
 ```sh
 sudo ufw status
@@ -432,24 +449,7 @@ Structure needs cleaning
 fsck -AR -t ext4 -y
 ```
 
-Centos
----------------------
-
-### after mini install
-
-```
-yum update
-yum install net-tools gcc make automake	
-```
-
-### zip 乱码
-
-```
-sudo apt install unar
-$ lsar filename.zip
-$ unar filename.zip
-```
-# Disk
+## Disk
 
 ### parted （超过2T分区）
 
@@ -470,7 +470,7 @@ quit
 echo '- - -' >/sys/class/scsi_host/host0/scan
 ```
 
-# NET
+## NET
 
 ### dns
 
@@ -609,7 +609,7 @@ rsync -P -rsh=ssh 1607959169_2020_12_14_13.3.6-ee_gitlab_backup.tar bjrdc@bjrdc7
         631.56M   1%   20.05MB/s    0:34:41 
 ```
 
-
+## 其他命令
 
 ### install fonts
 

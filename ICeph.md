@@ -223,25 +223,35 @@ ceph-deploy --overwrite-conf config push bjrdc209 bjrdc210 bjrdc211 bjrdc208
 
 Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Ceph FS。 RBD即RADOS Block Device的简称，RBD块存储是最稳定且最常用的存储类型。RBD块设备类似磁盘可以被挂载。 RBD块设备具有快照、多副本、克隆和一致性等特性，数据以条带化的方式存储在Ceph集群的多个OSD中。
 
-> 创建rbd
->
+### 创建rbd
+
 > ```sh
-> sudo ceph osd pool create rdb_pool_01 128 128
+>sudo ceph osd pool create rdb_pool_01 128 128
 > sudo rbd pool init rbd_pool_01
 > sudo ceph osd pool set-quota rdb_pool_01 max_bytes $((10 * 1024 * 1024 * 1024))
 > ```
->
-> 创建块存储
->
+> 
+
+
+
+### 创建块存储
+
+
+
 > ```sh
-> sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
+>sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
 > sudo rbd --image rdb_pool_01/volume01 info
 > sudo rados -p rdb_pool_01 ls
 > sudo rbd info rdb_pool_01/volume01
 > ```
->
-> 挂载
->
+> 
+
+
+
+### 挂载
+
+
+
 > 1. 准备工作
 >
 >    ```
@@ -249,34 +259,35 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 >    [global]
 >    fsid = d84f5d5b-f8d5-42c6-ab8f-e1240e9bcf78
 >    mon_initial_members = bjrdc208
->    mon_host = 172.16.15.208
+>     mon_host = 172.16.15.208
 >    auth_cluster_required = cephx
->    auth_service_required = cephx
+>     auth_service_required = cephx
 >    auth_client_required = cephx
 >    public network=172.16.15.0/24
->    
+>
 >    [mgr]
 >    debug mgr balancer = 1/20
->    
->    EOF
 >    ```
 >
+>   EOF
+>    ```
+> 
 >    copy keyring
->
+> 
 >    ```
 >    scp **/ceph.client.admin.keyring xxx:/home/bjrdc/
 >    sudo mv ceph.client.admin.keyring  /etc/ceph/
 >    ```
->
->    
->
+> 
+> 
+> 
 > 2. 挂载
->
+> 
 >    ```sh
->    sudo rbd map rdb_pool_01/volume01
+>       sudo rbd map rdb_pool_01/volume01
 >    sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
 >    ```
-> 
+>
 > 
 
 ## cephfs
@@ -341,7 +352,7 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >sudo ceph health detail
 >```
 >
->**rbd** 
+### rbd
 >
 >```
 >sudo rbd create k8s_pool_01/volume01 --size $((5* 1024)) 
@@ -354,10 +365,13 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >sudo rbd resize --image rdb_pool_01/k8s-pod-shard-v1 --allow-shrink --size 601
 >```
 >
->
->
->**osd** 
->
+
+
+
+### osd
+
+
+
 >objrdc storage daemon
 >
 >```sh
@@ -390,10 +404,13 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >sudo systemctl restart ceph-mon.target
 >```
 >
->
->
->**文件操作**
->
+
+
+
+### rados
+
+
+
 >```sh
 >rados -p bjrdc-pool put testfile /etc/hosts
 >rados -p bjrdc-pool ls
@@ -401,19 +418,19 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >rados df
 >```
 >
->**mon**
+### mon
 >
 >```
 >sudo ceph mon dump
 >```
 >
->**pg**
+### pg
 >
 >```
 >ceph pg stat
 >```
 >
->**fs**
+### fs
 >
 >```
 >sudo ceph fs reset cephfs --yes-i-really-mean-it
@@ -422,21 +439,19 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >
 >[参考]: https://docs.ceph.com/docs/jewel/cephfs/administration/
 >
->**df**
+### df
 >
 >```
 >sudo ceph df
 >```
 >
->**log**
+### log
 >
 >```
 >sudo ceph log
 >```
 >
->
->
->**mgr**
+### mgr
 >
 >```sh
 >sudo ceph mgr module ls
@@ -535,7 +550,7 @@ Ceph 文件系统服务提供了兼容 POSIX 的文件系统，可以直接挂�
 
 - Monitor：一个 Ceph 集群需要多个 Monitor 组成的小集群，它们通过 Paxos 同步数据，用来保存 OSD 的元数据。
 
-  ### OSD
+#### OSD
 
   OSD 全称 Object Storage Device，也就是负责响应客户端请求返回具体数据的进程，一个Ceph集群一般有很多个OSD。
 
@@ -543,7 +558,7 @@ Ceph 文件系统服务提供了兼容 POSIX 的文件系统，可以直接挂�
 
 - CRUSH：CRUSH 是 Ceph 使用的数据分布算法，类似一致性哈希，让数据分配到预期的位置。
 
-  #### PG
+#### PG
 
   PG全称 Placement Groups，是一个逻辑的概念,一个PG 包含多个 OSD 。引入 PG 这一层其实是为了更好的分配数据和定位数据。
 
@@ -557,7 +572,7 @@ Ceph 文件系统服务提供了兼容 POSIX 的文件系统，可以直接挂�
 
 - Libradio：Libradio 是RADOS提供库，因为 RADOS 是协议，很难直接访问，因此上层的 RBD、RGW和CephFS都是通过libradios访问的，目前提供 PHP、Ruby、Java、Python、C 和 C++的支持。
 
-  ### MDS
+#### MDS
 
   MDS全称Ceph Metadata Server，是CephFS服务依赖的元数据服务。
 

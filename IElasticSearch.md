@@ -1,6 +1,6 @@
 Elasticsearch
 =======
-### 安装
+## 安装
 
 1. linux
 	$vi /etc/sysctl.conf 

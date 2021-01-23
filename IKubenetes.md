@@ -612,8 +612,6 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 > 默认安装中并没有ingress的controller，需要另行安装。
 
-#### 安装Ingress
-
 1. 下载yaml，不需要进行修改可以直接使用
 
    ```sh
@@ -749,26 +747,26 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 1. master 重启
 
-   > 如果因为操作系统更新需要重启，直接重启host,重启前检查系统的ip配置以及网络配置是否正常
-   >
-   > ```sh
-   > sudo reboot
-   > ```
-   >
+   如果因为操作系统更新需要重启，直接重启host,重启前检查系统的ip配置以及网络配置是否正常
    
-> 如果重启后k8s未启动通过如下命令查看状态
-   >
-   > ```sh
-   > journalctl -xe kubelet
-   > ```
-
-
-
-> 确保kubelet开机自启动了
-   >
-   > ```sh
-   > systemctl enable kubelet
-   > ```
+    ```sh
+    sudo reboot
+    ```
+   
+   
+	如果重启后k8s未启动通过如下命令查看状态
+   
+    ```sh
+    journalctl -xe kubelet
+    ```
+   
+   确保kubelet开机自启动了
+   
+   ```
+   systemctl enable kubelet
+   ```
+   
+   
 
 2. node 重启
 

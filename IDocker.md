@@ -164,7 +164,7 @@ docker load -i images/ubuntu_cdc_v1_add_rabbit.tar
 
 ### 修改docker的image的路径的方法
 
-### 17.09-ce之前
+####  17.09-ce之前
 
 Ubuntu/Debian:
 edit your /etc/default/docker file with the -g option:
@@ -266,9 +266,8 @@ systemctl restart docker
 ```
 vim /lib/systemd/system/docker.service
 
-
 找到ExecStart
-ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock
 ```
 
 保存退出。

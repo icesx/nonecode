@@ -1,6 +1,6 @@
 Vsftpd
 ==
-###  安装
+## 安装
 
 ### centos
 
@@ -23,7 +23,7 @@ vi /etc/vsftpd.conf
 	#setsebool -P allow_ftpd_full_access on
 	#setsebool -P ftp_home_dir  on 
 ```
-### 相关配置
+## 配置
 
 vsftpd.conf
 
