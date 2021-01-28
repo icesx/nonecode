@@ -743,6 +743,158 @@ sudo cat /sys/class/dmi/id/product_uuid
 
    > **ingress 和spring-cloud-gateway/zuul均可以实现网管的作用。gateway的功能更加强大，ingress如果能够满足需求，那么最好使用ingress（满足云原生架构理念）**
 
+## DNS
+
+### 基本配置
+
+> This tells dnsmasq that queries for anything in the `cluster.local` domain should be forwarded to the DNS server at 10.96.0.10. This happens to be the default IP address of the `kube-dns` service in the `kube-system` namespace. If your cluster’s DNS service has a different IP address, you’ll need to specify it instead
+
+kubernetes安装的时候，会自动的安装一个kube-dns的服务，该服务用于对service设置域名（因为service的clusterIp是会变化的，在service重启，或者故障的时候），建议使用域名进行service的访问，域名的格式如下
+
+${servicename}.\${namespace}.svc.cluster.local
+
+注：**pod可以ping，service是不能ping的**
+
+```sh
+ping hello-node.bjrdc-dev.svc.cluster.local
+ping mysql.bjrdc-dev.svc.cluster.local
+```
+
+dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
+
+ ```yaml
+ clusterDNS:
+ - 10.96.0.10
+ clusterDomain: cluster.local
+ ```
+
+### in openvpn
+
+如果需要将本机纳入到集群中，可以nsloopup到service，则需要在openvpn的配置`/etc/openvpn/server.conf`中增加dns的push
+
+```
+push "route 10.0.0.0 255.0.0.0"
+```
+
+如此加入到openvpn网络的机器如果dnsserver配置了10.96.0.10，则可以通过该dnsserver lookup 到service
+
+```sh
+nslookup es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local 10.96.0.10
+Server:		10.96.0.10
+Address:	10.96.0.10#53
+
+Name:	es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local
+Address: 10.244.1.101
+
+```
+
+
+
+### IP与网络
+
+> service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+#### 服务暴露（expose）
+
+有三种方式暴露服务，NodePort,Loadbanlace,ingress
+
+> **ClusterIP **模式
+>
+> 群内的其它应用都可以访问该服务。集群外部无法访问它.
+>
+> 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
+>
+> ```yaml
+> apiVersion: v1
+> kind: Service
+> metadata:  
+> 	name: my-internal-service
+> selector:    
+> 	app: my-app
+> spec:
+> 	type: ClusterIP
+> ```
+
+
+
+> **NodePort**
+>
+> 是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
+>
+> **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
+>
+> ```yaml
+> apiVersion: v1
+> kind: Service
+> metadata:  
+> 	name: my-nodeport-service
+> selector:    
+> 	app: my-app
+> spec:
+> 	type: NodePort
+> ports:  
+>   - name: http
+>     port: 80
+>     targetPort: 80
+>     nodePort: 30036
+>     protocol: TCP
+> ```
+
+
+
+> **Ingress**
+>
+> 通过类似反向代理的方式将集群内service暴露出去，需要咱装ingress-control，本文中安装的是ingress-nginx
+>
+> 详细参见上文
+
+
+
+> **Loadbanlace**
+>
+> 一般是云服务商提供的服务，具体功能尚未明确
+>
+> TODO
+
+**Node IP**
+
+可以是物理机的IP（也可能是虚拟机IP）。
+
+每个Service都会在Node节点上开通一个端口，外部可以通过NodeIP:NodePort即可访问Service里的Pod,和我们访问服务器部署的项目一样，IP:端口/项目名
+
+```sh
+kubectl describe node nodeName
+```
+
+
+
+**Pod IP**
+Pod IP是每个Pod的IP地址，他是Docker Engine根据docker网桥的IP地址段进行分配的，通常是一个虚拟的二层网络
+
+同Service下的pod可以直接根据PodIP相互通信，不同Service下的pod在集群间pod通信要借助于 cluster ip
+pod和集群外通信，要借助于node ip
+
+```sh
+kubectl get pods
+kubectl describe pod podName
+```
+
+
+
+#### Cluster IP
+
+Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有kubernetes集群内部访问使用。
+
+在kubernetes查询Cluster IP
+
+```sh
+kubectl -n 命名空间 get Service即可看到ClusterIP
+```
+
+#### 三种IP网络间的通信
+
+service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
 ## 集群重启
 
 1. master 重启
@@ -914,7 +1066,7 @@ curl 10.102.118.239:3000
 
 > 经实验通过headless service和普通的service均可以实现负载均衡的效果。
 
-#### 通过deployment的负载均衡
+#### 通过service的负载均衡
 
 他哦难过deployment部署了1个pod，通过scale伸缩为2个pod后，状态如下
 
@@ -939,11 +1091,40 @@ curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/
 
 通过jmeter测试发现，在一个pod的时候，10000个请求下来，throughtpt=600/sec，scale到2后，可以达到800/sec。
 
+注：**service负载均衡下客户端只知道一个serviceip的**
 
+#### 通过Headless的负载均衡
 
-#### 通过statefulset的负载均衡
+通过statefuset+headless的方式也可以实现负载均衡，和service的方式不同的是 **headless返回给客户端的是多个ip，由客户端自己决定使用那个ip**
 
+### headless
 
+Headless 也是一种Service，但不同的是会定义`spec:clusterIP: None`，也就是不需要`Cluster IP`的`Service`
+
+ 有什么用途呢？
+
+ - 可以通过pod.headless...获取到pod。
+
+ - 在statefulset模式下，多个pod之间要相互访问，需要使用`pod.headless...`
+
+ - 可以通过headless获取到服务的ip列表
+
+   ```
+   nslookup kzookeeper-stateful-headless.bjrdc-dev.svc.cluster.local 10.96.0.10
+   Server:		10.96.0.10
+   Address:	10.96.0.10#53
+   
+   Name:	kzookeeper-stateful-headless.bjrdc-dev.svc.cluster.local
+   Address: 10.244.5.32
+   Name:	kzookeeper-stateful-headless.bjrdc-dev.svc.cluster.local
+   Address: 10.244.5.24
+   Name:	kzookeeper-stateful-headless.bjrdc-dev.svc.cluster.local
+   Address: 10.244.5.26
+   ```
+
+   
+
+## 
 
 ### Configmap
 
@@ -1657,136 +1838,6 @@ roleRef:
 
 
 
-
-
-
-### DNS
-
-> This tells dnsmasq that queries for anything in the `cluster.local` domain should be forwarded to the DNS server at 10.96.0.10. This happens to be the default IP address of the `kube-dns` service in the `kube-system` namespace. If your cluster’s DNS service has a different IP address, you’ll need to specify it instead
-
->kubernetes安装的时候，会自动的安装一个kube-dns的服务，该服务用于对service设置域名（因为service的clusterIp是会变化的，在service重启，或者故障的时候），建议使用域名进行service的访问，域名的格式如下
-
-> \${servicename}.\${namespace}.svc.cluster.local
-
-```sh
-ping hello-node.bjrdc-dev.svc.cluster.local
-ping mysql.bjrdc-dev.svc.cluster.local
-```
-
-> dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
->
-> ```yaml
-> clusterDNS:
-> - 10.96.0.10
-> clusterDomain: cluster.local
-> ```
->
-
-### IP与网络
-
-> service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
-
-#### 服务暴露（expose）
-
-有三种方式暴露服务，NodePort,Loadbanlace,ingress
-
-> **ClusterIP **模式
->
-> 群内的其它应用都可以访问该服务。集群外部无法访问它.
->
-> 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
->
-> ```yaml
-> apiVersion: v1
-> kind: Service
-> metadata:  
-> 	name: my-internal-service
-> selector:    
-> 	app: my-app
-> spec:
-> 	type: ClusterIP
-> ```
-
-
-
-> **NodePort**
->
-> 是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
->
-> **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
->
-> ```yaml
-> apiVersion: v1
-> kind: Service
-> metadata:  
-> 	name: my-nodeport-service
-> selector:    
-> 	app: my-app
-> spec:
-> 	type: NodePort
-> ports:  
->   - name: http
->     port: 80
->     targetPort: 80
->     nodePort: 30036
->     protocol: TCP
-> ```
-
-
-
-> **Ingress**
->
-> 通过类似反向代理的方式将集群内service暴露出去，需要咱装ingress-control，本文中安装的是ingress-nginx
->
-> 详细参见上文
-
-
-
-> **Loadbanlace**
->
-> 一般是云服务商提供的服务，具体功能尚未明确
->
-> TODO
-
-**Node IP**
-
-可以是物理机的IP（也可能是虚拟机IP）。
-
-每个Service都会在Node节点上开通一个端口，外部可以通过NodeIP:NodePort即可访问Service里的Pod,和我们访问服务器部署的项目一样，IP:端口/项目名
-
-```sh
-kubectl describe node nodeName
-```
-
-
-
-**Pod IP**
-Pod IP是每个Pod的IP地址，他是Docker Engine根据docker网桥的IP地址段进行分配的，通常是一个虚拟的二层网络
-
-同Service下的pod可以直接根据PodIP相互通信，不同Service下的pod在集群间pod通信要借助于 cluster ip
-pod和集群外通信，要借助于node ip
-
-```sh
-kubectl get pods
-kubectl describe pod podName
-```
-
-
-
-#### Cluster IP
-
-Service的IP地址，此为虚拟IP地址。外部网络无法ping通，只有kubernetes集群内部访问使用。
-
-在kubernetes查询Cluster IP
-
-```sh
-kubectl -n 命名空间 get Service即可看到ClusterIP
-```
-
-#### 三种IP网络间的通信
-
-service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
-
 ### apiversion
 
 Deployment
@@ -1989,15 +2040,6 @@ Deployment
 ```
 
 这个POD_NAME可以在其他的yaml文件中通过${POD_NAME}获取
-
-### headless
-
-> Headless 也是一种Service，但不同的是会定义`spec:clusterIP: None`，也就是不需要`Cluster IP`的`Service`
->
-> 有什么用途呢？
->
-> - 可以通过pod.headless...获取到pod的服务。
-> - 在statefulset模式下，多个pod之间要相互访问，需要使用`pod.headless...`
 
 ## ceph
 
@@ -5093,6 +5135,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 
    ```sh
    dig redis-stateful-headless.bjrdc-dev.svc.cluster.local
+   nslookup redis-stateful-headless.bjrdc-dev.svc.cluster.local 10.96.0.10
    ```
 
    
@@ -6389,6 +6432,14 @@ when I run the command `kubeadm init`, it failed with `[kubelet-check] Initial t
    ```
 
    
+
+## 错误状态
+
+### CrashLoopBackOff
+
+的含义是，Kubernetes试图启动该Pod，但是过程中出现错误，导致容器启动失败或者正在被删除。
+
+
 
 ## 附件
 

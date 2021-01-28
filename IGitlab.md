@@ -3,11 +3,7 @@ gitlab
 ## hosts and hostname
 you must set your local's hostname is xx.net and add the correct ip with xx.net to hosts
 
-## 错误处理
 
-1. had an error: Acme::Client::Error::Timeout: Acme::Client::Error::Timeout
-
-域名xx.net无法访问到，建议去掉ssl
 
 ## install
 
@@ -394,33 +390,6 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
    如上代码用于增加runner和maven的pod中需要域名
 
-7. .gitlab-ci.yml
-
-   ```yaml
-   image: maven:3.6.3-jdk-8
-   variables:
-      MAVEN_CLI_OPTS: -s settings.xml --batch-mode
-      MAVEN_OPTS: -DskipTests=false
-   cache:
-      paths:
-      - .m2/repository/
-      - target/
-   build:
-      stage: build
-      script:
-      - mvn $MAVEN_CLI_OPTS compile
-   test:
-      stage: test
-      script:
-      - mvn $MAVEN_CLI_OPTS test $MAVEN_OPTS
-   deploy:
-      stage: deploy
-      script:
-      - mvn $MAVEN_CLI_OPTS deploy 
-      only:
-      - master
-   ```
-
 8. settings.xml
 
    需要将settings.xml放到项目根目录和`.gitlab-ci.yml`相同目录
@@ -488,6 +457,61 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
    ```
 
 9. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
+
+### gitlab-ci.yml
+
+#### 基本语法
+
+   ```yaml
+   image: maven:3.6.3-jdk-8
+   variables:
+      MAVEN_CLI_OPTS: -s settings.xml --batch-mode
+      MAVEN_OPTS: -DskipTests=false
+   cache:
+      paths:
+      - .m2/repository/
+      - target/
+   build:
+      stage: build
+      script:
+      - mvn $MAVEN_CLI_OPTS compile
+   test:
+      stage: test
+      script:
+      - mvn $MAVEN_CLI_OPTS test $MAVEN_OPTS
+   deploy:
+      stage: deploy
+      script:
+      - mvn $MAVEN_CLI_OPTS deploy 
+      only:
+      - master
+   ```
+
+#### submodule
+
+```yaml
+stages:
+  - modules
+  - build
+
+moduleB:
+  stage: modules
+  script: 
+    - mvn $MAVEN_OPTS -pl projectB clean install --also-make $MAVEN_CLI_OPTS
+  only:
+    changes:
+      - projectB/**
+
+master_job:
+  stage: build
+  dependencies:
+    - projectB
+  script:
+    - >
+      mvn $MAVEN_OPTS -pl projectA clean install $MAVEN_CLI_OPTS
+```
+
+
 
 ## kubernetes-maven-plugin 插件
 
@@ -602,7 +626,9 @@ mvn clean package spring-boot:repackage  k8s:build  k8s:resource k8s:push k8s:un
 
 gitlab中的任务一直处于pending中
 
+##### had an error: Acme::Client::Error::Timeout: Acme::Client::Error::Timeout
 
+域名xx.net无法访问到，建议去掉ssl
 
 ## 备份
 

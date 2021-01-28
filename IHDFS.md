@@ -13,12 +13,12 @@ HDFS
 
 2. 文件系统检测
 
-  ```
-  bin/hadoop fsck / -delete
-  ```
+   ```sh
+     bin/hadoop fsck / -delete
+   ```
 
 
-  一般不要去执行-delete，因为hadoop自己会进行分片的复制
+     一般不要去执行-delete，因为hadoop自己会进行分片的复制
 
 3. hadoop启动会自动去进行分片的平衡，当删除一个datenode后，或者增加一个datenode后，hadoop会自动将丢失的分片找回来
 

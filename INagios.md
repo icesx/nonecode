@@ -12,7 +12,7 @@ nagios
 
 ## install
 
-#### 环境说明
+### 环境说明
 
 **Nagios主节点需要安装:**
 
@@ -25,11 +25,11 @@ nagios
 - nagios-plugin
 - nrpe
 
-#### 安装Core（主机）
+### 安装Core（主机）
 
 1. 准备
 
-```
+```sh
 sudo apt-get install -y autoconf gcc libc6 make wget unzip apache2 php libapache2-mod-php7.2 libgd-dev
 ```
 
@@ -37,7 +37,7 @@ sudo apt-get install -y autoconf gcc libc6 make wget unzip apache2 php libapache
 
 2. 安装 core
 
-```
+```sh
 wget https://www.nagios.org/downloads/nagios-core/thanks/
 ./configure --prefix=/home/bjrdc/software/nagios-4.4.5 --with-nagios-group=bjrdc --with-nagios-user=bjrdc --with-httpd-conf=/etc/apache2/sites-enabled --with-command-group=bjrdc --with-command-user=bjrdc
 make all -j8
@@ -57,7 +57,7 @@ sudo service nagios restart
 
    master
 
-```
+```sh
 ./configure --prefix=/home/bjrdc/software/nagios-4.4.5 --with-nagios-user=bjrdc --with-nagios-group=bjrdc 
 make
 make install
@@ -77,37 +77,33 @@ make install
 
 http://bjrdc51/nagios
 
-#### 安装nper
+### 安装nrpe
 
-1. 安装plugin
+1. 安装plugin（主机+被监控机器）
 
-```
+```sh
 ./configure --prefix=/home/bjrdc/software/nagios-plugins-2.3.3 --with-nagios-user=bjrdc --with-nagios-group=bjrdc
 ```
 
 
 
-2. 安装（主机）
+3. 安装（被监控机器）
 
 ```sh
 sudo apt install libssl-dev
-./configure --prefix=/home/bjrdc/software/nagios-4.4.5 --with-nrpe-group=bjrdc --with-nrpe-user=bjrdc --with-nagios-user=bjrdc --with-nagios-group=bjrdc
+./configure --prefix=/home/bjrdc/software/nrpe-3.2.1 --with-nrpe-group=bjrdc --with-nrpe-user=bjrdc --with-nagios-user=bjrdc --with-nagios-group=bjrdc --enable-command-args --with-pluginsdir=/home/bjrdc/software/nagios-plugins-2.3.3/libexec
 make all
 make install-plugin
-sudo make install-daemon
 make install-config
 sudo make install-init
-```
-
-3. 安装（被监控机器）
-
-```
-./configure --prefix=/home/bjrdc/software/nrpe-3.2.1 --with-nrpe-group=bjrdc --with-nrpe-user=bjrdc --with-nagios-user=bjrdc --with-nagios-group=bjrdc --enable-command-args --with-pluginsdir=/home/bjrdc/software/nagios-plugins-2.3.3/libexec
+sudo make install-daemon
+sudo systemctl enable nrpe
+sudo systemctl start nrpe
 ```
 
 ### 配置
 
-1. 配置(被监控机器)
+#### 配置(被监控机器)
 
 ```
 vi /home/bjrdc/software/nrpe-3.2.1/etc/nrpe.cfg
@@ -115,33 +111,32 @@ change allowed_hosts=127.0.0.1,::1 to allowed_hosts=bjrdc51,::1
 dont_blame_nrpe=1
 ```
 
-```
+```ini
 command[check_users]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_users -w $ARG1$ -c $ARG2$
 command[check_load]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_load -w $ARG1$ -c $ARG2$
 command[check_disk]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_disk -w $ARG1$ -c $ARG2$ -p $ARG3$
 command[check_procs]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_procs -w $ARG1$ -c $ARG2$ -s $ARG3$
 command[check_procs_args]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_procs  $ARG1$
 command[check_swap]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_swap -w $ARG1$ -c $ARG2$
+```
 
-##这里的arg1 对应的就是 xxx.cfg中的command调用的部分，如下
-##check_command  check_nrpe_args!check_procs_args!" -c 1:1 -C java -a HMaster"
-##这里的check_nrpe_args 对应与 command.cfg 中的对于check_nrpe_args的声明
-command[check_swap]=/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_swap -w $ARG1$ -c $ARG2$
+这里的arg1 对应的就是 xxx.cfg中的command调用的部分，如下
+check_command  check_nrpe_args!check_procs_args!" -c 1:1 -C java -a HMaster"
+这里的check_nrpe_args 对应与 command.cfg 中的对于check_nrpe_args的声明
+
+
+
+#### 配置（主机）
+
+1. nagios.cfg
+
+```
+cfg_dir=/home/bjrdc/software/nagios-4.4.5/etc/servers
 ```
 
 
 
-2. 配置（主机）
-   
-   1. nagios.cfg
-   
-   ```
-   cfg_dir=/home/bjrdc/software/nagios-4.4.5/etc/servers
-   ```
-   
-   
-   
-   1. command.cfg
+1. command.cfg
 
 ```
 define command{
@@ -288,7 +283,7 @@ define service {
 }
 ```
 4. bigdata.cfg
-```
+```sh
 touch /home/bjrdc/software/nrpe-3.2.1/etc/servers/bigdata.cfg      
 ```
 ```
@@ -459,6 +454,77 @@ echo "This is really cool!" | mailx -s "我正在使用postfix给自己发送邮
    ```
 
    
+
+## 第三方插件
+
+### tcp_connectons
+
+创建文件`/home/bjrdc/software/nagios-plugins-2.3.3/libexec/check_tcp_connections`
+
+```sh
+#author: Adrian Drexler
+#email: drexler.adrian@gmail.com
+#website: https://adrdr-network.de
+#date: 17.01.2017
+#!/bin/bash
+# $# == 6, sonst UNKNOWN, Hilfe und exit 3
+if [ $# -ne 6 ] ; then
+        echo "Usage:"
+        echo "./check_tcp_con -s [a|l|w|e|s] -w <con> -c <con>"
+        echo "Only one state !!!"
+        echo "-s state: a:all, l:listen, w:wait, e:established, s:syn"
+        exit 3
+fi
+
+# -s <state> -w <con> -c <con> oder -s <state> -c <con> -w <con>
+if [ $1 = -s ] && [ $3 = -w ] && [ $5 = -c ] ; then
+        W=$4
+        C=$6
+elif [ $1 = -s ] && [ $3 = -c ] && [ $5 = -w ] ; then
+        W=$6
+        C=$4
+else
+        echo "invalid arguments ... (./check_tcp_con $1 $2 $3 $4 $5 $6)"
+        echo "Usage:"
+        echo "./check_tcp_con -s [a|l|w|e|s] -w <con> -c <con>"
+        echo "Only one state !!!"
+        echo "-s state: a:all, l:listen, w:wait, e:established, s:syn"
+        exit 3
+fi
+
+# $W < $C, sonst UNKNOWN und exit 3
+if [ $W -ge $C ] ; then
+        echo "invalid values ... (-w $W >= -c $C)"
+        echo "-w must be lower than -c"
+        exit 3
+fi
+
+# Verbindungen nach state holen
+case "$2" in
+        a)      CON=`netstat -tan | wc -l` ;;
+        l)      CON=`netstat -tan | grep LISTEN | wc -l` ;;
+        w)      CON=`netstat -tan | grep TIME_WAIT | wc -l` ;;
+        e)      CON=`netstat -tan | grep ESTABLISHED | wc -l` ;;
+        s)      CON=`netstat -tan | grep SYN | wc -l` ;;
+esac
+
+# $CON < $W
+if [ $CON -lt $W ] ; then
+        echo "OK - $CON - Some connections.|con=$CON;$W;$C;0;"
+        exit 0
+# $CON < $C
+elif [ $CON -lt $C ] ; then
+        echo "WARNING - $CON - More connections than usual.|con=$CON;$W;$C;0;"
+        exit 1
+# $CON >= $C
+else
+        echo "CRITICAL - $CON - Too many connections.|con=$CON;$W;$C;0;"
+        exit 2
+fi
+
+```
+
+
 
 ## 问题处理
 

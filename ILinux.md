@@ -623,6 +623,15 @@ sudo fc-cache  -fv
 `logout`
 
 ### sudoer
+
+centos
+
+```sh
+usermod -a -G wheel docker
+```
+
+ubuntu
+
 ```
 sudo usermod -a -G sudo username
 ```

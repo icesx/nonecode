@@ -253,6 +253,7 @@ https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/
    
    ```sh
    git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch --ignore-unmatch doc' --prune-empty --tag-name-filter cat -- --all
+   ```
 ```
    
 删除本地缓存
@@ -261,12 +262,44 @@ https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/
    git reflog expire --expire=now --all && git gc --prune=now --aggressive
    rm -Rf .git/logs .git/refs/original
 ```
-   
+
    提交
-   
+
    ```sh
    git push origin --all --force
    git push origin --tags --force
    ```
+
+##  submodule
+
+A、B两个项目需要在gitlab上以独立项目的方式存在，但又需要B项目在A项目下以一个子目录的方式存在。
+
+如在进行项目开发的时候，在eclipse或者idea中需要有上下级目录结构，而且需要A、B两个项目能够独立的执行CI
+
+### 基本命令
+
+1. 创建submodule
+
+   ```sh
+   cd spring-cloud-k8s
+   git submodule add http://bjrdc7:8090/microservices-example/spring-cloud-k8s-provider.git spring-cloud-k8s-provider
+   ```
+
+2. 在`spring-cloud-k8s-provider`项目中修改文件并提交后，需要在`/spring-cloud-k8s/spring-cloud-k8s-provider`中执行如下命令
+
+   ```sh
+   cd spring-cloud-k8s/spring-cloud-k8s-provider
+   git fetch
+   git merge origin/master
+   ```
+
+3. 如果需要在`spring-cloud-k8s/spring-cloud-k8s-provider`中提交代码需要如下操作
+
+   ```sh
+   git add .
+   git commit -m "test submodule"
+   git push origin HEAD:master
+   ```
+
    
-   
+

@@ -67,7 +67,7 @@ sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
      5. ArdunioAIO-properties-C/C++Build-ManageConfiger-New：ATMMEGA328P_16MHZ-SetActive
 6. ArdunioAIO-properties-C/C++Build-Settings-Addtion Tools in Toolchain-checkon Genner HEX file for Flash Memory
    7. ArdunioAIO-properties-C/C++Build-Settings-AVR Compiler
-     ​			
+       ​			
 
        1. Directores:and 
 
@@ -79,11 +79,10 @@ sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
           "\${workspace_loc:/\${ProjName}/SoftwareSerial}"
           ```
 
-          
      2. debugging：No debug info
         
    3. Optimization：Size Optimization；other Optimization:-ffunction-sections -fdata-sections
-        
+      
         4. language Standara：un check all
      8. ArdunioAIO-properties-C/C++Build-Settings-AVR C++ Compiler
         ​			
@@ -155,3 +154,8 @@ Ardunio mega2560
 
 ## On Vscode
 
+### arduino plugin
+
+
+
+### cmake
