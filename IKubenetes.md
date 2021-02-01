@@ -231,7 +231,7 @@ sudo cat /sys/class/dmi/id/product_uuid
       --apiserver-advertise-address=172.16.15.17 \
       --image-repository registry.aliyuncs.com/google_containers \
       --pod-network-cidr=10.244.0.0/16 \
-      --kubernetes-version=v1.18.0
+      --kubernetes-version=v1.18.0	
       #如果无法下载，需要设置--kubernetes-version为当前registry服务器上有的版本
       ```
 
@@ -768,6 +768,12 @@ dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
  clusterDomain: cluster.local
  ```
 
+```
+kubectl exec -ti busybox -- nslookup kubernetes.default
+```
+
+
+
 ### in openvpn
 
 如果需要将本机纳入到集群中，可以nsloopup到service，则需要在openvpn的配置`/etc/openvpn/server.conf`中增加dns的push
@@ -1158,70 +1164,68 @@ cn.xportal.cs.config.base: local
 
 ### pod
 
-> pod 是container的更高抽象
->
-> 1. 独立声明pod
->
->    ```yaml
->    cat >0-busybox-pod.yaml <<EOF
->    apiVersion: v1
->    kind: Pod
->    metadata:
->      name: busybox
->      namespace: bjrdc-dev
->      labels: 
->       app: busybox 
->    spec:
->          containers: 
->          - name: busybox
->            image: busybox
->            args:
->            - /bin/sh
->            - -c
->            - sleep 10; touch /tmp/healthy; sleep 30000
->            readinessProbe:           
->              exec:
->                command:
->                - cat
->                - /tmp/healthy
->              initialDelaySeconds: 10      
->              periodSeconds: 5
->    EOF          
->    ```
->
->    
->
-> 2. 重启pod
->
->    ```sh
->    kubectl get pod mysql-on-ceph-01-yyy -o yaml -n bjrdc-dev|kubectl replace --force -f -
->    ```
->
-> 3. 迁移pod
->
->    先将node设置为不可调度
->
->    ```sh
->    kubectl cordon bjrdc81
->    ```
->
->    重启pod
->
->    ```shell
->    kubectl get pod mysql-on-ceph-01-xxx -o yaml -n bjrdc-dev|kubectl replace --force -f -
->    ```
->
->    恢复node
->
->    ```shell
->    kubectl uncordon bjrdc81
->    ```
->
-> 4. 驱逐所有pod
->
->    TODO
->
-> 
+pod 是container的更高抽象
+
+1. 独立声明pod
+    ```yaml
+    cat >0-busybox-pod.yaml <<EOF
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: busybox
+      namespace: bjrdc-dev
+      labels: 
+       app: busybox 
+    spec:
+          containers: 
+          - name: busybox
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - sleep 10; touch /tmp/healthy; sleep 30000
+            readinessProbe:           
+              exec:
+                command:
+                - cat
+                - /tmp/healthy
+              initialDelaySeconds: 10      
+              periodSeconds: 5
+    EOF          
+    ```
+
+    
+
+ 2. 重启pod
+
+    ```sh
+    kubectl get pod mysql-on-ceph-01-yyy -o yaml -n bjrdc-dev|kubectl replace --force -f -
+    ```
+
+ 3. 迁移pod
+
+    先将node设置为不可调度
+
+    ```sh
+    kubectl cordon bjrdc81
+    ```
+
+    重启pod
+
+    ```shell
+    kubectl get pod mysql-on-ceph-01-xxx -o yaml -n bjrdc-dev|kubectl replace --force -f -
+    ```
+
+    恢复node
+
+    ```shell
+    kubectl uncordon bjrdc81
+    ```
+
+ 4. 驱逐所有pod
+
+    TODO
+
 
 ### pv and pvc
 
@@ -2041,6 +2045,123 @@ Deployment
 
 这个POD_NAME可以在其他的yaml文件中通过${POD_NAME}获取
 
+## restful api
+
+> kubernetes 通过restfulapi可以方便的访问集群资源，有如下两种方式
+
+### proxy
+
+1. 启动proxy
+
+   ```
+   kubectl proxy --port=8080
+   ```
+
+2. 通过curl访问
+
+   ```
+   curl http://localhost:8080/api/
+   curl http://localhost:8080/api/v1/namespaces/bjrdc-dev/pods
+   ```
+
+### no proxy
+
+```sh
+# 查看所有的集群，因为你的 .kubeconfig 文件中可能包含多个上下文
+kubectl config view -o jsonpath='{"Cluster name\tServer\n"}{range .clusters[*]}{.name}{"\t"}{.cluster.server}{"\n"}{end}'
+
+# 从上述命令输出中选择你要与之交互的集群的名称
+export CLUSTER_NAME="some_server_name"
+
+# 指向引用该集群名称的 API 服务器
+APISERVER=$(kubectl config view -o jsonpath="{.clusters[?(@.name==\"$CLUSTER_NAME\")].cluster.server}")
+
+# 获得令牌
+TOKEN=$(kubectl get secrets -o jsonpath="{.items[?(@.metadata.annotations['kubernetes\.io/service-account\.name']=='default')].data.token}"|base64 -d)
+
+# 使用令牌玩转 API
+curl -X GET $APISERVER/api --header "Authorization: Bearer $TOKEN" --insecure
+```
+
+### python
+
+>Python 客户端可以使用与 kubectl 命令行工具相同的 [kubeconfig 文件](https://kubernetes.io/zh/docs/concepts/configuration/organize-cluster-access-kubeconfig/) 定位和验证 API 服务器。参见这个 [例子](https://github.com/kubernetes-client/python/blob/master/examples/out_of_cluster_config.py)：
+
+```
+pip install kubernetes
+```
+
+
+
+```python
+from kubernetes import client, config
+
+config.load_kube_config()
+
+v1=client.CoreV1Api()
+print("Listing pods with their IPs:")
+ret = v1.list_pod_for_all_namespaces(watch=False)
+for i in ret.items:
+    print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+```
+
+
+
+### java
+
+>参阅https://github.com/kubernetes-client/java/releases 了解当前支持的版本。
+>
+>Java 客户端可以使用 kubectl 命令行所使用的 [kubeconfig 文件](https://kubernetes.io/zh/docs/concepts/configuration/organize-cluster-access-kubeconfig/) 以定位 API 服务器并向其认证身份。 参看此[示例](https://github.com/kubernetes-client/java/blob/master/examples/src/main/java/io/kubernetes/client/examples/KubeConfigFileClientExample.java)：
+
+```java
+package io.kubernetes.client.examples;
+
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.ApiException;
+import io.kubernetes.client.Configuration;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1PodList;
+import io.kubernetes.client.util.ClientBuilder;
+import io.kubernetes.client.util.KubeConfig;
+import java.io.FileReader;
+import java.io.IOException;
+
+/**
+ * A simple example of how to use the Java API from an application outside a kubernetes cluster
+ *
+ * <p>Easiest way to run this: mvn exec:java
+ * -Dexec.mainClass="io.kubernetes.client.examples.KubeConfigFileClientExample"
+ *
+ */
+public class KubeConfigFileClientExample {
+  public static void main(String[] args) throws IOException, ApiException {
+
+    // file path to your KubeConfig
+    String kubeConfigPath = "~/.kube/config";
+
+    // loading the out-of-cluster config, a kubeconfig from file-system
+    ApiClient client =
+        ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath))).build();
+
+    // set the global default api-client to the in-cluster one from above
+    Configuration.setDefaultApiClient(client);
+
+    // the CoreV1Api loads default api-client from global configuration.
+    CoreV1Api api = new CoreV1Api();
+
+    // invokes the CoreV1Api client
+    V1PodList list = api.listPodForAllNamespaces(null, null, null, null, null, null, null, null, null);
+    System.out.println("Listing all pods: ");
+    for (V1Pod item : list.getItems()) {
+      System.out.println(item.getMetadata().getName());
+    }
+  }
+}
+```
+
+
+
 ## ceph
 
 ### RBD
@@ -2725,6 +2846,12 @@ kubectl logs pod/mysql-statefulset-1 -c clone-mysql -n bjrdc-dev
 kubectl logs --tail=20 spring-cloud-k8s-consumer-7989fcf49c-h46rw -c spring-cloud-k8s-consumer-server -n bjrdc-dev -f
 ```
 
+```
+kubectl logs --namespace=kube-system -l k8s-app=kube-dns
+```
+
+
+
 #### lable
 
 ```sh
@@ -2795,18 +2922,24 @@ kubectl scale --replicas=3 statefulset/gitlab-ci-runner -n gitlab-runner
 kubectl create configmap redis-cluster-config  -n bjrdc-dev --from-file=redis.conf=./redis.conf --from-file=redis-cluster-boot.py=./redis-cluster-boot.py
 ```
 
-#### 重启 资源
+#### 重启pod
 
 ```sh
 kubectl get pod ubuntu -n bjrdc-dev -o yaml|kubectl replace --force -f -
 kubectl get statefulset redis-stateful -n bjrdc-dev -o yaml|kubectl replace --force -f -
 ```
 
+#### 修改kubectl默认namespace
+
+```sh
+kubectl config set-context --current --namespace=bjrdc-dev
+```
+
 
 
 ## harbor
 
->Harbor 是 Vmwar 公司开源的 企业级的 Docker Registry 管理项目
+>Harbor 是 Vmware 公司开源的 企业级的 Docker Registry 管理项目
 >
 >它主要 提供 Dcoker Registry 管理UI，可基于角色访问控制, AD/LDAP 集成，日志审核等功能，完全的支持中文。
 
@@ -4440,7 +4573,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 2. statefulset
 
    ```yaml
-   cat 1-kafka-cluster-statefulset.yaml 
+   cat >1-kafka-cluster-statefulset.yaml <<EOF
    apiVersion: apps/v1
    kind: StatefulSet
    metadata:
@@ -4489,12 +4622,13 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
          resources:
            requests:
              storage: 2Gi
+   EOF          
    ```
 
 3. headless
 
    ```yaml
-   cat 2-kafka-cluster-service.yaml 
+   cat >2-kafka-cluster-service.yaml <<EOF
    # Headless service for stable DNS entries of StatefulSet members.
    apiVersion: v1
    kind: Service
@@ -4510,6 +4644,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
      clusterIP: None
      selector:
        app: kafka-stateful
+   EOF    
    ```
 
 4. 测试
@@ -4707,7 +4842,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 7. 创建statefulset
 
    ```yaml
-   cat >1-rabbit-cluster-statefulset.yaml <<EOF
+   cat > 1-rabbit-cluster-statefulset.yaml <<EOF
    apiVersion: apps/v1
    kind: StatefulSet
    metadata:
@@ -4758,10 +4893,12 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
              protocol: TCP
    
            livenessProbe:
-             exec: 
-               command: 
-               - rabbitmqctl
-               - node_health_check
+             httpGet:
+               path: /api/overview
+               port: 15672 
+               httpHeaders:
+                 - name: Authorization
+                   value: Basic xxxxxxx
              initialDelaySeconds: 80
              periodSeconds: 30
    
@@ -4795,6 +4932,15 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
              storage: 2Gi
    EOF          
    ```
+
+   xxxxxxx is base of user:password
+
+   ```
+   echo xxx:yyy|base64
+   eHh4Onl5eQo=
+   ```
+
+   
 
 8. 创建用户权限
 
@@ -5579,13 +5725,13 @@ spec:
 
 ## 问题处理
 
-1. 查看日志
+查看日志
 
    ```sh
    journalctl -f -u kubelet
    ```
 
-2. kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
+### kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
 
    现象
 
@@ -5608,43 +5754,60 @@ spec:
    KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
    ```
 
-3. /run/flannel/subnet.env: no such file or directory
+### /run/flannel/subnet.env: no such file or directory
 
    重新apply flannel，或者手动创建该文件（不推荐）
 
    ```sh
-   kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
    ```
 
-4. coredns pod crash
+### coredns pod crash
 
    ```sh
-   kubectl -n kube-system get deployment coredns -o yaml |sed s/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -
-   ```
-   
-5. Back-off restarting failed container
-
-   没有常驻进程，也就是服务可能没有启动
-   
-6. Failed to update endpoint bjrdc-dev/redis-stateful-headless: Operation cannot be fulfilled on endpoints "redis-stateful-headless": the object has been modified; please apply your changes to the latest version and try again
-
-7. 集群重启后出现pod无法启动的问题
-
-   ```
-   MountVolume.SetUp failed for volume "default-token" : secret "default-token" not found
+kubectl -n kube-system get deployment coredns -o yaml |sed s/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | kubectl apply -f -
    ```
 
-   不知道原因，可能是pod启动的时候default-token尚未准备好
+### Back-off restarting failed container
 
-   简单处理版本是重启pod就可以了
+先检查健康检查地址是否正确
 
-   
-
-## 应用
-
-### spring-cloud
+### Failed to update endpoint bjrdc-dev/redis-stateful-headless: Operation cannot be fulfilled on endpoints "redis-stateful-headless": the object has been modified; please apply your changes to the latest version and try again
 
 
+
+### 集群重启后出现pod无法启动的问题
+
+```
+MountVolume.SetUp failed for volume "default-token" : secret "default-token" not found
+```
+
+不知道原因，可能是pod启动的时候default-token尚未准备好
+
+简单处理版本是重启pod就可以了
+
+### Spring-cloud
+
+#### io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints
+
+[参考此处](#service发现)
+
+
+
+### DNS 无法找到的问题
+
+现象是在集群的一个node中的所有的pod中都无法ping到和查找到其他的任何service的ip。经实验发现，重启coredns的pod后问题得以解决。*出现问题的那台pod上有coredns的container，怀疑可能和路由有关*.
+
+重启后的cornds的pod在master上运行的。
+
+**暂时不能确定真正的原因，待日后在实验**
+
+
+## spring-cloud
+
+### kubernetes-maven-plugin
+
+The **kubernetes-maven-plugin** brings your Java applications on to [Kubernetes](http://kubernetes.io/). It provides a tight integration into [Maven](http://maven.apache.org/) and benefits from the build configuration already provided. This plugin focus on two tasks: *Building Docker images* and *creating Kubernetes resource descriptors*. It can be configured very flexibly and supports multiple configuration models for creating: A *Zero-Config* setup allows for a quick ramp-up with some opinionated defaults. For more advanced requirements, an *XML configuration* provides additional configuration options which can be added to the `pom.xml`. For the full power, in order to tune all facets of the creation, external *resource fragments* and *Dockerfiles* can be used.
 
 
 
@@ -5654,155 +5817,162 @@ spec:
 
 ### 打通虚拟网络
 
-> 1. 配置路由
->
->    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
->
->    ```sh
->    route add -net 10.0.0.0/8 gw 172.16.15.17
->    ```
->
->    172.16.15.17为k8s的master的ip
->
->    或者通过netplan配置，and config to netplan.yaml
->
->    ```yaml
->    network:
->      version: 2
->      renderer: networkd
->      ethernets:
->        ens19:
->    ...
->          routes:
->          - to: 10.0.0.0/8
->            via: 172.16.15.17
->    ```
->
->    
->
->    但是打通IP由有什么用呢？能够发现service吗？*可以*
->
-> 2. 配置dns，*该方式似乎已经过时，推荐使用systemd-resolved*
->
->    只能通过`resolvconf`来实现更新，相关方法如下
->
->    ```sh
->    sudo apt install resolvconf
->    cat > /etc/resolvconf/resolv.conf.d/head <<EOF
->    nameserver 10.96.0.10
->    EOF
->    resolvconf -u
->    ```
+ 1. 配置路由
+
+    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
+
+    ```sh
+    route add -net 10.0.0.0/8 gw 172.16.15.17
+    ```
+
+    172.16.15.17为k8s的master的ip
+
+    或者通过netplan配置，and config to netplan.yaml
+
+    ```yaml
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        ens19:
+    ...
+          routes:
+          - to: 10.0.0.0/8
+            via: 172.16.15.17
+    ```
+
+    
+
+    但是打通IP由有什么用呢？能够发现service吗？*可以*
+
+ 2. 配置dns，*该方式似乎已经过时，推荐使用systemd-resolved*
+
+    只能通过`resolvconf`来实现更新，相关方法如下
+
+    ```sh
+    sudo apt install resolvconf
+    cat  /etc/resolvconf/resolv.conf.d/head <<EOF
+    nameserver 10.96.0.10
+    EOF
+    resolvconf -u
+    ```
 
 
 
-### 测试开发（Eclipse）
+### spring-cloud on k8s
 
-#### spring-cloud on k8s
+ 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
 
-> 经测试，在使用spring-cloud on k8s的模式下，直接自爱eclipse中执行java程序，可以顺利注册到集群中。
->
-> 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
->
-> 从原理上说，使用网络打通的方式应该只适合spring-cloud on k8s
+ 可以通过eureka的界面上看到本地注册的服务，并且通过本地服务可以调用远程clauster中的服务。
+
+ 从原理上说，使用网络打通的方式应该只适合spring-cloud on k8s
 
 
 
-#### spring-cloud in k8s
+### spring-cloud in k8s
 
-> 在spring-cloud in k8s的模式下，尚未测试。
->
-> 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
->
-> ```java
->	@Autowired
-> 	private DiscoveryClient discoveryClient;
-> 
-> 	@GetMapping("/services")
-> 	public List<String> services() {
-> 		return this.discoveryClient.getServices();
-> 	}
-> ```
-> 
-> 需要在pom.xml中配置如下
->
-> ```xml
-><dependency>
-> <groupId>org.springframework.cloud</groupId>
-> <artifactId>spring-cloud-kubernetes-core</artifactId>
-> </dependency>
-> <dependency>
-> <groupId>org.springframework.cloud</groupId>
-> <artifactId>spring-cloud-kubernetes-discovery</artifactId>
-> </dependency>
-> <dependency>
-> <groupId>org.springframework.cloud</groupId>
-> <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
-> </dependency>
-> ```
-> 
-> 使用如下方法测试
->
-> service发现
->
-> ```sh
->curl localhost:8086/sc-k8s-consumer/services
-> ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
-> ```
-> 
-> 调用provider方法
->
-> ```sh
->curl localhost:8086/sc-k8s-provider/index/list
-> ```
-> 
-> 将consumer也部署到k8s后，报如下错误
->
-> ```
->io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
-> ```
-> 
-> 这是因为权限的问题，应该是掉用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
->
-> ```yaml
->apiVersion: rbac.authorization.k8s.io/v1
-> kind: ClusterRole
-> metadata:
-> name: bjrdc-cr
-> namespace: bjrdc-dev
-> rules:
-> - apiGroups: [""]
->   resources: ["services", "endpoints", "pods"]
->   verbs: ["get", "list", "watch"]
-> ---
-> apiVersion: rbac.authorization.k8s.io/v1
-> kind: ClusterRoleBinding
-> metadata:
->   name: bjrdc-rb
->   namespace: bjrdc-dev
-> roleRef:
->   apiGroup: rbac.authorization.k8s.io
->   kind: ClusterRole
->   name: bjrdc-cr
-> subjects:
-> - kind: ServiceAccount
->   name: default
->   namespace: bjrdc-dev
-> ```
-> 
-> 
->
-> 在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
->
-> 
+ 在spring-cloud in k8s的模式下，尚未测试。
+
+ 经测试后，竟然可以，你说神奇不申请（*估计spring-cloud-kubernetes是通过域名获取到cluster的api，然后通过api获取的service，以后有机会抓包看看*）通过如下代码竟然可以发现service
+
+ ```java
+	@Autowired
+ 	private DiscoveryClient discoveryClient;
+ 
+ 	@GetMapping("/services")
+ 	public List<String> services() {
+ 		return this.discoveryClient.getServices();
+ 	}
+ ```
+
+
+#### pom.xml
+
+需要在pom.xml中配置如下
+
+ ```xml
+<dependency>
+ <groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-kubernetes-core</artifactId>
+ </dependency>
+<dependency>
+ <groupId>org.springframework.cloud</groupId>
+ <artifactId>spring-cloud-kubernetes-discovery</artifactId>
+</dependency>
+ <dependency>
+ <groupId>org.springframework.cloud</groupId>
+ <artifactId>spring-cloud-starter-kubernetes-ribbon</artifactId>
+ </dependency>
+ ```
+
+使用如下方法测试
+
+```
+curl spring-cloud-k8s-consumer.bjrdc-dev.svc.cluster.local:8096/sc-k8s-consumer/feign/list
+```
+
+
+
+#### service发现
+
+ ```sh
+curl localhost:8086/sc-k8s-consumer/services
+ ["hello-node","mysql","mysql-service","spring-cloud-config","spring-cloud-consumer","spring-cloud-dashboard","spring-cloud-eureka","spring-cloud-k8s-provider","spring-cloud-provider","spring-cloud-zipkin","spring-cloud-zuul","kubernetes","ingress-nginx-controller","ingress-nginx-controller-admission","kube-dns","metrics-server","dashboard-metrics-scraper","kubernetes-dashboard"]
+ ```
+
+调用provider方法
+
+ ```sh
+ curl localhost:8086/sc-k8s-provider/index/list
+ ```
+
+ 将consumer也部署到k8s后，报如下错误
+
+ ```
+ io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: GET at: https://10.96.0.1/api/v1/namespaces/bjrdc-dev/endpoints/spring-cloud-k8s-provider. Message: Forbidden!Configured service account doesn't have access. Service account may have been revoked. endpoints "spring-cloud-k8s-provider" is forbidden: User "system:serviceaccount:bjrdc-dev:default" cannot get resource "endpoints" in API group "" in the namespace "bjrdc-dev".
+ ```
+
+这是因为权限的问题，应该是调用fabric8(jkube插件用的也是这个客户端)的客户端调用cluster的api的时候，获取不到权限。需要将serviceaccount default 的权限给加上
+
+ ```yaml
+ apiVersion: rbac.authorization.k8s.io/v1
+ kind: ClusterRole
+ metadata:
+ name: bjrdc-cr
+ namespace: bjrdc-dev
+ rules:
+ - apiGroups: [""]
+   resources: ["services", "endpoints", "pods"]
+   verbs: ["get", "list", "watch"]
+ ---
+ apiVersion: rbac.authorization.k8s.io/v1
+ kind: ClusterRoleBinding
+metadata:
+   name: bjrdc-rb
+  namespace: bjrdc-dev
+ roleRef:
+  apiGroup: rbac.authorization.k8s.io
+   kind: ClusterRole
+   name: bjrdc-cr
+ subjects:
+ - kind: ServiceAccount
+  name: default
+   namespace: bjrdc-dev
+ ```
+
+ 
+
+在pod启动的时候，kubernetes会将该pod对应的token和ca.crt namespace 挂载在*/run/secrets/kubernetes.io/serviceaccount*
+
+修改rbac后需要重启pod才能生效
 
 ### 使用 telepresence
 
-> telepresence为k8s提供的一个开发客户端-服务端程序，类是vpn，将服务器和客户端打通
->
-> 具体使用方法尚未验证
->
-> TODO
+ telepresence为k8s提供的一个开发客户端-服务端程序，类是vpn，将服务器和客户端打通
+
+ 具体使用方法尚未验证
+
+ TODO
 
 ## 关于jkube插件
 
@@ -5837,9 +6007,9 @@ spec:
 
 ### 资源
 
-> k8s中有大量的资源对象，比较重要的有service、deployment、pod、namespace、ingress、role、clusterrole、serviceaccount
->
-> 
+ k8s中有大量的资源对象，比较重要的有service、deployment、pod、namespace、ingress、role、clusterrole、serviceaccount
+
+ 
 
 | 类别     | 名称                                                         | 说明 |
 | :------- | ------------------------------------------------------------ | ---- |
@@ -5850,127 +6020,127 @@ spec:
 
 ### pod
 
-> Pod 是在 Kubernetes 集群中运行部署应用或服务的最小单元，它是可以支持多容器的。
->
-> Pod 的设计理念是支持多个容器在一个 Pod 中共享网络地址和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。
->
-> Pod 对多容器的支持是 K8 最基础的设计理念。比如你运行一个操作系统发行版的软件仓库，一个 Nginx 容器用来发布软件，另一个容器专门用来从源仓库做同步，这两个容器的镜像不太可能是一个团队开发的，但是他们一块儿工作才能提供一个微服务；这种情况下，不同的团队各自开发构建自己的容器镜像，在部署的时候组合成一个微服务对外提供服务
+ Pod 是在 Kubernetes 集群中运行部署应用或服务的最小单元，它是可以支持多容器的。
+
+ Pod 的设计理念是支持多个容器在一个 Pod 中共享网络地址和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。
+
+ Pod 对多容器的支持是 K8 最基础的设计理念。比如你运行一个操作系统发行版的软件仓库，一个 Nginx 容器用来发布软件，另一个容器专门用来从源仓库做同步，这两个容器的镜像不太可能是一个团队开发的，但是他们一块儿工作才能提供一个微服务；这种情况下，不同的团队各自开发构建自己的容器镜像，在部署的时候组合成一个微服务对外提供服务
 
 ### *副本控制器（Replication Controller，RC）*
 
-> RC 是 Kubernetes 集群中最早的保证 Pod 高可用的 API 对象。通过监控运行中的 Pod 来保证集群中运行指定数目的 Pod 副本。指定的数目可以是多个也可以是 1 个；少于指定数目，RC 就会启动运行新的 Pod 副本；多于指定数目，RC 就会杀死多余的 Pod 副本。即使在指定数目为 1 的情况下，通过 RC 运行 Pod 也比直接运行 Pod 更明智，因为 RC 也可以发挥它高可用的能力，保证永远有 1 个 Pod 在运行。
->
-> **RC 是 Kubernetes 较早期的技术概念，只适用于长期伺服型的业务类型，比如控制小机器人提供高可用的 Web 服务**
+ RC 是 Kubernetes 集群中最早的保证 Pod 高可用的 API 对象。通过监控运行中的 Pod 来保证集群中运行指定数目的 Pod 副本。指定的数目可以是多个也可以是 1 个；少于指定数目，RC 就会启动运行新的 Pod 副本；多于指定数目，RC 就会杀死多余的 Pod 副本。即使在指定数目为 1 的情况下，通过 RC 运行 Pod 也比直接运行 Pod 更明智，因为 RC 也可以发挥它高可用的能力，保证永远有 1 个 Pod 在运行。
+
+ **RC 是 Kubernetes 较早期的技术概念，只适用于长期伺服型的业务类型，比如控制小机器人提供高可用的 Web 服务**
 
 ### 副本集（Replica Set，RS）
 
-> RS 是新一代 RC，提供同样的高可用能力，区别主要在于 RS 后来居上，能支持更多种类的匹配模式。
->
-> 副本集对象一般不单独使用，而是作为 Deployment 的理想状态参数使用。
+ RS 是新一代 RC，提供同样的高可用能力，区别主要在于 RS 后来居上，能支持更多种类的匹配模式。
+
+ 副本集对象一般不单独使用，而是作为 Deployment 的理想状态参数使用。
 
 ### 部署（Deployment）
 
-> 部署表示用户对 Kubernetes 集群的一次更新操作。
->
-> 部署是一个比 RS 应用模式更广的 API 对象，可以是创建一个新的服务，更新一个新的服务，也可以是滚动升级一个服务。滚动升级一个服务，实际是创建一个新的 RS，然后逐渐将新 RS 中副本数增加到理想状态，将旧 RS 中的副本数减小到 0 的复合操作；这样一个复合操作用一个 RS 是不太好描述的，所以用一个更通用的 Deployment 来描述。
->
-> 以 Kubernetes 的发展方向，未来对所有长期伺服型的的业务的管理，都会通过 Deployment 来管理。
+ 部署表示用户对 Kubernetes 集群的一次更新操作。
+
+ 部署是一个比 RS 应用模式更广的 API 对象，可以是创建一个新的服务，更新一个新的服务，也可以是滚动升级一个服务。滚动升级一个服务，实际是创建一个新的 RS，然后逐渐将新 RS 中副本数增加到理想状态，将旧 RS 中的副本数减小到 0 的复合操作；这样一个复合操作用一个 RS 是不太好描述的，所以用一个更通用的 Deployment 来描述。
+
+ 以 Kubernetes 的发展方向，未来对所有长期伺服型的的业务的管理，都会通过 Deployment 来管理。
 
 ### 服务（Service）
 
-> **Service可以看作是一组提供相同服务的Pod对外的访问接口**。借助Service，应用可以方便地实现服务发现和负载均衡。
->
-> RC、RS 和 Deployment 只是保证了支撑服务的微服务 Pod 的数量，但是没有解决如何访问这些服务的问题。
->
-> **一个 Pod 只是一个运行服务的实例，随时可能在一个节点上停止，在另一个节点以一个新的 IP 启动一个新的 Pod，因此不能以确定的 IP 和端口号提供服务。要稳定地提供服务需要服务发现和负载均衡能力。服务发现完成的工作，是针对客户端访问的服务，找到对应的的后端服务实例。**
->
-> 在 K8 集群中，客户端需要访问的服务就是 Service 对象。每个 Service 会对应一个集群内部有效的虚拟 IP，集群内部通过虚拟 IP 访问一个服务。
->
-> 在 Kubernetes 集群中微服务的负载均衡是由 Kube-proxy 实现的。Kube-proxy 是 Kubernetes 集群内部的负载均衡器。它是一个分布式代理服务器，在 Kubernetes 的每个节点上都有一个；这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的 Kube-proxy 就越多，高可用节点也随之增多。与之相比，我们平时在服务器端做个反向代理做负载均衡，还要进一步解决反向代理的负载均衡和高可用问题。
+ **Service可以看作是一组提供相同服务的Pod对外的访问接口**。借助Service，应用可以方便地实现服务发现和负载均衡。
+
+ RC、RS 和 Deployment 只是保证了支撑服务的微服务 Pod 的数量，但是没有解决如何访问这些服务的问题。
+
+ **一个 Pod 只是一个运行服务的实例，随时可能在一个节点上停止，在另一个节点以一个新的 IP 启动一个新的 Pod，因此不能以确定的 IP 和端口号提供服务。要稳定地提供服务需要服务发现和负载均衡能力。服务发现完成的工作，是针对客户端访问的服务，找到对应的的后端服务实例。**
+
+ 在 K8 集群中，客户端需要访问的服务就是 Service 对象。每个 Service 会对应一个集群内部有效的虚拟 IP，集群内部通过虚拟 IP 访问一个服务。
+
+ 在 Kubernetes 集群中微服务的负载均衡是由 Kube-proxy 实现的。Kube-proxy 是 Kubernetes 集群内部的负载均衡器。它是一个分布式代理服务器，在 Kubernetes 的每个节点上都有一个；这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的 Kube-proxy 就越多，高可用节点也随之增多。与之相比，我们平时在服务器端做个反向代理做负载均衡，还要进一步解决反向代理的负载均衡和高可用问题。
 
 
 
-> Service有三种类型：
->
-> - ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP
->- NodePort：在ClusterIP基础上为Service在每台机器上绑定一个端口，这样就可以通过`<NodeIP>:NodePort`来访问该服务
-> - LoadBalancer：在NodePort的基础上，借助cloud provider创建一个外部的负载均衡器，并将请求转发到`<NodeIP>:NodePort`
+ Service有三种类型：
+
+ - ClusterIP：默认类型，自动分配一个仅cluster内部可以访问的虚拟IP
+- NodePort：在ClusterIP基础上为Service在每台机器上绑定一个端口，这样就可以通过`<NodeIP:NodePort`来访问该服务
+ - LoadBalancer：在NodePort的基础上，借助cloud provider创建一个外部的负载均衡器，并将请求转发到`<NodeIP:NodePort`
 
 ### 任务（Job）
 
-> Job 是 Kubernetes 用来控制批处理型任务的 API 对象。
->
-> 批处理业务与长期伺服业务的主要区别是批处理业务的运行有头有尾，而长期伺服业务在用户不停止的情况下永远运行。Job 管理的 Pod 根据用户的设置把任务成功完成就自动退出了。成功完成的标志根据不同的 spec.completions 策略而不同：单 Pod 型任务有一个 Pod 成功就标志完成；定数成功型任务保证有 N 个任务全部成功；工作队列型任务根据应用确认的全局成功而标志成功。
+ Job 是 Kubernetes 用来控制批处理型任务的 API 对象。
+
+ 批处理业务与长期伺服业务的主要区别是批处理业务的运行有头有尾，而长期伺服业务在用户不停止的情况下永远运行。Job 管理的 Pod 根据用户的设置把任务成功完成就自动退出了。成功完成的标志根据不同的 spec.completions 策略而不同：单 Pod 型任务有一个 Pod 成功就标志完成；定数成功型任务保证有 N 个任务全部成功；工作队列型任务根据应用确认的全局成功而标志成功。
 
 ### 后台支撑服务集（DaemonSet）
 
-> 长期伺服型和批处理型服务的核心在业务应用，可能有些节点运行多个同类业务的 Pod，有些节点上又没有这类 Pod 运行；
->
-> 而后台支撑型服务的核心关注点在 Kubernetes 集群中的节点（物理机或虚拟机），要保证每个节点上都有一个此类 Pod 运行。节点可能是所有集群节点也可能是通过 nodeSelector 选定的一些特定节点。
->
-> 典型的后台支撑型服务包括，存储，日志和监控等在每个节点上支持 Kubernetes 集群运行的服务。
+ 长期伺服型和批处理型服务的核心在业务应用，可能有些节点运行多个同类业务的 Pod，有些节点上又没有这类 Pod 运行；
+
+ 而后台支撑型服务的核心关注点在 Kubernetes 集群中的节点（物理机或虚拟机），要保证每个节点上都有一个此类 Pod 运行。节点可能是所有集群节点也可能是通过 nodeSelector 选定的一些特定节点。
+
+ 典型的后台支撑型服务包括，存储，日志和监控等在每个节点上支持 Kubernetes 集群运行的服务。
 
 ### 有状态服务集（StatefulSet）
 
-> Kubernetes 在 1.3 版本里发布了 Alpha 版的 PetSet 功能，在 1.5 版本里将 PetSet 功能升级到了 Beta 版本，并重新命名为 StatefulSet，最终在 1.9 版本里成为正式 GA 版本。在云原生应用的体系里，有下面两组近义词；
->
-> 第一组是无状态（stateless）、牲畜（cattle）、无名（nameless）、可丢弃（disposable）；第二组是有状态（stateful）、宠物（pet）、有名（having name）、不可丢弃（non-disposable）。
->
-> RC 和 RS 主要是控制提供无状态服务的，其所控制的 Pod 的名字是随机设置的，一个 Pod 出故障了就被丢弃掉，在另一个地方重启一个新的 Pod，名字变了。名字和启动在哪儿都不重要，重要的只是 Pod 总数；而 StatefulSet 是用来控制有状态服务，StatefulSet 中的每个 Pod 的名字都是事先确定的，不能更改。StatefulSet 中 Pod 的名字的作用，并不是《千与千寻》的人性原因，而是关联与该 Pod 对应的状态。
+ Kubernetes 在 1.3 版本里发布了 Alpha 版的 PetSet 功能，在 1.5 版本里将 PetSet 功能升级到了 Beta 版本，并重新命名为 StatefulSet，最终在 1.9 版本里成为正式 GA 版本。在云原生应用的体系里，有下面两组近义词；
 
-> 对于 RC 和 RS 中的 Pod，一般不挂载存储或者挂载共享存储，保存的是所有 Pod 共享的状态，Pod 像牲畜一样没有分别（这似乎也确实意味着失去了人性特征）；对于 StatefulSet 中的 Pod，每个 Pod 挂载自己独立的存储，如果一个 Pod 出现故障，从其他节点启动一个同样名字的 Pod，要挂载上原来 Pod 的存储继续以它的状态提供服务。
+ 第一组是无状态（stateless）、牲畜（cattle）、无名（nameless）、可丢弃（disposable）；第二组是有状态（stateful）、宠物（pet）、有名（having name）、不可丢弃（non-disposable）。
 
-> 适合于 StatefulSet 的业务包括数据库服务 MySQL 和 PostgreSQL，集群化管理服务 ZooKeeper、etcd 等有状态服务。StatefulSet 的另一种典型应用场景是作为一种比普通容器更稳定可靠的模拟虚拟机的机制。传统的虚拟机正是一种有状态的宠物，运维人员需要不断地维护它，容器刚开始流行时，我们用容器来模拟虚拟机使用，所有状态都保存在容器里，而这已被证明是非常不安全、不可靠的。使用 StatefulSet，Pod 仍然可以通过漂移到不同节点提供高可用，而存储也可以通过外挂的存储来提供高可靠性，StatefulSet 做的只是将确定的 Pod 与确定的存储关联起来保证状态的连续性。
+ RC 和 RS 主要是控制提供无状态服务的，其所控制的 Pod 的名字是随机设置的，一个 Pod 出故障了就被丢弃掉，在另一个地方重启一个新的 Pod，名字变了。名字和启动在哪儿都不重要，重要的只是 Pod 总数；而 StatefulSet 是用来控制有状态服务，StatefulSet 中的每个 Pod 的名字都是事先确定的，不能更改。StatefulSet 中 Pod 的名字的作用，并不是《千与千寻》的人性原因，而是关联与该 Pod 对应的状态。
+
+ 对于 RC 和 RS 中的 Pod，一般不挂载存储或者挂载共享存储，保存的是所有 Pod 共享的状态，Pod 像牲畜一样没有分别（这似乎也确实意味着失去了人性特征）；对于 StatefulSet 中的 Pod，每个 Pod 挂载自己独立的存储，如果一个 Pod 出现故障，从其他节点启动一个同样名字的 Pod，要挂载上原来 Pod 的存储继续以它的状态提供服务。
+
+ 适合于 StatefulSet 的业务包括数据库服务 MySQL 和 PostgreSQL，集群化管理服务 ZooKeeper、etcd 等有状态服务。StatefulSet 的另一种典型应用场景是作为一种比普通容器更稳定可靠的模拟虚拟机的机制。传统的虚拟机正是一种有状态的宠物，运维人员需要不断地维护它，容器刚开始流行时，我们用容器来模拟虚拟机使用，所有状态都保存在容器里，而这已被证明是非常不安全、不可靠的。使用 StatefulSet，Pod 仍然可以通过漂移到不同节点提供高可用，而存储也可以通过外挂的存储来提供高可靠性，StatefulSet 做的只是将确定的 Pod 与确定的存储关联起来保证状态的连续性。
 
 ### 集群联邦（Federation）
 
-> Kubernetes 在 1.3 版本里发布了 beta 版的 Federation 功能。在云计算环境中，服务的作用距离范围从近到远一般可以有：同主机（Host，Node）、跨主机同可用区（Available Zone）、跨可用区同地区（Region）、跨地区同服务商（Cloud Service Provider）、跨云平台。Kubernetes 的设计定位是单一集群在同一个地域内，因为同一个地区的网络性能才能满足 Kubernetes 的调度和计算存储连接要求。而联合集群服务就是为提供跨 Region 跨服务商 Kubernetes 集群服务而设计的。
+ Kubernetes 在 1.3 版本里发布了 beta 版的 Federation 功能。在云计算环境中，服务的作用距离范围从近到远一般可以有：同主机（Host，Node）、跨主机同可用区（Available Zone）、跨可用区同地区（Region）、跨地区同服务商（Cloud Service Provider）、跨云平台。Kubernetes 的设计定位是单一集群在同一个地域内，因为同一个地区的网络性能才能满足 Kubernetes 的调度和计算存储连接要求。而联合集群服务就是为提供跨 Region 跨服务商 Kubernetes 集群服务而设计的。
 
-> 每个 Kubernetes Federation 有自己的分布式存储、API Server 和 Controller Manager。用户可以通过 Federation 的 API Server 注册该 Federation 的成员 Kubernetes Cluster。当用户通过 Federation 的 API Server 创建、更改 API 对象时，Federation API Server 会在自己所有注册的子 Kubernetes Cluster 都创建一份对应的 API 对象。在提供业务请求服务时，Kubernetes Federation 会先在自己的各个子 Cluster 之间做负载均衡，而对于发送到某个具体 Kubernetes Cluster 的业务请求，会依照这个 Kubernetes Cluster 独立提供服务时一样的调度模式去做 Kubernetes Cluster 内部的负载均衡。而 Cluster 之间的负载均衡是通过域名服务的负载均衡来实现的。
+ 每个 Kubernetes Federation 有自己的分布式存储、API Server 和 Controller Manager。用户可以通过 Federation 的 API Server 注册该 Federation 的成员 Kubernetes Cluster。当用户通过 Federation 的 API Server 创建、更改 API 对象时，Federation API Server 会在自己所有注册的子 Kubernetes Cluster 都创建一份对应的 API 对象。在提供业务请求服务时，Kubernetes Federation 会先在自己的各个子 Cluster 之间做负载均衡，而对于发送到某个具体 Kubernetes Cluster 的业务请求，会依照这个 Kubernetes Cluster 独立提供服务时一样的调度模式去做 Kubernetes Cluster 内部的负载均衡。而 Cluster 之间的负载均衡是通过域名服务的负载均衡来实现的。
 
-> Federation V1 的设计是尽量不影响 Kubernetes Cluster 现有的工作机制，这样对于每个子 Kubernetes 集群来说，并不需要更外层的有一个 Kubernetes Federation，也就是意味着所有现有的 Kubernetes 代码和机制不需要因为 Federation 功能有任何变化。
+ Federation V1 的设计是尽量不影响 Kubernetes Cluster 现有的工作机制，这样对于每个子 Kubernetes 集群来说，并不需要更外层的有一个 Kubernetes Federation，也就是意味着所有现有的 Kubernetes 代码和机制不需要因为 Federation 功能有任何变化。
 
-> 目前正在开发的 Federation V2，在保留现有 Kubernetes API 的同时，会开发新的 Federation 专用的 API 接口，详细内容可以在 [这里](https://github.com/kubernetes/community/tree/master/sig-multicluster) 找到。
+ 目前正在开发的 Federation V2，在保留现有 Kubernetes API 的同时，会开发新的 Federation 专用的 API 接口，详细内容可以在 [这里](https://github.com/kubernetes/community/tree/master/sig-multicluster) 找到。
 
 ### 存储卷（Volume）
 
-> Kubernetes 集群中的存储卷跟 Docker 的存储卷有些类似，只不过 Docker 的存储卷作用范围为一个容器，而 Kubernetes 的存储卷的生命周期和作用范围是一个 Pod。每个 Pod 中声明的存储卷由 Pod 中的所有容器共享。Kubernetes 支持非常多的存储卷类型，特别的，支持多种公有云平台的存储，包括 AWS，Google 和 Azure 云；支持多种分布式存储包括 GlusterFS 和 Ceph；也支持较容易使用的主机本地目录 emptyDir, hostPath 和 NFS。Kubernetes 还支持使用 Persistent Volume Claim 即 PVC 这种逻辑存储，使用这种存储，使得存储的使用者可以忽略后台的实际存储技术（例如 AWS，Google 或 GlusterFS 和 Ceph），而将有关存储实际技术的配置交给存储管理员通过 Persistent Volume 来配置。
+ Kubernetes 集群中的存储卷跟 Docker 的存储卷有些类似，只不过 Docker 的存储卷作用范围为一个容器，而 Kubernetes 的存储卷的生命周期和作用范围是一个 Pod。每个 Pod 中声明的存储卷由 Pod 中的所有容器共享。Kubernetes 支持非常多的存储卷类型，特别的，支持多种公有云平台的存储，包括 AWS，Google 和 Azure 云；支持多种分布式存储包括 GlusterFS 和 Ceph；也支持较容易使用的主机本地目录 emptyDir, hostPath 和 NFS。Kubernetes 还支持使用 Persistent Volume Claim 即 PVC 这种逻辑存储，使用这种存储，使得存储的使用者可以忽略后台的实际存储技术（例如 AWS，Google 或 GlusterFS 和 Ceph），而将有关存储实际技术的配置交给存储管理员通过 Persistent Volume 来配置。
 
 ### 持久存储卷（Persistent Volume，PV）和持久存储卷声明（Persistent Volume Claim，PVC）
 
-> PV 和 PVC 使得 Kubernetes 集群具备了存储的逻辑抽象能力，使得在配置 Pod 的逻辑里可以忽略对实际后台存储技术的配置，而把这项配置的工作交给 PV 的配置者，即集群的管理者。存储的 PV 和 PVC 的这种关系，跟计算的 Node 和 Pod 的关系是非常类似的；PV 和 Node 是资源的提供者，根据集群的基础设施变化而变化，由 Kubernetes 集群管理员配置；而 PVC 和 Pod 是资源的使用者，根据业务服务的需求变化而变化，有 Kubernetes 集群的使用者即服务的管理员来配置。
+ PV 和 PVC 使得 Kubernetes 集群具备了存储的逻辑抽象能力，使得在配置 Pod 的逻辑里可以忽略对实际后台存储技术的配置，而把这项配置的工作交给 PV 的配置者，即集群的管理者。存储的 PV 和 PVC 的这种关系，跟计算的 Node 和 Pod 的关系是非常类似的；PV 和 Node 是资源的提供者，根据集群的基础设施变化而变化，由 Kubernetes 集群管理员配置；而 PVC 和 Pod 是资源的使用者，根据业务服务的需求变化而变化，有 Kubernetes 集群的使用者即服务的管理员来配置。
 
 ### 节点（Node）
 
-> Kubernetes 集群中的计算能力由 Node 提供，最初 Node 称为服务节点 Minion，后来改名为 Node。Kubernetes 集群中的 Node 也就等同于 Mesos 集群中的 Slave 节点，是所有 Pod 运行所在的工作主机，可以是物理机也可以是虚拟机。不论是物理机还是虚拟机，工作主机的统一特征是上面要运行 kubelet 管理节点上运行的容器。
+ Kubernetes 集群中的计算能力由 Node 提供，最初 Node 称为服务节点 Minion，后来改名为 Node。Kubernetes 集群中的 Node 也就等同于 Mesos 集群中的 Slave 节点，是所有 Pod 运行所在的工作主机，可以是物理机也可以是虚拟机。不论是物理机还是虚拟机，工作主机的统一特征是上面要运行 kubelet 管理节点上运行的容器。
 
 ### 密钥对象（Secret）
 
-> Secret 是用来保存和传递密码、密钥、认证凭证这些敏感信息的对象。使用 Secret 的好处是可以避免把敏感信息明文写在配置文件里。在 Kubernetes 集群中配置和使用服务不可避免的要用到各种敏感信息实现登录、认证等功能，例如访问 AWS 存储的用户名密码。为了避免将类似的敏感信息明文写在所有需要使用的配置文件中，可以将这些信息存入一个 Secret 对象，而在配置文件中通过 Secret 对象引用这些敏感信息。这种方式的好处包括：意图明确，避免重复，减少暴漏机会。
+ Secret 是用来保存和传递密码、密钥、认证凭证这些敏感信息的对象。使用 Secret 的好处是可以避免把敏感信息明文写在配置文件里。在 Kubernetes 集群中配置和使用服务不可避免的要用到各种敏感信息实现登录、认证等功能，例如访问 AWS 存储的用户名密码。为了避免将类似的敏感信息明文写在所有需要使用的配置文件中，可以将这些信息存入一个 Secret 对象，而在配置文件中通过 Secret 对象引用这些敏感信息。这种方式的好处包括：意图明确，避免重复，减少暴漏机会。
 
 ### 用户帐户（User Account）和服务帐户（Service Account）
 
-> 顾名思义，用户帐户为人提供账户标识，而服务账户为计算机进程和 Kubernetes 集群中运行的 Pod 提供账户标识。用户帐户和服务帐户的一个区别是作用范围；用户帐户对应的是人的身份，人的身份与服务的 namespace 无关，所以用户账户是跨 namespace 的
->
-> 而服务帐户对应的是一个运行中程序的身份，与特定 namespace 是相关的。
+ 顾名思义，用户帐户为人提供账户标识，而服务账户为计算机进程和 Kubernetes 集群中运行的 Pod 提供账户标识。用户帐户和服务帐户的一个区别是作用范围；用户帐户对应的是人的身份，人的身份与服务的 namespace 无关，所以用户账户是跨 namespace 的
+
+ 而服务帐户对应的是一个运行中程序的身份，与特定 namespace 是相关的。
 
 ### 命名空间（Namespace）
 
-> 命名空间为 Kubernetes 集群提供虚拟的隔离作用，Kubernetes 集群初始有两个命名空间，分别是默认命名空间 default 和系统命名空间 kube-system，除此以外，管理员可以可以创建新的命名空间满足需要。
+ 命名空间为 Kubernetes 集群提供虚拟的隔离作用，Kubernetes 集群初始有两个命名空间，分别是默认命名空间 default 和系统命名空间 kube-system，除此以外，管理员可以可以创建新的命名空间满足需要。
 
 ### RBAC 访问授权
 
-> Kubernetes 在 1.3 版本中发布了 alpha 版的基于角色的访问控制（Role-based Access Control，RBAC）的授权模式。相对于基于属性的访问控制（Attribute-based Access Control，ABAC），RBAC 主要是引入了角色（Role）和角色绑定（RoleBinding）的抽象概念。在 ABAC 中，Kubernetes 集群中的访问策略只能跟用户直接关联；而在 RBAC 中，访问策略可以跟某个角色关联，具体的用户在跟一个或多个角色相关联。显然，RBAC 像其他新功能一样，每次引入新功能，都会引入新的 API 对象，从而引入新的概念抽象，而这一新的概念抽象一定会使集群服务管理和使用更容易扩展和重用。
+ Kubernetes 在 1.3 版本中发布了 alpha 版的基于角色的访问控制（Role-based Access Control，RBAC）的授权模式。相对于基于属性的访问控制（Attribute-based Access Control，ABAC），RBAC 主要是引入了角色（Role）和角色绑定（RoleBinding）的抽象概念。在 ABAC 中，Kubernetes 集群中的访问策略只能跟用户直接关联；而在 RBAC 中，访问策略可以跟某个角色关联，具体的用户在跟一个或多个角色相关联。显然，RBAC 像其他新功能一样，每次引入新功能，都会引入新的 API 对象，从而引入新的概念抽象，而这一新的概念抽象一定会使集群服务管理和使用更容易扩展和重用。
 
 
 
 ## kubernetes1.20
 
-> 1.20版本开始弃用dockershim，个中原因夹杂政治、利益、技术等等，详细可以围观
->
-> [官方解释](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
->
-> [来龙去脉](https://blog.kelu.org/tech/2020/10/09/the-diff-between-docker-containerd-runc-docker-shim.html)
+ 1.20版本开始弃用dockershim，个中原因夹杂政治、利益、技术等等，详细可以围观
+
+ [官方解释](https://kubernetes.io/blog/2020/12/02/dont-panic-kubernetes-and-docker/)
+
+ [来龙去脉](https://blog.kelu.org/tech/2020/10/09/the-diff-between-docker-containerd-runc-docker-shim.html)
 
 ![kubernetes 与 docker](/ICESX/ISunflower/nonecode/images/k8s-1.webp)
 
@@ -6015,18 +6185,18 @@ spec:
 
 ### containerd-shim
 
->containerd-shim 是一个真实运行容器的载体，每启动一个容器都会起一个新的 containerd-shim 的一个进程， 它直接通过指定的三个参数：容器 id，boundle 目录（containerd 对应某个容器生成的目录，一般位于：/var/run/docker/libcontainerd/containerID，其中包括了容器配置和标准输入、标准输出、标准错误三个管道文件），运行时二进制（默认为 runC）来调用 runc 的 api 创建一个容器，上面的 docker 进程图中可以直观的显示。其主要作用是：它允许容器运行时(即 runC)在启动容器之后退出，简单说就是不必为每个容器一直运行一个容器运行时(runC)
->即使在 containerd 和 dockerd 都挂掉的情况下，容器的标准 IO 和其它的文件描述符也都是可用的
->向 containerd 报告容器的退出状态
->
->有了它就可以在不中断容器运行的情况下升级或重启 dockerd，对于生产环境来说意义重大。
->运行是二进制（默认为 runc）来调用 runc 的 api 创建一个容器（比如创建容器：最后拼装的命令如下：runc create 。。。。。）
+containerd-shim 是一个真实运行容器的载体，每启动一个容器都会起一个新的 containerd-shim 的一个进程， 它直接通过指定的三个参数：容器 id，boundle 目录（containerd 对应某个容器生成的目录，一般位于：/var/run/docker/libcontainerd/containerID，其中包括了容器配置和标准输入、标准输出、标准错误三个管道文件），运行时二进制（默认为 runC）来调用 runc 的 api 创建一个容器，上面的 docker 进程图中可以直观的显示。其主要作用是：它允许容器运行时(即 runC)在启动容器之后退出，简单说就是不必为每个容器一直运行一个容器运行时(runC)
+即使在 containerd 和 dockerd 都挂掉的情况下，容器的标准 IO 和其它的文件描述符也都是可用的
+向 containerd 报告容器的退出状态
+
+有了它就可以在不中断容器运行的情况下升级或重启 dockerd，对于生产环境来说意义重大。
+运行是二进制（默认为 runc）来调用 runc 的 api 创建一个容器（比如创建容器：最后拼装的命令如下：runc create 。。。。。）
 
 ### crictl
 
 [官方地址](https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md）
 
-> *crictl* 是CRI 兼容的容器运行时命令行接口
+ *crictl* 是CRI 兼容的容器运行时命令行接口
 
 crictl by default connects on Unix to:
 
@@ -6051,10 +6221,10 @@ sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
 
 ### containerd
 
-> ctr is an unsupported debug and administrative client for interacting
-> with the containerd daemon. Because it is unsupported, the commands,
-> options, and operations are not guaranteed to be backward compatible or
-> stable from release to release of the containerd project
+ ctr is an unsupported debug and administrative client for interacting
+ with the containerd daemon. Because it is unsupported, the commands,
+ options, and operations are not guaranteed to be backward compatible or
+ stable from release to release of the containerd project
 
 #### 安装
 

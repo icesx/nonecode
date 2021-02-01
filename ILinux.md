@@ -877,3 +877,19 @@ To kill any socket in CLOSE_WAIT state, run this (as root)
 ```
 $ ss --tcp state CLOSE-WAIT --kill
 ```
+
+## curl
+
+```
+echo bjrdc:xxx|base64
+YmplZGM6eHh4Cg==
+```
+
+```
+curl -H "Authorization:Basic YmplZGM6eHh4Cg==" http://rabbit-stateful-0.rabbit-stateful-headless.bjrdc-dev.svc.cluster.local:15672/api/overview
+```
+
+```
+curl -i -u guest:guest http://localhost:15672/api/vhosts
+```
+

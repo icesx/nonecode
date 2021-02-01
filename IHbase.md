@@ -267,6 +267,9 @@ You need to restart Masters, then run hbck2 'assigns' command below:
 
 
  #### bypass
+
+可以pass掉某些任务，但是发现实地用处不大
+
    Options:
     -o,--override   override if procedure is running/stuck
     -r,--recursive  bypass parent and its children. SLOW! EXPENSIVE!
@@ -280,6 +283,9 @@ You need to restart Masters, then run hbck2 'assigns' command below:
    selectively. Does not always work.
 
  #### extraRegionsInMeta
+
+
+
    Options:
     -f, --fix    fix meta by removing all extra regions found.
    Reports regions present on hbase:meta, but with no related

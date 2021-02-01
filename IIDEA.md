@@ -38,7 +38,7 @@ IIDEA
 | Ctrl + B              | 进入光标所在的方法/变量的接口或是定义处，等效于 Ctrl + 左键单击 （必备） |
 | alt+shift+ left/rigth | navigate 返回或者前进上次光标位置                            |
 | ctrl+shift+alt+Y      | Show Context Menu，需要自己设置                              |
-|                       |                                                              |
+| alt+shift+7           | find used                                                    |
 
 
 

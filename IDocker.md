@@ -146,7 +146,7 @@ name		:
 ```sh
 docker run -it java:8-jdk  /bin/bash
 ## 修改镜像文件
-docker commit 880a64a4b26d --message="add rabbitmq" java:jdk-8-bjrdc-v1.0.0
+docker commit --message="add rabbitmq" 880a64a4b26d java:jdk-8-bjrdc-v1.0.0
 docker tag java:jdk-8-bjrdc-v1.0.1 bjrdc206.reg/java:jdk-8-bjrdc-v1.0.1
 docker loging bjrdc206.reg
 docker login bjrdc206.reg
