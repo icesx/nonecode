@@ -70,7 +70,7 @@ sudo bash -c "echo options nouveau modeset=0 >> /etc/modprobe.d/blacklist-nvidia
 
 3. cudann 库（安装runtime和dev两个）
     libcudnn7_7.6.2.24-1+cuda10.1_amd64.deb
-  libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
+    libcudnn7-dev_7.6.2.24-1+cuda10.1_amd64.deb
 
 4. pip3 install numpy 
 ### 问题处理

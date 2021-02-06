@@ -2,18 +2,24 @@ ffmpeg
 ======
 ## install
 + sample
-```
-	sudo apt-get install yasm libx264-dev
+```sh
+sudo apt-get install yasm libx264-dev
 	./configure --enable-shared --enable-libx264 --enable-gpl --prefix=/TOOLS/software/ffmpeg
 ```
 + complix
-```
+```sh
 sudo apt install libgsm1-dev  libmp3lame-dev  libx265-dev libwebp-dev libwavpack-dev libvpx-dev libvorbis-dev libzvbi-dev  libspeex-dev libmysofa-dev libshine-dev libopus-dev libtheora-dev libfontconfig1-dev libopencv-dev  libopencv-core-dev libopenjp2-7-dev  libopenmpt-dev libpulse-dev librsvg2-dev librubberband-dev  libsnappy-dev libsoxr-dev libssh-dev libtwolame-dev libxvidcore-dev libzmq3-dev libopenal-dev libcdio-dev libsdl2-dev
-
-./configure --prefix=/home/solar/ffmpeg-4.1 --extra-version=0ubuntu0.18.04.1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --enable-gpl --disable-stripping --enable-avresample --enable-avisynth  --enable-ladspa --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca  --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librubberband --enable-librsvg --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi  --enable-openal  --enable-sdl2 --enable-libdc1394 --enable-libdrm  --enable-chromaprint --enable-frei0r  --enable-libx264 --enable-shared --enable-pthreads
-
 ```
+
+
+```sh
+./configure --prefix=/home/solar/ffmpeg-4.1 --extra-version=0ubuntu0.18.04.1 --toolchain=hardened --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --enable-gpl --disable-stripping --enable-avresample --enable-avisynth  --enable-ladspa --enable-libass --enable-libbluray --enable-libbs2b --enable-libcaca  --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libmp3lame --enable-libmysofa --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse --enable-librubberband --enable-librsvg --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libssh --enable-libtheora --enable-libtwolame --enable-libvorbis --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 --enable-libxvid --enable-libzmq --enable-libzvbi  --enable-openal  --enable-sdl2 --enable-libdc1394 --enable-libdrm  --enable-chromaprint --enable-frei0r  --enable-libx264 --enable-shared --enable-pthreads
+```
+
+
+
 ## 参数
+
 ```
 	 -encoders
 	 -s 720*576
@@ -44,8 +50,76 @@ ffprobe -i xx.mp4
 ### -deinterlace
 
 ## 样例
-```
+```sh
 ffmpeg -y -i g7-2009-kbs.rm -c:v libx264 -strict -2 -deinterlace  -vb 3300000 usb-target/g7-2009-kbs.deinterlace.mp4
 ```
 ## webm to mp4 
-	ffmpeg -fflags +genpts -i 吸毒打击.webm   吸毒打 击.mp4
+```sh
+ffmpeg -fflags +genpts -i 吸毒打击.webm   吸毒打击.mp4
+```
+
+## 屏幕直播
+
+```
+sudo apt-get install libx11-dev libXtst-dev yasm libx264-dev
+./configure --prefix=/TOOLS/software/ffmpeg --enable-x11grab --enable-gpl --enable-libx264
+./ffmpeg  -f x11grab -s 1366*768 -r 15  -i :0.0 -vcodec libx264 -preset ultrafast -pix_fmt yuv420p -s 720*576 -f flv rtmp://localhost/myrtmp/mystream
+```
+
+
+
+## 压缩
+
+自动进行目录的压缩
+
+```sh
+#!/bin/bash
+set -x
+_local=$0
+root_dir=$1
+out_dir=$2
+function main(){
+	IFS=$(echo -en "\n\b")
+	echo -en $IFS
+	files=`find $root_dir|grep .mp4$`
+	for i in $files
+	do
+		file_check $i
+		echo $out_dir
+		out_file=`echo $i|sed "s|$root_dir|$out_dir|g"`
+		mkdir -p `dirname $out_file`
+		out_base=$out_file.base.ts
+		run_ffmpeg $i $out_base 720*576 25 2300000 96000 4:3
+		echo $out_base >>$out_dir/file_ok.txt
+		out_fhd=$out_file.fhd.ts 
+		run_ffmpeg $i $out_fhd 1920*1080 25 7200000 96000 16:9
+		echo $out_fhd >>$out_dir/file_ok.txt
+		out_hd=$out_file.hd.ts 
+		run_ffmpeg $i $out_hd 1280*720 25 3300000 96000 16:9
+		echo $out_hd >>$out_dir/file_ok.txt
+	done
+}
+function file_check(){
+file=$1
+if [ -f "$file" ]
+then
+	echo "$file found."
+else
+	echo "$file not found."
+	echo $file >> $out_dir/file_error.txt
+fi
+}
+function run_ffmpeg(){
+	in=$1
+	out=$2
+	resolution=$3
+	fps=$4
+	vb=$5
+	ab=$6
+	aspect=$7
+#	ffmpeg  -i $in -s $resolution  -deinterlace -strict -2 -threads 0 -r $fps -vb $vb $out
+	ffmpeg	-i $in -c:v libx264 -s $resolution -aspect $aspect -r $fps -b:v $vb -b:a $ab -c:a mp2 $out
+}
+main
+```
+

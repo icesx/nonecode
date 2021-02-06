@@ -56,7 +56,7 @@ idf.py -p /dev/ttyUSB0 monitor
 
 > 安装插件`espressif.esp-idf-extension`
 
-### 打开配置
+### 配置
 
 按F1键，输入ESP-IDF:Configure ESP-IDF extension，打开配置页面，安装后似乎也会自动弹出配置页面
 
@@ -119,7 +119,7 @@ EOF
 /TOOLS/SDK/esp32/esp-idf/install.sh
 ```
 
-## 问题处理
+### 问题处理
 
 #### mynvs.c:16:10: fatal error: nvs_flash.h: No such file or directory
 
@@ -371,4 +371,154 @@ PIO中对于一种平台包含三总定义：
    `lib_deps`为依赖库，通过pio插件查询后（[也可以通过在线查询地址查询](https://platformio.org/lib)）可以配置在这里，在进行编译的时候，会自动下载。下载完成后会放到项目根目录的/lib目录下。
 
    
+
+## ESP-IDF
+
+### 目录结构
+
+├── CMakeLists.txt
+├── components
+│   ├── display_common
+│   ├── display_effect
+│   ├── display_normal
+│   └── tjpgd
+├── main
+│   ├── CMakeLists.txt
+│   └── main.c
+├── README.md
+└── sdkconfig
+
+1. sdkconfig
+
+   配置相关硬件和软件的信息，可以使用`menuconfig`对其进行修改。如修改lcd的配置。
+
+   sdkconfig编译后，会形成sdkconfig.h，其中是配置的相关的宏。
+
+2. main
+
+   该目录存在项目的入口文件，文件名称可以自定义，需要在`/main/CMakeLists.txt`中进行声明
+
+   ```cmake
+   set(srcs "main.c"
+       )
+   
+   idf_component_register(SRCS ${srcs}
+                       INCLUDE_DIRS "."
+   )
+   ```
+
+   
+
+3. componentes
+
+   esp-idf插件自动识别的目录，存在相关的自定义库。componentes目录下不需要cmake相关的文件。
+
+4. ./CmakesLists.txt
+
+   项目入口文件
+
+   ```cmake
+   # The following lines of boilerplate have to be in your project's CMakeLists
+   # in this exact order for cmake to work correctly
+   cmake_minimum_required(VERSION 3.5)
+   
+   include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+   project(spi_master)
+   
+   ```
+
+   
+
+### display
+
+我购买的是TTGO的带屏幕的一款设备，TTGO提供的出厂例程使用的是arduino，虽然在platformIO模式下点亮成功，但是感觉还是不够原生。
+
+使用官方的`esp-idf/examples/peripherals/spi_master`在安装好的esp-idf模式下可以编译通过，按时无法点亮。原因是针脚不匹配，按照ttgo官方说明，进行宏修改。
+
+| Name       | V18    |
+| ---------- | ------ |
+| TFT Driver | ST7789 |
+| TFT_MISO   | N/A    |
+| TFT_MOSI   | 19     |
+| TFT_SCLK   | 18     |
+| TFT_CS     | 5      |
+| TFT_DC     | 16     |
+| TFT_RST    | N/A    |
+| TFT_BL     | 4      |
+| I2C_SDA    | 21     |
+| I2C_SCL    | 22     |
+| ADC_IN     | 34     |
+| BUTTON1    | 35     |
+| BUTTON2    | 0      |
+| ADC Power  | 14     |
+
+```c
+#define PIN_NUM_MISO 23
+#define PIN_NUM_MOSI 19
+#define PIN_NUM_CLK 18
+#define PIN_NUM_CS 5
+#define PIN_NUM_DC 16
+#define PIN_NUM_RST 23
+#define PIN_NUM_BCKL 4
+```
+
+没有点亮，但是也没有报错，经过跟踪，用打光的方式，发现是lcd的背光没有开。
+
+```c
+gpio_set_level(PIN_NUM_BCKL, 1);
+```
+
+
+
+### 自定义component
+
+尝试将display相关功能抽象出来，作成独立的组件，代码抽取出去后，目录接入如下：
+
+├── CMakeLists.txt
+├── components
+│   ├── display_common
+│   │   ├── CMakeLists.txt
+│   │   ├── component.mk
+│   │   ├── display_common.c
+│   │   └── display_common.h
+│   ├── display_effect
+│   │   ├── CMakeLists.txt
+│   │   ├── component.mk
+│   │   ├── decode_image.c
+│   │   ├── decode_image.h
+│   │   ├── image.jpg
+│   │   ├── Kconfig.projbuild
+│   │   ├── pretty_effect.c
+│   │   ├── pretty_effect.h
+│   │   ├── spi_disaply.h
+│   │   └── spi_master_example_main.c
+│   ├── display_normal
+│   └── tjpgd
+│       ├── CMakeLists.txt
+│       ├── component.mk
+│       ├── include
+│       └── src
+├── main
+│   ├── CMakeLists.txt
+│   └── main.c
+├── README.md
+└── sdkconfig
+
+编译通过但是链接不成功，查询后原因是`display_effect`依赖与`display_common`,需要在`componentes/display_effect/CMakeLists.ext`中增加相关配置
+
+```cmake
+set(srcs "pretty_effect.c"
+    "spi_master_example_main.c"
+    )
+
+# Only ESP32 has enough memory to do jpeg decoding
+if(IDF_TARGET STREQUAL "esp32")
+    list(APPEND srcs "decode_image.c")
+endif()
+
+idf_component_register(SRCS ${srcs}
+                    INCLUDE_DIRS "."
+                    REQUIRES display_common
+                    EMBED_FILES image.jpg)
+```
 
