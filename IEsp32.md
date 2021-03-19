@@ -5,7 +5,7 @@ ESP32
 
 [参考地址](https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/get-started/index.html#get-started-connect)
 
-### 安装
+### 安装 espressif
 
 ```sh
 sudo apt install python-is-python3
@@ -30,6 +30,8 @@ sudo apt install ninja-build
 https://github.com/espressif/esp-idf/releases
 ```
 
+git clone
+
 执行完成后，tool-chain会下载到`/TOOLS/SDK/esp32/espressif`
 
 增加 get_idf 的命令别名到`.profile`
@@ -37,6 +39,45 @@ https://github.com/espressif/esp-idf/releases
 ```sh
 alias get_idf='. /TOOLS/SDK/esp32/esp-idf/export.sh'
 ```
+
+### 安装esp-idf
+
+1. clone esp-idf
+
+   ```sh
+   git clone  https://github.com/espressif/esp-idf.git
+   ```
+
+2. submodule
+
+   ```sh
+   cd esp-idf
+   git submodule update --recursive
+   ```
+
+   **注：每次checkout 分支后，需要更新submoule**
+
+   
+
+3. install
+
+   ```
+   ./install.sh
+   ```
+
+   
+
+### 环境变量
+
+编译之前需要先准备环境变量
+
+```sh
+export IDF_TOOLS_PATH=/TOOLS/SDK/esp32/espressif
+export IDF_PATH=/TOOLS/SDK/esp32/esp-idf
+source /TOOLS/SDK/esp32/esp-idf/export.sh
+```
+
+
 
 ### hello_world
 
@@ -52,7 +93,7 @@ idf.py -p /dev/ttyUSB0 monitor
 
 在安装vscode环境之前，要求已经安装了esp-idf 和 espressif
 
-#### 安装esp-idf插件
+### 安装esp-idf插件
 
 > 安装插件`espressif.esp-idf-extension`
 
@@ -372,7 +413,7 @@ PIO中对于一种平台包含三总定义：
 
    
 
-## ESP-IDF
+## vscode+esp-idf
 
 ### 目录结构
 
@@ -387,6 +428,8 @@ PIO中对于一种平台包含三总定义：
 │   └── main.c
 ├── README.md
 └── sdkconfig
+
+### 基本配置
 
 1. sdkconfig
 
@@ -413,7 +456,7 @@ PIO中对于一种平台包含三总定义：
 
    esp-idf插件自动识别的目录，存在相关的自定义库。componentes目录下不需要cmake相关的文件。
 
-4. ./CmakesLists.txt
+4. ./CMakesLists.txt
 
    项目入口文件
 

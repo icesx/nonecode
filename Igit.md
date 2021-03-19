@@ -62,10 +62,19 @@ git config --global credential.helper 'cache --timeout=360000'
 ### 中文文件名
 `git config --global core.quotepath false`
 
+### show all branch
+
+```
+git branch -r
+```
+
+
+
 # git 的正确用法
 ## branch
 远程master分支
 本地dev分支
+
 ## 正常工作流程
 1. 从服务器checkout master分支
 	
@@ -276,6 +285,12 @@ A、B两个项目需要在gitlab上以独立项目的方式存在，但又需要
 
 如在进行项目开发的时候，在eclipse或者idea中需要有上下级目录结构，而且需要A、B两个项目能够独立的执行CI
 
+```
+git submodule update --init --recursive
+```
+
+
+
 ### 基本命令
 
 1. 创建submodule
@@ -300,6 +315,48 @@ A、B两个项目需要在gitlab上以独立项目的方式存在，但又需要
    git commit -m "test submodule"
    git push origin HEAD:master
    ```
+
+4. 删除submodule
+
+   1. `rm -rf 子模块目录` 删除子模块目录及源码
+   2. `vi .gitmodules` 删除项目目录下.gitmodules文件中子模块相关条目
+   3. `vi .git/config` 删除配置项中子模块相关条目
+   4. `rm .git/module/*` 删除模块下的子模块目录，每个子模块对应一个目录，注意只删除对应的子模块目录即可
+
+   
+   
+   
+   
+   
+   
+   
+   
+## 问题处理
+
+### fatal: unable to access 'xxxx': gnutls_handshake() failed: Error in the pull function.
+
+
+In my case worked, mixing the solutions of @Rick and @m0j0
+
+First execute these commands:
+
+```
+git config --global http.sslVerify false
+git config --global http.sslVerify true
+```
+
+After add or modify `~/.gitconfig`
+
+```
+nano ~/.gitconfig
+```
+
+Set this:
+
+```
+[httpd] 
+    sslVersion = sslv3
+```
 
    
 

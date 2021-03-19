@@ -86,6 +86,31 @@ sudo bash -c "echo options nouveau modeset=0 >> /etc/modprobe.d/blacklist-nvidia
 
 > 没有安装cuda
 
+### 3. 内存溢出的一个问题
+
+在进行fit的callback中进行设置tensorboard的时候，callback每次调用的时候都创建了tensorboard，持续之后导致内存溢出了。
+
+将tensorboard的设置修改为单例的
+
+```python
+class __tensor_boader_single():
+    def __init__(self):
+        self.__tensor_board = None
+
+    def tf_board_instance(self, name):
+        log_dir = "../tmp/logs/tb/" + name + "/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        if self.__tensor_board is None:
+            print("created TensorBoard")
+            self.__tensor_board = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1, profile_batch=0)
+        return self.__tensor_board
+
+
+tb = __tensor_boader_single()
+
+```
+
+
+
 ## pip 安装
 
 ```
@@ -209,7 +234,9 @@ tf2的版本去掉了session，另外还有较大的改动。官方推荐使用k
 
 ## 关于训练
 
-# train loss与test loss结果分析
+
+
+## train loss与test loss结果分析
 
 train loss 不断下降，test loss不断下降，说明网络仍在学习;
 train loss 不断下降，test loss趋于不变，说明网络过拟合;
@@ -239,3 +266,18 @@ train loss 不断上升，test loss不断上升，说明网络结构设计不当
 损失值一直下降缓慢(蓝色曲线),此时应稍微加大学习率,然后继续观察训练
 曲线;直至模型呈现红色曲线所示的理想学习率下的训练曲线为止。此外,微
 调(}M2 imM2)卷积神经网络过程中,学习率有时也需特别关注
+
+## 模型优化
+
+1. 增加深度
+
+   增加深度可以减少参数，防止过拟合，提高准确率。在102flowers上，增加深度可以提高20%的准确率。
+
+2. 增加正则化
+
+3. 增加dropout
+
+4. 数据增强
+
+## 数据增强（augment）
+

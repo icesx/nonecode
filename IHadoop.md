@@ -751,3 +751,57 @@ hadoop-2.6.0
 ## Ambari
 
 ### 安装
+
+
+
+#### 问题
+
+1. at exports.runInThisContext (vm.js:53:16)
+
+   nodejs 的包版本的问题，[使用如下链接的补丁修正](https://github.com/apache/bigtop/pull/628/files)
+
+   ```sh
+   vi ambari-admin/src/main/resources/ui/admin-web/package.json
+   ```
+
+   ```json
+   {
+     "name": "adminconsole",
+     "version": "0.0.0",
+     "dependencies": {},
+     "devDependencies": {
+       "bower": "1.3.8",
+   ```
+
+   ```json
+   {
+     "name": "adminconsole",
+     "version": "0.0.0",
+     "dependencies": {},
+     "devDependencies": {
+       "bower": "1.8.8",
+   ```
+
+   
+
+2. ​      [get] Error opening connection java.io.IOException: Server returned HTTP response code: 403 for URL: https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.0-315/tars/hbase/hbase-2.0.2.3.1.4.0-315-bin.tar.gz
+
+   [解决办法](https://stackoverflow.com/questions/64494636/install-ambari-cant-download-hortonworks-hdp-from-amazon-s3)
+
+   vi **apache-ambari-2.7.5-src/ambari-metrics/pom.xml**
+
+   ```
+    <hbase.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/hbase/hbase-2.0.2.3.1.4.1-1-bin.tar.gz</hbase.tar>
+       <hbase.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/hbase/hbase-2.0.2.3.1.4.1-1-bin.tar.gz</hbase.tar>
+       <hbase.folder>hbase-2.0.2.3.1.4.1-1</hbase.folder>
+       <hadoop.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/hadoop/hadoop-3.1.1.3.1.4.1-1.tar.gz</hadoop.tar>
+       <hadoop.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/hadoop/hadoop-3.1.1.3.1.4.1-1.tar.gz</hadoop.tar>
+       <hadoop.folder>hadoop-3.1.1.3.1.4.1-1</hadoop.folder>
+       <grafana.folder>grafana-6.4.2</grafana.folder>
+       <grafana.tar>https://dl.grafana.com/oss/release/grafana-6.4.2.linux-amd64.tar.gz</grafana.tar>
+       <phoenix.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/phoenix/phoenix-5.0.0.3.1.4.1-1.tar.gz</phoenix.tar>
+       <phoenix.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/phoenix/phoenix-5.0.0.3.1.4.1-1.tar.gz</phoenix.tar>
+       <phoenix.folder>phoenix-5.0.0.3.1.4.1-1</phoenix.folder>
+   ```
+
+   

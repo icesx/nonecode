@@ -178,7 +178,15 @@ endforeach (sub)
 
     添加需要链接的库文件目录
 
-12. 
+12. file
+
+    将所有文件增加到srcs变量中
+
+    ```cmake
+    FILE(GLOB srcs *.c)
+    ```
+
+    
 
 ### 编译选项
 
@@ -209,6 +217,213 @@ endforeach (sub)
 `cmake . -LH`
 
 ## 使用例子
+
+### Linux
+
+#### 例子
+
+1. 简单的一个例子
+
+   `/ICESX/workSpaceC/IC/workspace_vsc/ILearcnC++`
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   project(learncpp VERSION 0.1.0)
+   set( CMAKE_VERBOSE_MAKEFILE on )
+   include(CTest)
+   enable_testing()
+   add_executable(learncpp src/ILearn.cpp)
+   set(subs "clazz;lambda;list;my_integer;operator;vector")
+   foreach(sub IN LISTS subs)
+       message("config subdirectory::: ${sub}")
+       add_subdirectory("src/${sub}")
+       link_directories(${PROJECT_BINARY_DIR}/src/${sub})
+       target_link_libraries(${PROJECT_NAME} ${sub})
+   endforeach (sub)
+   set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+   set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+   include(CPack)
+   ```
+
+2. C 调用C++
+
+   ```
+   ├── c_i_cpp
+   │   ├── CMakeLists.txt
+   │   └── src
+   ├── CMakeLists.txt
+   ├── cpp_i_c
+   │   ├── CMakeLists.txt
+   │   └── src
+   ├── include
+   │   ├── c_module.h
+   │   └── cpp_module.h
+   ├── lib_cpp_shard
+   │   ├── CMakeLists.txt
+   │   └── src
+   ├── lib_c_shard
+   │   ├── CMakeLists.txt
+   │   └── src
+   └── readme.md
+   ```
+
+   `/ICESX/workSpaceC/IC/workspace_vsc/C-C++`
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   set( CMAKE_VERBOSE_MAKEFILE on )
+   message(STATUS "src This is BINARY dir " ${PROJECT_BINARY_DIR})
+   message(STATUS "src This is SOURCE dir " ${PROJECT_SOURCE_DIR})
+   project(ccp VERSION 0.1.0)
+   #0 is c ivoke c++
+   # set(IVOKE 0)
+   set(IVOKE 0)
+   include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+   if (${IVOKE} EQUAL 1)
+       message("c++ ivoke c")
+       set(SHARD_PATH lib_c_shard)
+       set(LIB c_shard)
+       set(EXE_PATH cpp_i_c)
+   else()
+       message("c ivoke c++")
+       set(SHARD_PATH lib_cpp_shard)
+       set(LIB cpp_shard)
+       set(EXE_PATH c_i_cpp)
+   endif()
+   link_directories(
+       ${PROJECT_BINARY_DIR}/lib_cpp_shard
+       ${PROJECT_BINARY_DIR}/lib_c_shard
+   )
+   message("SHARD_PATH=${SHARD_PATH}")
+   add_subdirectory(${SHARD_PATH})
+   add_subdirectory(${EXE_PATH})
+   ```
+
+   /lib_c_shard/CMakeList.txt，`cpp_shard`是当前目录的模块的名称
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   project(cpp_shard VERSION 0.1.0)
+   aux_source_directory(. DIR_LIB_SRCS)
+   SET(SRC src/c_module.c)
+   ADD_LIBRARY(${LIB} SHARED ${SRC})
+   ```
+
+3. 编译SO
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   set( CMAKE_VERBOSE_MAKEFILE on )
+   message(STATUS "src This is BINARY dir " ${PROJECT_BINARY_DIR})
+   message(STATUS "src This is SOURCE dir " ${PROJECT_SOURCE_DIR})
+   project(ardunio VERSION 0.1.0)
+   set(CMAKE_C_COMPILER /TOOLS/IDE/arduino/hardware/tools/avr/bin/avr-gcc)
+   set(CMAKE_CXX_COMPILER /TOOLS/IDE/arduino/hardware/tools/avr/bin/avr-g++)
+   set(CMAKE_CXX_FLAGS "-O2 -Wwrite-strings")
+   # include
+   message("CMAKE_CURRENT_LIST_DIR====${CMAKE_CURRENT_LIST_DIR}")
+   INCLUDE_DIRECTORIES(
+       ${CMAKE_CURRENT_LIST_DIR}/include
+       ${CMAKE_CURRENT_LIST_DIR}/libavr-base
+       ${CMAKE_CURRENT_LIST_DIR}/libavr-mine
+       ${CMAKE_CURRENT_LIST_DIR}/libavr-base/arduino
+       ${CMAKE_CURRENT_LIST_DIR}/include/variants/mega
+       )
+   
+   # 宏
+   add_definitions(
+       -DF_CPU=16000000L
+       -D__AVR_ATmega2560__
+       -DARDUINO_ARCH_AVR
+   )
+   set(subs "libavr-base;libavr-mine")
+   foreach(sub IN LISTS subs)
+       message("config subdirectory::: ${sub}")
+       add_subdirectory("${sub}")
+   endforeach (sub)
+   
+   ```
+
+   
+
+### 模板
+
+#### 动态库
+
+1. 根目录
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   project(auth-face VERSION 0.1.0)
+   set(CMAKE_VERBOSE_MAKEFILE on )
+   set(CMAKE_C_COMPILER /TOOLS/GCC/gcc-linaro-5.3.1-2016.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc)
+   set(CMAKE_CXX_COMPILER /TOOLS/GCC/gcc-linaro-5.3.1-2016.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc)
+   set(CMAKE_CXX_FLAGS "-O2 -Wwrite-strings -std=gnu++11")
+   
+   INCLUDE_DIRECTORIES(
+       ${CMAKE_CURRENT_LIST_DIR}/include
+       ${CMAKE_CURRENT_LIST_DIR}/include/libconfig
+       ${CMAKE_CURRENT_LIST_DIR}/include/libjpeg
+       )
+   
+   set(subs "config;face;forpy;inotify;jpeg;sqlite;system;utils")
+   foreach(sub IN LISTS subs)
+       message("config subdirectory::: ${sub}")
+       add_subdirectory("src/${sub}")
+       link_directories(${PROJECT_BINARY_DIR}/src/${sub})
+       target_link_libraries(${sub})
+   endforeach (sub)
+   set(MAIN_SRC libc.c)
+   ADD_LIBRARY(${PROJECT_NAME} SHARED ${MAIN_SRC})
+   ```
+
+2. subs  clazz目录
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   SET(SRC config.cpp
+   )
+   set(so config)
+   ADD_LIBRARY(${so} SHARED ${SRC})
+   ```
+   
+
+#### 可执行程序
+
+1. 根目录
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   project(FILEUTILS VERSION 0.1.0)
+   
+   include(CTest)
+   enable_testing()
+   
+   set(SRC FileUtils.c)
+   add_executable(${PROJECT_NAME} ${SRC})
+   set(subs "fu")
+   foreach(sub IN LISTS subs)
+       message("config subdirectory::: ${sub}")
+       add_subdirectory("${sub}")
+       link_directories(${PROJECT_BINARY_DIR}/${sub})
+       target_link_libraries(${PROJECT_NAME} ${sub})
+   endforeach (sub)
+   set(CPACK_PROJECT_NAME ${PROJECT_NAME})
+   set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
+   include(CPack)
+   
+   ```
+
+2. 子目录
+
+   ```cmake
+   cmake_minimum_required(VERSION 3.0.0)
+   SET(SRC file_util.c)
+   set(so fu)
+   ADD_LIBRARY(${so} SHARED ${SRC})
+   ```
+
+   
 
 ### arduino整合
 

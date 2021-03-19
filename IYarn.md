@@ -113,44 +113,52 @@
 ### log
 
 + mapred-site.xml
-<property> 
+
+  ```
+  <property> 
       <name>mapreduce.jobtracker.address</name>
       <value>hadoop-cx11</value>
-</property>
-<property> 
+  </property>
+  <property> 
       <name>mapreduce.jobhistory.address</name>
       <value>hadoop-cx11:10020</value>
-</property>
-<property> 
+  </property>
+  <property> 
       <name>mapreduce.jobhistory.webapp.address</name>
       <value>hadoop-cx11:19888</value>
-</property>
-<property>
+  </property>
+  <property>
     <name>mapreduce.job.userlog.retain.hours</name>
     <value>36</value>
-</property>
+  </property>
+  ```
+
+  
 
 + yarn-site.xml
   
-
-<property>
-    <name>yarn.log-aggregation-enable</name>
-    <value>true</value>
-</property>
-<property>
-    <name>yarn.log-aggregation-enable</name>
-    <value>true</value>
-</property>
-<property>
-    <name>yarn.log-aggregation.retain-seconds</name>
-    <value>172800</value>
-</property>
-<property>
-    <name>yarn.log.server.url</name>
-    <value>http://solar10:19888/jobhistory/logs</value>
-</property>
-
-
+  ```xml
+  <property>
+      <name>yarn.log-aggregation-enable</name>
+      <value>true</value>
+  </property>
+  <property>
+      <name>yarn.log-aggregation-enable</name>
+      <value>true</value>
+  </property>
+  <property>
+      <name>yarn.log-aggregation.retain-seconds</name>
+      <value>172800</value>
+  </property>
+  <property>
+      <name>yarn.log.server.url</name>
+      <value>http://xxx:19888/jobhistory/logs</value>
+  </property>
+  
+  
+  ```
+  
+  
 
 ## 内存配置
 
