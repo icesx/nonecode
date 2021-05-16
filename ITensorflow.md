@@ -24,7 +24,7 @@ pip3 install tensorflow
 pip3 install tensorflow-1.13.1-cp35-none-linux_armv7l.whl
 ```
 #### illegal instruction (core dumped)
-虚拟化软件中需要将cpu设置为Broadwell，不能用kvm-processer
+虚拟化软件中需要将cpu设置为Broadwell,或者IvyBridge，不能用kvm-processer
 
 ### base test
 
@@ -164,20 +164,20 @@ tf2的版本去掉了session，另外还有较大的改动。官方推荐使用k
 
 1. batchsize
 
-   > 中文翻译为批大小（批尺寸）。在深度学习中，一般采用SGD训练，即每次训练在训练集中取batchsize个样本训练；
+   中文翻译为批大小（批尺寸）。在深度学习中，一般采用SGD训练，即每次训练在训练集中取batchsize个样本训练
 
-2. iteration
+2. steps_per_epoch
 
-   > 中文翻译为迭代，1个iteration等于使用batchsize个样本训练一次；
-   > 一个迭代 = 一个正向通过+一个反向通过
+    中文翻译为迭代，1个steps_per_epoch等于使用batchsize个样本训练一次；
+    一个迭代 = 一个正向通过+一个反向通过
 
 3. epoch
 
-   > 迭代次数，1个epoch等于使用训练集中的全部样本训练一次；
-   > 一个epoch = 所有训练样本的一个正向传递和一个反向传递
-   > 举个例子，训练集有1000个样本，batchsize=10，那么：
-   > 训练完整个样本集需要：
-   > 100次iteration，1次epoch。
+    迭代次数，1个epoch等于使用训练集中的全部样本训练一次；
+    一个epoch = 所有训练样本的一个正向传递和一个反向传递
+    
+4. 举个例子，训练集有5000个样本那么：
+   训练完整个样本集5次需要：epoch=5，steps_per_epoch=500,batchsize=10。
 
 
 
@@ -278,6 +278,29 @@ train loss 不断上升，test loss不断上升，说明网络结构设计不当
 3. 增加dropout
 
 4. 数据增强
+
+5. 开发出过拟合的模型（保证网络有足够的拟合能力，再去调参）：
+
+   1. 添加更多的层（增加深度）。
+   2. 让每一层变得更大（增加神经单元数）。
+   3. 训练更多的轮次。
+
+6. 然后，抑制过拟合:（出现过拟合表示网络的容量足够）
+
+   1. dropout。
+   2. 正则化。
+   3. 图像增强。
+   4. 增加训练数据（最佳）。
+   5. 使用更小的网络容量（减少神经单元、减少隐藏层）
+
+7. 构建网络的总原则：
+
+   1. 增大网络容量，直到过拟合
+   2. 采取措施抑制过拟合
+   3. 继续增大网络容量，直到过拟合
+
+
+
 
 ## 数据增强（augment）
 

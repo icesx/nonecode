@@ -65,7 +65,18 @@ alias get_idf='. /TOOLS/SDK/esp32/esp-idf/export.sh'
    ./install.sh
    ```
 
-   
+
+### 升级esp-idf
+
+```sh
+cd $IDF_PATH
+git fetch
+git checkout vX.Y.Z
+git submodule update --init --recursive
+python -m pip install --user -r $IDF_PATH/requirements.txt
+```
+
+
 
 ### 环境变量
 

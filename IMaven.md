@@ -1,11 +1,15 @@
 Maven
 ========
 
+### 基本命令
+
+
+
 ### goal
 
 > 将当前插件的resource、build、deploy阶段 绑定到deploy阶段
 
-```
+```xml
 <execution>
     <phase>deploy</phase>
     <id>default</id>
@@ -37,7 +41,7 @@ Maven
 
 
 
-```
+```xml
 <execution>
 	<phase>process-sources</phase>
     <goals>
@@ -48,7 +52,7 @@ Maven
 
 modifyCode 将关联到MavenModleCodeModifyPlugin
 
-```
+```java
 @Mojo(name = "modifyCode", requiresDependencyResolution = ResolutionScope.COMPILE)
 public class MavenModleCodeModifyPlugin extends AbstractMojo {
 ...
@@ -85,7 +89,7 @@ cd ${nexus_home}
 ```
 4. 重置密码为admin123
 ```
-  update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"
+update user SET password="$shiro1$SHA-512$1024$NE+wqQq/TmjZMvfI7ENh/g==$V4yPw8T64UQ6GfJfxYq2hLsVrBY8D1v+bktfOxGdt4b/9BthpWPNUy/CBk6V9iA0nHpzYzJFWO8v/tZFtES8CA==" UPSERT WHERE id="admin"
 ```
 5. 启动服务
 
@@ -146,7 +150,7 @@ http://maven.aliyun.com/nexus/content/groups/public
 
 ### maven/conf/settings 
 
-```
+```xml
 <servers>
 <server>
 	<id>nexus</id>
@@ -196,7 +200,7 @@ http://maven.aliyun.com/nexus/content/groups/public
 
 ## 本地代码deploy
 在项目的pom文件中增加如下配置
-```
+```xml
 	<distributionManagement>
 		<snapshotRepository>
 			<id>nexus</id>

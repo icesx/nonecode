@@ -46,7 +46,28 @@ location / {
 		proxy_pass http://52.4.1.145:18567;
 	}
 ```
+### auth
+
+```
+sudo apt install apache2-utils
+cd $nginx/config
+htpasswd password user
+```
+
+配置nginx.conf
+
+```nginx
+http {
+...
+    auth_basic "password";
+    auth_basic_user_file password;
+...    
+```
+
+
+
 ### mp4
+
 ```
 --with-http_mp4_module
 ```

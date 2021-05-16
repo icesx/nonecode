@@ -226,6 +226,11 @@ systemctl start pve-cluster.service
 ssh -o 'HostKeyAlias=bj3' root@192.168.86.44
 ```
 
+### Proxmox TASK ERROR: VM is locked
+
+ssh登陆Proxmox服务器，执行如下命令即可(ID：103)：
+qm unlock 103
+
 ## 常用命令
 
 1. 关闭虚拟机

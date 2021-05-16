@@ -39,6 +39,11 @@ IIDEA
 | alt+shift+ left/rigth | navigate 返回或者前进上次光标位置                            |
 | ctrl+shift+alt+Y      | Show Context Menu，需要自己设置                              |
 | alt+shift+7           | find used                                                    |
+| ctrl+alt+O            | autoimport                                                   |
+| ctrl+shift+O          | mavne reload                                                 |
+|                       |                                                              |
+|                       |                                                              |
+|                       |                                                              |
 
 
 

@@ -481,7 +481,7 @@ hadoop-2.6.0
 	config yarn shuffleservice
 	echo "CLASSPATH=${CLASSPATH}:/home/docker/software/spark-2.1.1-bin-hadoop2.6/yarn/spark-2.1.1-yarn-shuffle.jar" >> ~${hadoop-home}/libexec/hadoop-config.sh
 
-### log
+### history
 
 + mapred-site.xml
 
@@ -527,9 +527,13 @@ hadoop-2.6.0
   </property>
   ```
 
++ 启动命令
+
+  ```
+  mr-jobhistory-daemon.sh start historyserver
+  ```
+
   
-
-
 
 ### 内存配置
 
@@ -695,7 +699,6 @@ hadoop-2.6.0
            <final>false</final>
    </property>
    ```
-   
 
 
 ## HDFS
@@ -752,6 +755,23 @@ hadoop-2.6.0
 
 ### 安装
 
+```
+apt install python-psutil pyhton-dev
+```
+
+
+
+```
+wget https://www-eu.apache.org/dist/ambari/ambari-2.7.5/apache-ambari-2.7.5-src.tar.gz (use the suggested mirror from above)
+tar xfvz apache-ambari-2.7.5-src.tar.gz
+cd apache-ambari-2.7.5-src
+mvn versions:set -DnewVersion=2.7.5.0.0
+ 
+pushd ambari-metrics
+mvn versions:set -DnewVersion=2.7.5.0.0
+popd
+```
+
 
 
 #### 问题
@@ -790,18 +810,35 @@ hadoop-2.6.0
 
    vi **apache-ambari-2.7.5-src/ambari-metrics/pom.xml**
 
-   ```
-    <hbase.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/hbase/hbase-2.0.2.3.1.4.1-1-bin.tar.gz</hbase.tar>
-       <hbase.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/hbase/hbase-2.0.2.3.1.4.1-1-bin.tar.gz</hbase.tar>
-       <hbase.folder>hbase-2.0.2.3.1.4.1-1</hbase.folder>
-       <hadoop.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/hadoop/hadoop-3.1.1.3.1.4.1-1.tar.gz</hadoop.tar>
-       <hadoop.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/hadoop/hadoop-3.1.1.3.1.4.1-1.tar.gz</hadoop.tar>
-       <hadoop.folder>hadoop-3.1.1.3.1.4.1-1</hadoop.folder>
+   ```xml
+      <hbase.tar>https://archive.apache.org/dist/hbase/2.2.6/hbase-2.2.6-bin.tar.gz</hbase.tar>
+       <hbase.folder>hbase-2.2.6</hbase.folder>
+       <hadoop.tar>https://archive.apache.org/dist/hadoop/core/hadoop-3.0.3/hadoop-3.0.3.tar.gz</hadoop.tar>
+       <hadoop.folder>hadoop-3.0.3</hadoop.folder>
        <grafana.folder>grafana-6.4.2</grafana.folder>
        <grafana.tar>https://dl.grafana.com/oss/release/grafana-6.4.2.linux-amd64.tar.gz</grafana.tar>
-       <phoenix.tar>https://s3.amazonaws.com/dev.hortonworks.com/HDP/centos7/3.x/BUILDS/3.1.4.1-1/tars/phoenix/phoenix-5.0.0.3.1.4.1-1.tar.gz</phoenix.tar>
-       <phoenix.tar>https://private-repo-1.hortonworks.com/HDP/centos7/3.x/updates/3.1.4.1-1/tars/phoenix/phoenix-5.0.0.3.1.4.1-1.tar.gz</phoenix.tar>
-       <phoenix.folder>phoenix-5.0.0.3.1.4.1-1</phoenix.folder>
+       <phoenix.tar>https://archive.apache.org/dist/phoenix/phoenix-5.1.1/phoenix-hbase-2.2-5.1.1-bin.tar.gz</phoenix.tar>
+       <phoenix.folder>apache-phoenix-5.0.0-alpha-HBase-2.0-bin</phoenix.folder>
+   ```
+
+   vi ambari-metrics/ambari-metrics-timelineservice/pom.xml
+
+   ```xml
+     <properties>
+       <!-- Needed for generating FindBugs warnings using parent pom -->
+       <!--<yarn.basedir>${project.parent.parent.basedir}</yarn.basedir>-->
+       <protobuf.version>2.5.0</protobuf.version>
+       <hadoop.version>3.0.3</hadoop.version>
+       <phoenix.version>5.1.1</phoenix.version>
+       <hbase.version>2.2.6</hbase.version>
+     </properties>
+   ```
+
+   ```xml
+                       <move
+                           file="${project.build.directory}/embedded/${phoenix.folder}/phoenix-server-hbase-2.2-${phoenix.version}.jar"
+                           tofile="${project.build.directory}/embedded/${hbase.folder}/lib/phoenix-server-hbase-2.2-${phoenix.version}.jar"
+                       />
    ```
 
    

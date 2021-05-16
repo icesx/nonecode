@@ -734,6 +734,23 @@ mysql> show variables like '%sort_buffer_size%';
 1 rows in set (0.00 sec)
 ```
 
+### 动态调整日志
+
+```
+mysql> show variables like "%slow%";
++---------------------------+----------------------------------------+
+| Variable_name             | Value                                  |
++---------------------------+----------------------------------------+
+| log_slow_admin_statements | OFF                                    |
+| log_slow_slave_statements | OFF                                    |
+| slow_launch_time          | 2                                      |
+| slow_query_log            | ON                                     |
+| slow_query_log_file       | /usr/local/mysql/data/bjrdc86-slow.log |
++---------------------------+----------------------------------------+
+5 rows in set (0.01 sec)
+```
+
+
 
 ### 自动备份
 

@@ -55,6 +55,14 @@ git config --global credential.helper 'cache --timeout=360000'
 ### 换行符^M忽略
 `git config --global core.whitespace cr-at-eol`
 
+### 中文文件
+
+```
+git config --global core.quotepath false
+```
+
+
+
 ## branch
 ### 比较本地和远程
 `git diff master origin/master`
@@ -263,21 +271,22 @@ https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/
    ```sh
    git filter-branch --force --index-filter 'git rm -rf --cached --ignore-unmatch --ignore-unmatch doc' --prune-empty --tag-name-filter cat -- --all
    ```
-```
-   
-删除本地缓存
-   
-   ```sh
-   git reflog expire --expire=now --all && git gc --prune=now --aggressive
-   rm -Rf .git/logs .git/refs/original
-```
 
-   提交
+3. 删除本地缓存
 
    ```sh
-   git push origin --all --force
-   git push origin --tags --force
+      git reflog expire --expire=now --all && git gc --prune=now --aggressive
+      rm -Rf .git/logs .git/refs/original
    ```
+
+4.  提交
+
+   ```sh
+      git push origin --all --force
+      git push origin --tags --force
+   ```
+
+   
 
 ##  submodule
 
@@ -322,15 +331,26 @@ git submodule update --init --recursive
    2. `vi .gitmodules` 删除项目目录下.gitmodules文件中子模块相关条目
    3. `vi .git/config` 删除配置项中子模块相关条目
    4. `rm .git/module/*` 删除模块下的子模块目录，每个子模块对应一个目录，注意只删除对应的子模块目录即可
+   
+5. pull submoudule
+
+   ```
+   git submodule update --init --recursive
+   git pull --recurse-submodules
+   ```
 
    
-   
-   
-   
-   
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
 ## 问题处理
 
 ### fatal: unable to access 'xxxx': gnutls_handshake() failed: Error in the pull function.
