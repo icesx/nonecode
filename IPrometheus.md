@@ -54,8 +54,8 @@ cat prometheus.service <<EOF
 
  ```sh
 sudo cp prometheuse.service /lib/systemd/system/
- sudo systemctl enable prometheuse
- sudo systemctl start prometheuse.service
+sudo systemctl enable prometheuse
+sudo systemctl start prometheuse.service
  ```
 
 
@@ -111,19 +111,19 @@ wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_e
 
 
  ```sh
-cat node_exporter.service <<EOF
+cat > node_exporter.service <<EOF
  [Unit]
 Description=node_exporter
  After=network.target
  
  [Service]
-ExecStart=/home/bjrdc/software/node_exporter-1.0.1.linux-amd64/node_exporter
+ExecStart=/root/software/node_exporter-1.0.1.linux-amd64/node_exporter
  KillMode=process
 Restart=on-failure
  [Install]
  WantedBy=multi-user.target
  Alias=node_exporter.service
- EOF
+EOF
  ```
 
 
@@ -135,7 +135,7 @@ Restart=on-failure
 
  ```sh
 sudo cp node_exporter.service /lib/systemd/system/
- sudo systemctl enable node_exporter
+sudo systemctl enable node_exporter
 sudo systemctl start node_exporter.service
  ```
 

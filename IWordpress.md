@@ -7,7 +7,7 @@ wordpress
 
 1. 安装wordpress
 
-   ```
+   ```sh
    sudo apt install wordpress
    ```
 
@@ -33,7 +33,7 @@ wordpress
 
     3. 启动服务
 
-       ```
+       ```sh
        sudo a2ensite wordpress
        systemctl reload apache2
        sudo systemctl reload apache2
@@ -144,7 +144,7 @@ wordpress
 
 在 single.php 里或者其它文章显示文件里在自己喜欢的位置添加如下代码就可以了
 
-```
+```php
 <?php
 /**
  * The template for displaying all single posts
@@ -198,7 +198,7 @@ document.getElementById("qy").src="http://api.qrserver.com/v1/create-qr-code/?si
 
 第二种二维码方式
 
-```
+```php
 <img src="http://api.qrserver.com/v1/create-qr-code/?size=100x100&data=<?php echo 'http://'.$_SERVER['HTTP_HOST'].':10080'.$_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING']; ?>" alt="QR: <?php the_title(); ?>"/>
 ```
 

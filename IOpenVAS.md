@@ -1,5 +1,0 @@
-IOpenVAS
-======
-
-### install
-

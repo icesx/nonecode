@@ -30,13 +30,21 @@ sudo apt install gcc make automake net-tools route zip unzip binutils
 ```
 ### 远程桌面
 
+### vnc
+
 0. 配置
 `vino-preferences`
 1. 开启vnc
 `$/usr/lib/vino/vino-server`	
 2. 开启权限	
 $gsettings set org.gnome.Vino require-encryption false
+
+### RDP
+
+
+
 ### 本地ISO软件源
+
 > Ubuntu的软件源文件为/etc/apt/sources.list，我们可以先备份一下该文件，直接执行mv命令，这样就没有sources.list文件了。下面挂载ISO镜像，一般放了DVD会自动挂载，我们也可以手动挂载到/media/cdcrom
 ```sh
 $mount /dev/cdrom /media/cdrom 
