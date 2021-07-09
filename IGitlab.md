@@ -671,21 +671,35 @@ vim /etc/gitlab/gitlab.rb
 
 修改上图`backup_path`的值即可，之后使用`gitlab-ctl reconfigure`使得配置生效
 
+```
+sudo gitlab-ctl reconfigure
+```
+
+
+
 ### 一个备份脚本
 
 ```sh
-cat gitlab-backup.sh 
+cat > gitlab-backup.sh <<EOF
+
 set -x
-workdir=/backups/gitlab/
-rmfile=`su - git -c "ls -t $workdir|grep backup.tar|tail -1"`
+workdir=/git-backups/gitlab/
+befor_days=15
+rmfile=`su - git -c "ls -t $wordir|grep backup.tar|sort -r|tail -n +$befor_days|head -n 1"`
 if [ ! -n "$rmfile" ];then
         echo "empty"
 else
         echo $rmfile
         su - git -c "rm -f $workdir/$rmfile"
 fi
-/opt/gitlab/bin/gitlab-rake gitlab:backup:create
+/usr/bin/gitlab-backup create
+
+EOF
 ```
+
+
+
+## 热备
 
 
 

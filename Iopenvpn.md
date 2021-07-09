@@ -72,7 +72,7 @@ cp -rf /usr/share/easy-rsa/2.0/* /etc/openvpn/easy-rsa
 
 ### key on easy-rsa3
 
-```
+```sh
 wget https://github.com/OpenVPN/easy-rsa/archive/master.zip
 unzip master.zip
 mv easy-rsa-master easy-rsa
@@ -201,6 +201,7 @@ COMMIT
 ```
 另外一种配置方法
 -A POSTROUTING -d 172.16.15.0/24 -o ens19 -j MASQUERADE
+# 访问外网
 -A POSTROUTING -j MASQUERADE
 ```
 ```

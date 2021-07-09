@@ -5,6 +5,8 @@ ceph
 
 ## install
 
+### 安装
+
 > 1. 准备服务器
 >
 >    ```sh
@@ -40,7 +42,7 @@ ceph
 >    ```sh
 >    export CEPH_DEPLOY_REPO_URL=https://mirrors.aliyun.com/ceph/debian-octopus
 >    #使用阿里云源
-> ceph-deploy install bjrdc208 bjrdc209 bjrdc210
+>    ceph-deploy install bjrdc208 bjrdc209 bjrdc210
 >    ```
 >    
 >    > 出现如下问题
@@ -63,32 +65,32 @@ ceph
 >
 >    Ceph cluster monitor has been initialized above. To deploy it, execute the command below on Ceph Admin node.
 >
->    ```
+>    ```sh
 >    ceph-deploy mon create-initial
 >    ```
 >
->    
+> 
 >
 > 2. Copy the Ceph Configuration files and Keys
 >
->    ```
+>    ```sh
 >    ceph-deploy admin bjrdc208 bjrdc209 bjrdc210
 >    ```
 >
 > 3. Deploy Ceph Manager Daemon
 >
->    ```
+>    ```sh
 >    ceph-deploy mgr create bjrdc208
 >    ```
 >
 > 4. deploy mds
 >
->    ```
+>    ```sh
 >    ceph-deploy --overwrite-conf mds create bjrdc208 bjrdc209 bjrdc210
 >    ```
->    
->    
->    
+>
+> 
+>
 > 5. Attach Logical Storage Volumes to Ceph OSD Nodes
 >
 >    ```
@@ -144,7 +146,7 @@ ceph
 
 ### and new node
 
-> 1. installl to node
+> 1. on master node
 >
 >    ```
 >    export CEPH_DEPLOY_REPO_URL=https://mirrors.aliyun.com/ceph/debian-octopus
@@ -158,14 +160,11 @@ ceph
 >    echo "bjrdc ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers.d/bjrdc
 >    ```
 >
->    
->
-> 3. create osd
+> 3. create osd on master
 >
 >    ```
 >    ceph-deploy osd create --data /dev/sdb1 bjrdc211
 >    ```
->
 
 ### push config
 
@@ -186,6 +185,12 @@ ceph-deploy --overwrite-conf config push bjrdc209 bjrdc210 bjrdc211 bjrdc208
 >enable
 >
 >```
+>sudo ceph config set mgr mgr/dashboard/ssl false
+>sudo ceph config set mgr mgr/dashboard/server_addr 0.0.0.0
+>echo passwod > xxx
+>sudo ceph dashboard ac-user-create xjgz -i xxx administrator
+>sudo ceph mgr services
+>sudo ceph mgr module disable dashboard
 >sudo ceph mgr module enable dashboard
 >```
 >
@@ -202,7 +207,7 @@ ceph-deploy --overwrite-conf config push bjrdc209 bjrdc210 bjrdc211 bjrdc208
 >关闭 ssl
 >
 >```
->ceph config set mgr mgr/dashboard/ssl false
+>sudo ceph config set mgr mgr/dashboard/ssl false
 >```
 >
 >帐号密码
@@ -217,6 +222,12 @@ ceph-deploy --overwrite-conf config push bjrdc209 bjrdc210 bjrdc211 bjrdc208
 >
 >`http://bjrdc208:7000`
 
+### and manager
+
+```
+ceph-deploy mgr create bjrdc208
+```
+
 
 
 ## RBD
@@ -225,26 +236,22 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 
 ### 创建rbd
 
-> ```sh
->sudo ceph osd pool create rdb_pool_01 128 128
-> sudo rbd pool init rbd_pool_01
-> sudo ceph osd pool set-quota rdb_pool_01 max_bytes $((10 * 1024 * 1024 * 1024))
-> ```
-> 
+```
+sudo ceph osd pool create rdb_pool_01 128 128
+sudo rbd pool init rbd_pool_01
+sudo ceph osd pool set-quota rdb_pool_01 max_bytes $((10 * 1024 * 1024 * 1024))
+```
 
 
 
 ### 创建块存储
 
-
-
-> ```sh
->sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
-> sudo rbd --image rdb_pool_01/volume01 info
-> sudo rados -p rdb_pool_01 ls
-> sudo rbd info rdb_pool_01/volume01
-> ```
-> 
+```
+sudo rbd create rdb_pool_01/volume01 --size $((2*1024))
+sudo rbd --image rdb_pool_01/volume01 info
+sudo rados -p rdb_pool_01 ls
+sudo rbd info rdb_pool_01/volume01
+```
 
 
 
@@ -252,43 +259,75 @@ Ceph可以同时提供对象存储RADOSGW、块存储RBD、文件系统存储Cep
 
 
 
-> 1. 准备工作
->
->    ```
->    cat >/etc/ceph/ceph.conf <<EOF 
->    [global]
->    fsid = d84f5d5b-f8d5-42c6-ab8f-e1240e9bcf78
->    mon_initial_members = bjrdc208
->     mon_host = 172.16.15.208
->    auth_cluster_required = cephx
->     auth_service_required = cephx
->    auth_client_required = cephx
->    public network=172.16.15.0/24
->
->    [mgr]
->    debug mgr balancer = 1/20
->    ```
->
->   EOF
->    ```
-> 
->    copy keyring
-> 
->    ```
->    scp **/ceph.client.admin.keyring xxx:/home/bjrdc/
->    sudo mv ceph.client.admin.keyring  /etc/ceph/
->    ```
-> 
-> 
-> 
-> 2. 挂载
-> 
->    ```sh
->       sudo rbd map rdb_pool_01/volume01
->    sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
->    ```
->
-> 
+1. 准备工作
+
+   ```sh
+   cat >/etc/ceph/ceph.conf <<EOF 
+   [global]
+   fsid = d84f5d5b-f8d5-42c6-ab8f-e1240e9bcf78
+   mon_initial_members = bjrdc208
+    mon_host = 172.16.15.208
+   auth_cluster_required = cephx
+    auth_service_required = cephx
+   auth_client_required = cephx
+   public network=172.16.15.0/24
+   
+   [mgr]
+   debug mgr balancer = 1/20
+   EOF
+   ```
+
+2. 安装ceph-common
+
+   `octopus`对应的cluster的ceph的版本号
+
+   ```
+   echo deb https://download.ceph.com/debian-octopus/ $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/ceph.list
+   wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo apt-key add -
+   ```
+
+   ```
+   sudo apt install ceph-common
+   ```
+
+   
+
+3. copy keyring
+
+   scp **/ceph.client.admin.keyring xxx:/home/bjrdc/
+   sudo mv ceph.client.admin.keyring  /etc/ceph/
+
+3. 挂载
+
+   ```
+   sudo rbd map rdb_pool_01/volume01
+   sudo mkfs.ext4 /dev/rbd/rdb_pool_01/volume01 /moa-rbd
+   ```
+
+4. 开机自动挂载
+
+   vi /etc/ceph/rbdmap
+
+   ```
+   # RbdDevice             Parameters
+   bjrdc-mysql/volume01
+   ```
+
+   vi /etc/fstable
+
+   **noauto**
+
+   ```
+   /dev/rbd0       /cloud  ext4    defaults,noatime,nodiratime,noauto      0       2
+   ```
+
+   enable rbdmap service
+
+   ```
+   sudo /lib/systemd/systemd-sysv-install enable rbdmap
+   ```
+
+   
 
 ## cephfs
 
@@ -348,27 +387,61 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 
 ## 基本命令
 
->```
->sudo ceph health detail
->```
->
+```
+sudo ceph health detail
+```
+
+
+
 ### rbd
->
->```
->sudo rbd create k8s_pool_01/volume01 --size $((5* 1024)) 
->sudo rbd resize --size $((5*1024)) k8s_pool_01/volume01
->sduo rbd rm {pool-name}/{image-name}
->sudo rbd list k8s_pool_01
->sudo rbd map k8s_pool_01/k8s_v1
->sudo rbd mv k8s_pool_01/k8s_v1 k8s_pool_01/k8s-v1
->sudo rbd info k8s_pool_mysql_cluster_01/kubernetes-dynamic-pvc-04b80b00-d562-11ea-9a3c-4e8cdd04a447
->sudo rbd resize --image rdb_pool_01/k8s-pod-shard-v1 --allow-shrink --size 601
->```
->
+
+rados block device
+
+```
+sudo ceph osd pool application enable k8s_pool_es_01 rbd
+```
+
+```
+rbd create --size {megabytes} {pool-name}/{image-name}
+```
+
+
+
+```
+sudo rbd create k8s_pool_01/volume01 --size $((5* 1024)) 
+sudo rbd resize --size $((5*1024)) k8s_pool_01/volume01
+sduo rbd rm {pool-name}/{image-name}
+sudo rbd list k8s_pool_01
+sudo rbd map k8s_pool_01/k8s_v1
+sudo rbd mv k8s_pool_01/k8s_v1 k8s_pool_01/k8s-v1
+sudo rbd info k8s_pool_mysql_cluster_01/kubernetes-dynamic-pvc-04b80b00-d562-11ea-9a3c-4e8cdd04a447
+sudo rbd resize --image rdb_pool_01/k8s-pod-shard-v1 --allow-shrink --size 601
+```
 
 
 
 ### osd
+
+```
+ceph heath detail
+sudo ceph heath detail
+sudo ceph health detail
+ceph osd lspools
+sudo ceph osd lspools
+ceph osd in 1
+ceph osd up 1
+ceph osd stat
+sudo ceph osd stat
+sudo ceph osd tree
+### 到osd 1 所在的服务器上
+sudo systectl start osd@1.service
+```
+
+### pool
+
+```
+sudo ceph osd pool create pool-name pg_num pgp_num
+```
 
 
 
@@ -403,7 +476,6 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >```
 >sudo systemctl restart ceph-mon.target
 >```
->
 
 
 
@@ -417,19 +489,19 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >rados -p bjrdc-pool rm testfile
 >rados df
 >```
->
 ### mon
+
+monitor
+
 >
 >```
 >sudo ceph mon dump
 >```
->
 ### pg
 >
 >```
 >ceph pg stat
 >```
->
 ### fs
 >
 >```
@@ -438,28 +510,31 @@ bjrdc208:/mysql-root     /moa-ceph    ceph    name=admin,secretfile=/home/bjrdc/
 >```
 >
 >[参考]: https://docs.ceph.com/docs/jewel/cephfs/administration/
->
 ### df
 >
 >```
 >sudo ceph df
 >```
->
 ### log
 >
 >```
 >sudo ceph log
 >```
->
 ### mgr
->
->```sh
->sudo ceph mgr module ls
->sudo ceph mgr services
->sudo ceph mgr module enable dashboard
->```
->
->
+
+manager
+
+```
+sudo ceph mgr module ls
+sudo ceph mgr services
+sudo ceph mgr module enable dashboard
+```
+
+
+
+### mds
+
+metadata service
 
 ## 问题处理
 
@@ -518,7 +593,26 @@ Error ERANGE:  pg_num 128 size 3 would mean 1347 total pgs, which exceeds max 10
 sudo systemctl restart ceph-mon.target
 ```
 
+### 5 mon is allowing insecure global_id reclaim
 
+```
+sudo ceph config set mon auth_allow_insecure_global_id_reclaim false
+```
+
+### rbd: sysfs write failed
+
+> dmsge 有如下错误提示
+>
+> rbd: image volume01: image uses unsupported features: 0x38
+
+客户端版本不对，需要升级到对应的ceph-common版本
+
+`octopus`对应的cluster的ceph的版本号
+
+```
+echo deb https://download.ceph.com/debian-octopus/ $(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/ceph.list
+wget -q -O- 'https://download.ceph.com/keys/release.asc' | sudo apt-key add -
+```
 
 
 

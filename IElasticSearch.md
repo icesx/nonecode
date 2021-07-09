@@ -24,11 +24,11 @@ Elasticsearch
 3. config
 
    ```
-     vi ./config/elasticsearch.yml
-     network.host: ${HOSTNAME}
-     path.data: xxx
-     path.logs: yyy
-     discovery.zen.pi	ng.unicast.hosts:["hadoop-cx168","hadoop-cx169","hadoop-cv170"]
+   vi ./config/elasticsearch.yml
+   network.host: ${HOSTNAME}
+   path.data: xxx
+   path.logs: yyy
+   discovery.zen.pi	ng.unicast.hosts:["hadoop-cx168","hadoop-cx169","hadoop-cv170"]
    ```
 
   
@@ -44,7 +44,7 @@ Elasticsearch
 5. 在haoop-cx168 169 170 上分别启动es集群就起来了
 
    ```
-     $elasticsearch -d
+   $elasticsearch -d
    ```
 
      
@@ -124,6 +124,26 @@ without increasing [node.max_local_storage_nodes] (was [1])
 
 
 ### kibana
+
+```sh
+cat >> kibana.yml << EOF
+server.port: 5601
+server.host: "bjrdc99"
+elasticsearch.url: "http://bjrdc99:9200"
+elasticsearch.username: "kibana"
+elasticsearch.password: "elastic"
+EOF
+```
+
+```
+$kibana-home/bin/kibana &
+```
+
+```
+http://bjrdc38:5601/app/kibana
+```
+
+
 
 
 ### plugin

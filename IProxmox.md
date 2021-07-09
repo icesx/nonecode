@@ -204,6 +204,14 @@ killall pmxcfs
 systemctl start pve-cluster.service
 ```
 
+### 删除节点
+
+```
+pvecm delnode proxmox-node3
+ls -l /etc/pve/nodes/
+mv /etc/pve/nodes/proxmox-node3 /root/NodeName
+```
+
 
 
 ## 用户

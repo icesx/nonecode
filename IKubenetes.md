@@ -1,7 +1,7 @@
 Kubernetes Doing
 =====
 
-### 架构
+## 架构
 
 ![架构图](https://jimmysong.io/kubernetes-handbook/images/architecture.png)
 
@@ -120,15 +120,17 @@ https://github.com/cncf/landscape
 
 ## Kubernetes install
 
-#### 准备工作
+### 准备工作
 
 1. 确保mac和uuid唯一
 
-您可以使用命令 `ip link` 或 `ifconfig -a` 来获取网络接口的 MAC 地址
+   您可以使用命令 `ip link` 或 `ifconfig -a` 来获取网络接口的 MAC 地址
 
-```shell
-sudo cat /sys/class/dmi/id/product_uuid
-```
+   ```shell
+   sudo cat /sys/class/dmi/id/product_uuid
+   ```
+
+   
 
 2. 在 Linux 中，nftables 当前可以作为内核 iptables 子系统的替代品。 `iptables` 工具可以充当兼容性层，其行为类似于 iptables 但实际上是在配置 nftables。 nftables 后端与当前的 kubeadm 软件包不兼容：它会导致重复防火墙规则并破坏 `kube-proxy`。
 
@@ -415,7 +417,7 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 ### master 上安装其他组件
 
-#### dashborader
+#### dashboard
 
 1. install
 
@@ -522,8 +524,6 @@ sudo cat /sys/class/dmi/id/product_uuid
     ```
    
     使用该token登录
-
-
 
 #### heapster
 
@@ -667,33 +667,33 @@ sudo cat /sys/class/dmi/id/product_uuid
 
 5. ingress rewrite
 
-   > ingree 支持rewrite，从而可以将指定的路径映射到目标目录。特别是在和spring-boot进行整合的时候，可以将一个path，映射到/下
-   >
-   > 如下的配置可以将所有的/sc-gateway开头的路径映射到spring-cloud-k8s-gateway服务8097端口的/下
-   >
-   > 如`curl ingress.bjrdc17:30080/sc-gateway/consumer/feign/list`请求到达`curl spring-cloud-k8s-gateway.bjrdc-dev.svc.cluster.local:8097/consumer/feign/list`
-   >
-   > ```yaml
-   > apiVersion: extensions/v1beta1
-   > kind: Ingress
-   > metadata:
-   >   name: sc-gateway-ingress
-   >   namespace: bjrdc-dev
-   >   annotations:
-   >     nginx.ingress.kubernetes.io/proxy-body-size: "20M"
-   >     nginx.ingress.kubernetes.io/rewrite-target: /$1
-   > spec:
-   >   rules:
-   >   - host: ingress.bjrdc17
-   >     http:
-   >       paths:
-   >       - path: /sc-gateway/(.*)
-   >         backend:
-   >           serviceName: spring-cloud-k8s-gateway
-   >           servicePort: 8097
-   > ```
-   >
-   > 
+   ingree 支持rewrite，从而可以将指定的路径映射到目标目录。特别是在和spring-boot进行整合的时候，可以将一个path，映射到/下
+   
+   如下的配置可以将所有的/sc-gateway开头的路径映射到spring-cloud-k8s-gateway服务8097端口的/下
+   
+   如`curl ingress.bjrdc17:30080/sc-gateway/consumer/feign/list`请求到达`curl spring-cloud-k8s-gateway.bjrdc-dev.svc.cluster.local:8097/consumer/feign/list`
+   
+   ```yaml
+   apiVersion: extensions/v1beta1
+   kind: Ingress
+   metadata:
+   name: sc-gateway-ingress
+   namespace: bjrdc-dev
+   annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20M"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+   spec:
+   rules:
+     - host: ingress.bjrdc17
+       http:
+         paths:
+         - path: /sc-gateway/(.*)
+           backend:
+             serviceName: spring-cloud-k8s-gateway
+             servicePort: 8097
+   ```
+   
+   
 
 6. 验证
 
@@ -798,69 +798,66 @@ Address: 10.244.1.101
 
 ### IP与网络
 
-> service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
 
 #### 服务暴露（expose）
 
 有三种方式暴露服务，NodePort,Loadbanlace,ingress
 
-> **ClusterIP **模式
->
-> 群内的其它应用都可以访问该服务。集群外部无法访问它.
->
-> 开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
->
-> ```yaml
-> apiVersion: v1
-> kind: Service
-> metadata:  
-> 	name: my-internal-service
-> selector:    
-> 	app: my-app
-> spec:
-> 	type: ClusterIP
-> ```
+##### ClusterIP 模式
+
+群内的其它应用都可以访问该服务。集群外部无法访问它.
+
+开启clusterIP后必须使用loadbanlace或者ingress来实现服务的透传
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:  
+	name: my-internal-service
+selector:    
+	app: my-app
+spec:
+	type: ClusterIP
+```
 
 
 
-> **NodePort**
->
-> 是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
->
-> **开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
->
-> ```yaml
-> apiVersion: v1
-> kind: Service
-> metadata:  
-> 	name: my-nodeport-service
-> selector:    
-> 	app: my-app
-> spec:
-> 	type: NodePort
-> ports:  
->   - name: http
->     port: 80
->     targetPort: 80
->     nodePort: 30036
->     protocol: TCP
-> ```
+##### **NodePort**
+是引导外部流量到你的服务的最原始方式。NodePort，正如这个名字所示，在所有节点（虚拟机）上开放一个特定端口，任何发送到该端口的流量都被转发到对应服务。
+
+**开启NodePort后，可以通过任何一个NodeIP和nodeport来访问服务**
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:  
+	name: my-nodeport-service
+selector:    
+	app: my-app
+spec:
+	type: NodePort
+ports:  
+  - name: http
+    port: 80
+    targetPort: 80
+    nodePort: 30036
+    protocol: TCP
+```
 
 
 
-> **Ingress**
->
-> 通过类似反向代理的方式将集群内service暴露出去，需要咱装ingress-control，本文中安装的是ingress-nginx
->
-> 详细参见上文
+##### **Ingress**
+通过类似反向代理的方式将集群内service暴露出去，需要咱装ingress-control，本文中安装的是ingress-nginx
+
+详细参见上文
 
 
 
-> **Loadbanlace**
->
-> 一般是云服务商提供的服务，具体功能尚未明确
->
-> TODO
+##### **Loadbanlace**
+一般是云服务商提供的服务，具体功能尚未明确
+
+TODO
 
 **Node IP**
 
@@ -900,6 +897,8 @@ kubectl -n 命名空间 get Service即可看到ClusterIP
 #### 三种IP网络间的通信
 
 service地址和pod地址在不同网段，service地址为虚拟地址，不配在pod上或主机上，外部访问时，先到Node节点网络，再转到service网络，最后代理给pod网络。
+
+
 
 ## 集群重启
 
@@ -1160,7 +1159,6 @@ cn.xportal.cs.config.base: local
 >"application.yaml: |-"可以理解为一个文件段，当然也可以引用外部的文件。
 >
 >在spring-cloud中使用这个configmap需要
->
 
 ### pod
 
@@ -3194,7 +3192,6 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 ### mysql singal
 
 > mysql单点部署，采用local和ceph两种卷额方式
->
 
 #### on local
 
@@ -5730,6 +5727,17 @@ spec:
    ```sh
    journalctl -f -u kubelet
    ```
+
+### You must be logged in to the server (Unauthorized)
+
+> `颁发证书时/etc/kubernetes/admin.conf文件重新生成，但是`$HOME/.kube/config并没有得到替换。
+
+```sh
+sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+sudo chown bjrdc:bjrdc ~/.kube/config
+```
+
+
 
 ### kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
 

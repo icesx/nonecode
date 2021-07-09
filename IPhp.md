@@ -28,26 +28,23 @@ sudo apt install libxml2-dev libpng-dev
 ```
 ./configure --with-apxs2=/home/xjgzbj/apache/bin/apxs --with-mysql --prefix=/home/xjgzbj/php --with-config-file-path=/home/xjgzbj/php/conf --with-pdo-mysql --with-jpeg-dir=/home/xjgzbj/libs/libjpeg --with-gd --with-png-dir=/home/xjgzbj/libs/libpng --with-freetype-dir=/home/xjgzbj/libs/freetype --with-libxml-dir=/home/xjgzbj/libs/libxml2
 ```
-#### php7
+## php7
+
 0. apache 安装
 
    首先安装必要的支持包
 
-   ```
-   sudo apt install libapr1-dev libaprutil1-dev  libpcre3-dev install pkg-config libxml2-dev
-   ```
+```
+sudo apt install libapr1-dev libaprutil1-dev  libpcre3-dev pkg-config libxml2-dev libssl-dev libonig-dev libcurl-openssl1.0-dev
+```
 
    安装
 
-   ```
-   ./configure --prefix=/home/bjrdc/httpd-2.4.42
-   ```
+```
+./configure --prefix=/home/bjrdc/httpd-2.4.42
+```
 
-   
-   
-   
-   
-#### with apache
+### with apache
 
 1. php7 安装
 
@@ -98,9 +95,9 @@ sudo apt install libxml2-dev libpng-dev
    ```
 
 
-#### with nginx
+### with nginx
 
-1. ​	安装php
+1. 安装php
 
    ```
    ./configure --with-apxs2=/home/liufeng/software/httpd-2.4.42/bin/apxs --with-zlib --prefix=/home/liufeng/software/php-7.3.12 --without-sqlite3 --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pdo-sqlite --prefix=/home/liufeng/software/php --with-openssl --enable-fpm
@@ -135,7 +132,7 @@ sudo apt install libxml2-dev libpng-dev
 
    
 
-#### test
+### test
 
 1. 创建phpinfo.php
 
@@ -152,4 +149,10 @@ sudo apt install libxml2-dev libpng-dev
    ```
 
    
+
+### zentao
+
+```
+./configure --with-apxs2=/home/bjrdc/software/httpd/bin/apxs --with-zlib --prefix=/home/bjrdc/software/php --without-sqlite3 --enable-mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --without-pdo-sqlite --prefix=/home/bjrdc/software/php --with-openssl --enable-mbstring --with-curl
+```
 
