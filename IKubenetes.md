@@ -387,9 +387,7 @@ sudo mkdir -p /etc/containerd
 sudo containerd config default | sudo tee /etc/containerd/config.toml
 ```
 
-```sh
-sudo systemctl restart containerd
-```
+
 
 ```sh
 cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf 
@@ -405,15 +403,15 @@ sudo modprobe overlay
 sudo modprobe br_netfilter
 ```
 
+```
+sudo systemctl restart containerd
+```
+
+
+
 ### 配置
 
-1. 创建配置文件
-
-   ```sh
-   sudo containerd config default|sudo tee /etc/containerd/config.toml
-   ```
-
-2. 非root执行
+1. 非root执行
 
    config.toml中设置uid和gid
 
@@ -428,15 +426,6 @@ sudo modprobe br_netfilter
    ```
 
    
-
-3. 需要配置内核插件
-
-   ```sh
-   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
-   overlay
-   br_netfilter
-   EOF
-   ```
 
 4. 安装harbor register的证书
 
@@ -507,9 +496,7 @@ sudo modprobe br_netfilter
    sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
    ```
 
-   
-
-4. 修改/etc/containerd/config.toml
+   或者
 
    ```toml
      [plugins."io.containerd.grpc.v1.cri"]
@@ -851,19 +838,31 @@ sudo modprobe br_netfilter
    4. containerd
    
       详见上文
+      
+   5. 最好重启一下
    
 2. 安装kubectl kubeadm
 
    ```sh
-   sudo su root
    curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
    # 添加 k8s 镜像源
-   sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+   ```
+   
+   
+   
+   ```sh
+   cat <<EOF |sudo tee /etc/apt/sources.list.d/kubernetes.list
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
+   ```
+   
+   ```sh
    sudo apt update
    sudo apt-get install -y kubelet kubeadm
    ```
+   
+   
+   
 3. 修改环境变量
 
    如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
@@ -876,10 +875,10 @@ sudo modprobe br_netfilter
 
    如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，详见上文安装pause
 
-5. 记得重新load
-   
-      ```sh
-      sudo systemctl daemon-reload
+4. 记得重新load
+
+   ```sh
+   sudo systemctl daemon-reload
    sudo systemctl restart kubelet
    ```
 
@@ -893,11 +892,11 @@ sudo modprobe br_netfilter
       
       kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
       ```
-   
+
       
-   
+
    2. on node
-   
+
       ```
       kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
       ```
