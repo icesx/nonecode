@@ -331,7 +331,9 @@ sudo rbd info rdb_pool_01/volume01
 
 ## cephfs
 
-ceph application not enabled，toenable cephfs
+### 创建
+
+ceph application not enabled，to enable cephfs
 
 ```
 sudo ceph osd pool application enable bjrdc-pool cephfs
@@ -345,7 +347,7 @@ sudo ceph osd pool create bjrdc-pool-metadata 128
 sudo ceph fs new cephfs bjrdc-pool-metadata bjrdc-pool
 ```
 
-
+### 挂载
 
 mount
 

@@ -86,7 +86,396 @@ https://github.com/cncf/landscape
 
    
 
-## 国内镜像
+## harbor
+
+>Harbor 是 Vmware 公司开源的 企业级的 Docker Registry 管理项目
+>
+>它主要 提供 Dcoker Registry 管理UI，可基于角色访问控制, AD/LDAP 集成，日志审核等功能，完全的支持中文。
+>
+>在安装kubernetes之前需要安装一个harbor用于本地镜像的服务。
+
+### 安装
+
+#### 1.准备证书
+
+1. Generate a CA certificate private key
+
+   ```sh
+   openssl genrsa  -out ca.key 4096
+   ```
+
+2. Generate the CA certificate.
+
+   ```sh
+   openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"  -key ca.key -out ca.crt
+   ```
+
+3. Generate a Server Certificate
+
+   ```sh
+   openssl genrsa -out bjrdc206.reg.key 4096
+   ```
+
+4. Generate a certificate signing request (CSR).
+
+   ```sh
+   openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"     -key bjrdc206.reg.key -out bjrdc206.reg.csr
+   ```
+
+   I had the same issue as you on Ubuntu 18.04.x. Removing (or commenting out) `RANDFILE = $ENV::HOME/.rnd` from `/etc/ssl/openssl.cnf` worked for me.
+
+5. Generate an x509 v3 extension file
+
+   ```sh
+   cat > v3.ext <<EOF
+   authorityKeyIdentifier=keyid,issuer
+   basicConstraints=CA:FALSE
+   keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+   extendedKeyUsage = serverAuth
+   subjectAltName = @alt_names
+   
+   [alt_names]
+   DNS.1=bjrdc206.reg
+   EOF
+   ```
+
+   
+
+6. Use the `v3.ext` file to generate a certificate for your Harbor host.
+
+   ```sh
+   openssl x509 -req -sha512 -days 3650 \
+       -extfile v3.ext \
+       -CA ca.crt -CAkey ca.key -CAcreateserial \
+       -in bjrdc206.reg.csr \
+       -out bjrdc206.reg.crt
+   ```
+
+7. 可选操作
+
+   1. Copy the server certificate and key into the certficates folder on your Harbor host
+
+      ```
+      cp bjrdc206.reg.crt /docker/cert/
+      cp bjrdc206.reg.key /docker/cert/
+      ```
+
+      
+
+   2. Convert `yourdomain.com.crt` to `yourdomain.com.cert`, for use by Docker.
+
+      ```
+      openssl x509 -inform PEM -in bjrdc206.reg.crt -out bjrdc206.reg.cert	
+      ```
+
+      
+
+   3. Copy the server certificate, key and CA files into the Docker certificates folder on the Harbor host. You must create the appropriate folders first
+
+      ```
+      mkdir /etc/docker/certs.d/bjrdc206.reg -p
+      cp bjrdc206.reg.cert /etc/docker/certs.d/bjrdc206.reg/
+      cp bjrdc206.reg.key /etc/docker/certs.d/bjrdc206.reg/
+      cp ca.crt /etc/docker/certs.d/bjrdc206.reg/
+      ```
+
+      ```
+      cp bjrdc206.reg.crt /usr/local/share/ca-certificates/
+      update-ca-certificates
+      ```
+
+      
+
+8. 下载ca.crt到本地，添加到浏览器中，并信任后，即可通过浏览器访问
+
+   ```
+   https://bjrdc206.reg
+   ```
+
+9. 如果客户端pull或者push需要证书的话，需要将bjrdc206.reg.crt和ca.crt复制到对应的主机上
+
+   ```sh
+   sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
+   sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
+   sudo update-ca-certificates
+   ```
+
+   
+
+#### 2.使用docker安装
+
+1. 安装docker
+
+   ```sh
+   systemctl enable docker.service
+   systemctl restart docker
+   ```
+
+2. 下载离线安装包
+
+   ```
+   wget https://github.com/goharbor/harbor/releases/download/v2.2.3/harbor-offline-installer-v2.2.3.tgz
+   ```
+
+   
+
+3. install docker-compose
+
+   ```sh
+   sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   
+   ```
+
+4. 修改 harbor.yml
+
+   hostname `bjrdc206.reg` 必须和证书的hostname相同
+
+   ```yaml
+   hostname: bjrdc206.reg
+   
+   # http related config
+   http:
+     # port for http, default is 80. If https enabled, this port will redirect to https port
+     port: 80
+   
+   # https related config
+   https:
+     # https port for harbor, default is 443
+     port: 443
+     # The path of cert and key files for nginx
+     certificate: /docker/cert/bjrdc206.reg.crt
+     private_key: /docker/cert/bjrdc206.reg.key
+    ...
+   ```
+
+   ```sh
+   ./install.sh
+   ```
+
+
+#### 3.自启动
+
+1. 创建service文件
+
+   ```sh
+   cat >harbor.service <<EOF
+   [Unit]
+   Description=Redis
+   After=network.target
+   
+   [Service]
+   ExecStart=/usr/local/bin/docker-compose -f /docker/harbor/docker-compose.yml start 
+   
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+   ```
+
+   
+
+2. 服务质量harbor.service
+
+   ```sh
+   cp harbor/harbor.service /lib/systemd/system/
+   ```
+
+   
+
+3. enable service
+
+   ```sh
+   systemctl enable harbor
+   ```
+
+   
+
+#### 4. 问题处理
+
+1. :failed to connect to tcp://postgresql:5432
+
+   查看日志时,发现错误:failed to connect to tcp://postgresql:5432
+   解决办法:
+
+   ```sh
+   cd /docker/harbor
+   sudo docker-compose down -v
+   docker-compose up -d
+   ```
+
+   ```
+   停止并删除docker容器:docker-compose down -v
+   启动所有docker容器:docker-compose up -d
+   ```
+
+   
+
+### 界面配置
+
+
+
+### push
+
+1. on docker
+
+   修改host 的docker配置，让https生效
+
+   ```sh
+   cat > /etc/docker/daemon.json <<EOF
+   {
+     "graph": "/docker",
+     "exec-opts": ["native.cgroupdriver=systemd"],
+     "log-driver": "json-file",
+     "log-opts": {
+       "max-size": "100m"
+     },
+     "storage-driver": "overlay2",
+     "insecure-registries":["bjrdc206.reg"] 
+   }
+   EOF
+   sudo service docker restart
+   ```
+
+   >  "insecure-registries":["bjrdc206.reg"],用于告知客户端信任该证书
+
+   ```sh
+    docker login bjrdc206.reg
+    docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
+    sudo docker push bjrdc206.reg/bjrdc-dev/hello-world:v1.0.0
+   ```
+
+2. on ctr
+
+   
+
+### register
+
+为harbo增加远程源
+
+在harbor的管理界面中，的“registries”中增加`https://registry-1.docker.io`
+
+### 重启
+
+使用docker-compose
+
+```sh
+sudo docker-compose down
+sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
+```
+
+或者直接重启host
+
+## containerd（kubernetes>=1.20.0）
+
+ ctr is an unsupported debug and administrative client for interacting
+ with the containerd daemon. Because it is unsupported, the commands,
+ options, and operations are not guaranteed to be backward compatible or
+ stable from release to release of the containerd project
+
+### 安装
+
+如果是v1.20后版本，需要安装containerd
+
+```sh
+sudo apt-get install -y containerd
+```
+
+
+
+```sh
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+```
+
+```sh
+sudo systemctl restart containerd
+```
+
+```sh
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf 
+overlay 
+br_netfilter 
+EOF
+```
+
+
+
+```sh
+sudo modprobe overlay 
+sudo modprobe br_netfilter
+```
+
+### 配置
+
+1. 创建配置文件
+
+   ```sh
+   sudo containerd config default|sudo tee /etc/containerd/config.toml
+   ```
+
+2. 非root执行
+
+   config.toml中设置uid和gid
+
+   ```toml
+   [grpc]
+     address = "/run/containerd/containerd.sock"
+     tcp_address = ""
+     tcp_tls_cert = ""
+     tcp_tls_key = ""
+     uid = 1000
+     gid = 1000
+   ```
+
+   
+
+3. 需要配置内核插件
+
+   ```sh
+   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+   overlay
+   br_netfilter
+   EOF
+   ```
+
+4. 安装harbor register的证书
+
+   ```sh
+   sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
+   sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
+   sudo update-ca-certificates
+   ```
+
+5. 修改本地存储路径
+
+   cat /etc/containerd/config.toml
+
+   ```toml
+   version = 2
+   root = "/cloud/var/lib/containerd"
+   state = "/run/containerd"
+   ```
+
+6. 增加register的登录信息
+
+   vi /etc/containerd/config.toml
+
+   ```toml
+           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."bjrdc206.reg"]
+             endpoint = ["https://bjrdc206.reg"]
+           [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."bjrdc206.reg".auth]
+          username = "admin"
+          password = "Harbor12345"
+   ```
+
+   ```
+   sudo systemctl restart containerd
+   ```
+   
+   
+
+### pause
 
 国内有墙的原因，导致google的镜像拿不下来，但是docker.io作了映射如下
 
@@ -96,7 +485,9 @@ https://github.com/cncf/landscape
 
 特别是在kubernet1.20后默认配置的pause用的是`k8s.gcr.io/pause:3.1`，这个镜像没有下载下来的话，节点无法上线。可以使用如下方式
 
-1. docker
+1. 使用docker push镜像到harbor
+
+   注：最好单独搞一台虚拟机用于docker的操作，不要将docker安装到kubernetes节点上。
 
    ```sh
    docker pull mirrorgooglecontainers/pause:3.1
@@ -104,7 +495,21 @@ https://github.com/cncf/landscape
    docker push
    ```
 
-2. 修改/etc/containerd/config/toml
+2. containerd to harbor
+
+   ```sh
+   sudo containerd config default|sudo tee /etc/containerd/config.toml
+   ```
+
+3. 修改 pause的register
+
+   ```sh
+   sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
+   ```
+
+   
+
+4. 修改/etc/containerd/config.toml
 
    ```toml
      [plugins."io.containerd.grpc.v1.cri"]
@@ -116,6 +521,67 @@ https://github.com/cncf/landscape
        sandbox_image = "bjrdc206.reg/gcr/pause:3.1"
    ```
 
+5. 重启服务
+
+   ```sh
+   sudo systemctl daemon-reload
+   sudo systemctl restart containerd
+   ```
+
+   
+
+
+
+### ctr 命令
+
+1. pull
+
+   ```sh
+   ctr image pull --skip-verify bjrdc206.reg/bjrdc-dev/java:8-jdk-bjrdc-v1.0.1
+   ctr images pull hub-mirror.c.163.com/library/redis:alpine
+   ctr images pull hub.c.163.com/library/nginx:latest
+   ```
+
+   如果没有安装bjrdc206.reg的证书的话会报错误
+
+   `x509: certificate signed by unknown authority`
+
+   解决办法是下载bjrdc206.reg的证书`/etc/docker/certs.d/bjrdc206.reg/ca.crt`，并安装到本地
+
+   ```sh
+   cp ca.crt /etc/ca-certificates/update.d
+   sudo update-ca-certificates
+   ```
+
+   
+
+2. run
+
+   ```sh
+   bjrdc@bjrdc105:~$ ctr images ls
+   REF                                                             TYPE                                                      DIGEST                                                                  SIZE      PLATFORMS                                                                                LABELS hub-mirror.c.163.com/library/redis:alpine                       application/vnd.docker.distribution.manifest.list.v2+json sha256:2cd821f730b90a197816252972c2472e3d1fad3c42f052580bc958d3ad641f96 10.1 MiB  linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x -      hub.c.163.com/library/nginx:latest                              application/vnd.oci.image.manifest.v1+json                sha256:8eeb06742b41fb67514e4b14049f6740dc582520486d7a1612e78c55b1dbe40e 41.2 MiB  linux/amd64 
+   ```
+
+   ```sh
+   sudo ctr run hub-mirror.c.163.com/library/redis:alpine redis-v11:C 20 Jan 2021 01:56:25.900 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo...
+   ```
+
+   
+
+3. ls/rm
+
+   ```
+   ctr c ls
+   ctr c rm nginx-test-1
+   ```
+
+4. task
+
+   ```
+   ctr task ls
+   sudo ctr task attach redis-v1
+   ```
+   
    
 
 ## Kubernetes install
@@ -145,11 +611,13 @@ https://github.com/cncf/landscape
    
 3. disable swap
 
+   ```
+   sudo swapoff -a
+   ```
 
+   change /etc/fatab
 
-### 镜像搜索
-
-[hub.docker.com](https://hub.docker.com/)
+   reboot
 
 ### 安装
 
@@ -167,6 +635,7 @@ https://github.com/cncf/landscape
    ```
    
    ​        
+   
 2. sysctl
 
    ```bash
@@ -177,41 +646,63 @@ https://github.com/cncf/landscape
    sudo sysctl --system
    ```
 
-3. enable docker
+3. 容器引擎
 
-   ```shell
-   sudo apt install docker.io
-   systemctl enable docker.service
-   cat > /etc/docker/daemon.json <<EOF
-   {
-       "graph": "/docker",
-       "exec-opts": ["native.cgroupdriver=systemd"],
-       "log-driver": "json-file",
-       "log-opts": {
-       "max-size": "100m"
-   },
-   "storage-driver": "overlay2"
-   }
-   EOF
-   ```
+   1. enable docker
 
+      > 1.20.x版本后不需要docker，故不需要安装docker
 
-​      
+      ```sh
+      sudo apt install docker.io
+      sudo systemctl enable docker.service
+      ```
 
-   4. 安装
+      
+
+      ```sh
+      cat <<EOF |sudo tee /etc/docker/daemon.json
+      {
+          "graph": "/docker",
+          "exec-opts": ["native.cgroupdriver=systemd"],
+          "log-driver": "json-file",
+          "log-opts": {
+          "max-size": "100m"
+      },
+      "storage-driver": "overlay2"
+      }
+      EOF
+      ```
+
+      
+
+   2. 安装（阿里云）
+
+      
 
       ```sh
       sudo su root
       curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
+      ```
+      
+      
+      
+      ```sh
       # 添加 k8s 镜像源
       sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
       deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
       EOF
+      ```
+      
+       on master
+      
+      ```sh
       sudo apt update
       sudo apt-get install -y kubectl kubeadm kubelet
       ```
-
-       按照安装官方教程安装（需要梯子）
+      
+      
+      
+   5. 按照安装官方教程安装（需要梯子）
 
       ```bash
       sudo apt-get update && sudo apt-get install -y apt-transport-https curl
@@ -226,19 +717,46 @@ https://github.com/cncf/landscape
 
       
 
-   5. 初始化
+   6. 环境变量
+
+      ```sh
+      cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
+      KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+      EOF
+      ```
+
+      
+
+   7. 重启
+
+      ```
+      reboot
+      ```
+
+      
+
+   8. 初始化
 
       ```sh
       kubeadm init \
       --apiserver-advertise-address=172.16.15.17 \
       --image-repository registry.aliyuncs.com/google_containers \
       --pod-network-cidr=10.244.0.0/16 \
-      --kubernetes-version=v1.18.0	
+      --kubernetes-version=v1.21.0\
+      --cri-socket=/run/containerd/containerd.sock
       #如果无法下载，需要设置--kubernetes-version为当前registry服务器上有的版本
       ```
 
+      v1.20.x 之后的版本废弃了docker，可以选择新版本安装。
+
       ```sh
       kubectl get nodes
+      ```
+
+      初始化过程中会出现多次找不到镜像的问题，需要人工去下载进行。
+
+      ```
+      kubeadm reset -f
       ```
 
       
@@ -249,7 +767,7 @@ https://github.com/cncf/landscape
 
       
 
-   6. .kube/config
+   9. .kube/config
 
       ```sh
       mkdir -p $HOME/.kube
@@ -257,7 +775,7 @@ https://github.com/cncf/landscape
       sudo chown $(id -u):$(id -g) $HOME/.kube/config
       ```
 
-   7. 部署 flannel 网络
+   10. 部署 flannel 网络
 
       > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
       >
@@ -269,20 +787,19 @@ https://github.com/cncf/landscape
       >
       > **打通pod与集群**
 
-   8. 查看pod
+   11. 查看pod
 
-      ```sh
-      kubectl get pod --all-namespaces
-      ```
+       ```sh
+       kubectl get pod --all-namespaces
+       ```
 
-9. 安装dashborad
+12. 安装dashborad
 
-   ```sh
-   wget  https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc7/aio/deploy/recommended.yaml
-   kubectl create -f recommended.yaml 
-   ```
+    ```sh
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+    ```
 
-#### 多master
+#### multi master
 
 
 
@@ -292,44 +809,49 @@ https://github.com/cncf/landscape
 
 1. 环境准备
 
-   disable swap
+   1. disable swap
 
-   ```sh
-   sudo vi /etc/fstab
-   #/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
-   ```
+      ```
+      sudo vi /etc/fstab
+      #/dev/mapper/fw--vg-swap_1 none            swap    sw              0       0
+      ```
 
-   sysctl
+   2. sysctl
 
-   ```sh
-   sudo  modprobe br_netfilter
-   cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
-   net.bridge.bridge-nf-call-ip6tables = 1
-   net.bridge.bridge-nf-call-iptables = 1
-   EOF
-   sudo sysctl --system
-   ```
+      ```sh
+      cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      EOF
+      sudo sysctl --system
+      ```
 
-   docker*如果使用containerd则不需要安装docker*
+      
 
-   ```shell
-   sudo apt install -y docker.io
-   systemctl enable docker.service
-   cat > /etc/docker/daemon.json <<EOF
-   {
-   "graph": "/docker",
-   "exec-opts": ["native.cgroupdriver=systemd"],
-   "log-driver": "json-file",
-   "log-opts": {
-    "max-size": "100m"
-   },
-   "storage-driver": "overlay2"
-   }
-   EOF
-   ```
+   3. docker
 
+      docker*如果使用containerd则不需要安装docker*
    
-
+      ```sh
+      sudo apt install -y docker.io
+      systemctl enable docker.service
+      cat > /etc/docker/daemon.json <<EOF
+      {
+      "graph": "/docker",
+      "exec-opts": ["native.cgroupdriver=systemd"],
+      "log-driver": "json-file",
+      "log-opts": {
+       "max-size": "100m"
+      },
+      "storage-driver": "overlay2"
+      }
+      EOF
+      ```
+      
+   4. containerd
+   
+      详见上文
+   
 2. 安装kubectl kubeadm
 
    ```sh
@@ -342,41 +864,7 @@ https://github.com/cncf/landscape
    sudo apt update
    sudo apt-get install -y kubelet kubeadm
    ```
-
-3. join
-
-   1. on master
-
-      ```
-      kubeadm token list
-      kubeadm token create --print-join-command
-      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
-      ```
-
-      
-
-   2. on node
-   
-      ```
-      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
-      ```
-   
-      
-   
-4. 增加内核插件(使用containerd时)
-
-   ```sh
-   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
-   overlay
-   br_netfilter
-   EOF
-   modprobe overlay
-   modprobe br_netfilter
-   ```
-
-   
-
-5. 修改环境变量
+3. 修改环境变量
 
    如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
 
@@ -386,34 +874,75 @@ https://github.com/cncf/landscape
    EOF
    ```
 
-   如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，需要如下配置
+   如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，详见上文安装pause
 
-   1. 准备镜像
-
-      找一台安装有docker的机器，使用如下命令准备pause镜像
-
-      ```sh
-      docker pull mirrorgooglecontainers/pause:3.1
-      docker tag mirrorgooglecontainers/pause:3.1 bjrdc206.reg/gcr/pause:3.1
-      docker push
-      ```
-
-      
-
-   2. 修改node节点服务器的 `/etc/containerd/config/toml`
-
-      ```sh
-      sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
-      ```
-      
-   3. 记得重新load
+5. 记得重新load
    
       ```sh
       sudo systemctl daemon-reload
-      sudo systemctl restart kubelet
+   sudo systemctl restart kubelet
+   ```
+
+5. join
+
+   1. on master
+
+      ```sh
+      kubeadm token list
+      kubeadm token create --print-join-command
+      
+      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
+      ```
+   
+      
+   
+   2. on node
+   
+      ```
+      kubeadm join 172.16.15.17:6443 --token h81gdw.duityezgzrxsl4g7     --discovery-token-ca-cert-hash sha256:18f9acf00a214334c0a8d284e5808a9eec346bfe99bee6b9ebb5b016c9d6ca1f
       ```
 
-      
+
+#### 问题处理
+
+##### registry.aliyuncs.com/google_containers/coredns:v1.8.0: not found
+
+因为阿里云上没有coredns:v1.8.0。
+
+由于crictl没有tag命令，无法将者私有的register上的coredns标记为`registry.aliyuncs.com/google_containers/coredns:v1.8.0`，故需要变通：
+
+1. 通过独立的机器上docker tag registry.aliyuncs.com/google_containers/coredns:v1.8.0，
+
+2. docker save
+
+   ```
+   docker save -o coredns1.8.0.tar registry.aliyuncs.com/google_containers/coredns:v1.8.0
+   ```
+
+3. scp
+
+4. ctr import
+
+   ```sh
+   sudo ctr -n=k8s.io images import coredns1.8.0.tar
+   ```
+
+   
+
+##### failed to pull image \"k8s.gcr.io/pause:3.2\"
+
+同上
+
+##### FATA[0010] failed to connect: failed to connect: context deadline exceeded
+
+```sh
+cat << EOF|sudo tee /etc/crictl.yaml 
+runtime-endpoint: unix:///run/containerd/containerd.sock
+debug: false
+EOF
+```
+
+
 
 ### master 上安装其他组件
 
@@ -2935,255 +3464,7 @@ kubectl config set-context --current --namespace=bjrdc-dev
 
 
 
-## harbor
 
->Harbor 是 Vmware 公司开源的 企业级的 Docker Registry 管理项目
->
->它主要 提供 Dcoker Registry 管理UI，可基于角色访问控制, AD/LDAP 集成，日志审核等功能，完全的支持中文。
-
-### 安装
-
-#### 证书
-
-1. Generate a CA certificate private key
-
-   ```sh
-   openssl genrsa  -out ca.key 4096
-   ```
-
-2. Generate the CA certificate.
-
-   ```sh
-   openssl req -x509 -new -nodes -sha512 -days 3650  -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"  -key ca.key -out ca.crt
-   ```
-
-3. Generate a Server Certificate
-
-   ```sh
-   openssl genrsa -out bjrdc206.key 4096
-   ```
-
-4. Generate a certificate signing request (CSR).
-
-   ```sh
-   openssl req -sha512 -new     -subj "/C=CN/ST=Beijing/L=Beijing/O=example/OU=Personal/CN=bjrdc206.reg"     -key bjrdc206.reg.key -out bjrdc206.reg.csr
-   ```
-
-   I had the same issue as you on Ubuntu 18.04.x. Removing (or commenting out) `RANDFILE = $ENV::HOME/.rnd` from `/etc/ssl/openssl.cnf` worked for me.
-
-5. Generate an x509 v3 extension file
-
-   ```sh
-   cat > v3.ext <<EOF
-   authorityKeyIdentifier=keyid,issuer
-   basicConstraints=CA:FALSE
-   keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
-   extendedKeyUsage = serverAuth
-   subjectAltName = @alt_names
-   
-   [alt_names]
-   DNS.1=bjrdc206.reg
-   EOF
-   ```
-
-   
-
-6. Use the `v3.ext` file to generate a certificate for your Harbor host.
-
-   ```sh
-   openssl x509 -req -sha512 -days 3650 \
-       -extfile v3.ext \
-       -CA ca.crt -CAkey ca.key -CAcreateserial \
-       -in bjrdc206.reg.csr \
-       -out bjrdc206.reg.crt
-   ```
-
-7. Copy the server certificate and key into the certficates folder on your Harbor host
-
-   ```sh
-   cp bjrdc206.reg.crt /docker/cert/
-   cp bjrdc206.reg.key /docker/cert/
-   ```
-
-8. Convert `yourdomain.com.crt` to `yourdomain.com.cert`, for use by Docker.
-
-   ```sh
-   openssl x509 -inform PEM -in bjrdc206.reg.crt -out bjrdc206.reg.cert
-   ```
-
-9. Copy the server certificate, key and CA files into the Docker certificates folder on the Harbor host. You must create the appropriate folders first
-
-   ```sh
-   mkdir /etc/docker/certs.d/bjrdc206.reg -p
-   cp bjrdc206.reg.cert /etc/docker/certs.d/bjrdc206.reg/
-   cp bjrdc206.reg.key /etc/docker/certs.d/bjrdc206.reg/
-   cp ca.crt /etc/docker/certs.d/bjrdc206.reg/
-   ```
-
-   ```sh
-   cp bjrdc206.reg.crt /usr/local/share/ca-certificates/
-   update-ca-certificates
-   ```
-
-10. 下载ca.crt到本地，添加到浏览器中，并信任后，即可通过浏览器访问
-
-    ```
-    https://bjrdc206.reg
-    ```
-
-11. 如果客户端pull或者push需要证书的话，需要将bjrdc206.reg.crt和ca.crt复制到对应的主机上
-
-    ```sh
-    sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
-    sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
-    sudo update-ca-certificates
-    ```
-
-    
-
-#### 使用docker安装
-
-1. 安装docker
-
-   ```sh
-   systemctl enable docker.service
-   systemctl restart docker
-   ```
-
-2. install docker-compose
-
-   ```sh
-   sudo curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
-   
-   ```
-
-3. 修改 harbor.yml
-
-   hostname `bjrdc206.reg` 必须和证书的hostname相同
-   
-   ```yaml
-   hostname: bjrdc206.reg
-   
-   # http related config
-   http:
-     # port for http, default is 80. If https enabled, this port will redirect to https port
-     port: 80
-   
-   # https related config
-   https:
-     # https port for harbor, default is 443
-     port: 443
-     # The path of cert and key files for nginx
-     certificate: /docker/cert/bjrdc206.reg.crt
-     private_key: /docker/cert/bjrdc206.reg.key
-    ...
-   ```
-   
-   ```sh
-   ./install.sh
-   ```
-
-
-### 自启动
-
-1. 创建service文件
-
-   ```sh
-   cat harbor.service 
-   [Unit]
-   Description=Redis
-   After=network.target
-   
-   [Service]
-   ExecStart=/usr/local/bin/docker-compose -f /docker/harbor/docker-compose.yml start 
-   
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-   
-
-2. 服务质量harbor.service
-
-   ```sh
-   cp harbor/harbor.service /lib/systemd/system/
-   ```
-
-   
-
-3. enable service
-
-   ```sh
-   systemctl enable harbor
-   ```
-
-   
-
-#### 问题处理
-
-1. :failed to connect to tcp://postgresql:5432
-
-   查看日志时,发现错误:failed to connect to tcp://postgresql:5432
-   解决办法:
-
-   ```sh
-   cd /docker/harbor
-   sudo docker-compose down -v
-   docker-compose up -d
-   ```
-
-   
-
-```
-停止并删除docker容器:docker-compose down -v
-启动所有docker容器:docker-compose up -d
-```
-
-### push
-
-修改host 的docker配置，让https生效
-
-```sh
-cat > /etc/docker/daemon.json <<EOF
-{
-  "graph": "/docker",
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m"
-  },
-  "storage-driver": "overlay2",
-  "insecure-registries":["bjrdc206.reg"] 
-}
-EOF
-sudo service docker restart
-```
-
->  "insecure-registries":["bjrdc206.reg"],用于告知客户端信任该证书
-
-```sh
- docker login bjrdc206.reg
- docker tag hello-world bjrdc206:443/bjrdc-dev/hello-world:v1.0.0
- sudo docker push bjrdc206.reg/bjrdc-dev/hello-world:v1.0.0
-```
-
-### register
-
-为harbo增加远程源
-
-在harbor的管理界面中，的“registries”中增加`https://registry-1.docker.io`
-
-### 重启
-
-使用docker-compose
-
-```sh
-sudo docker-compose down
-sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
-```
-
-或者直接重启host
 
 
 
@@ -6202,6 +6483,8 @@ containerd-shim 是一个真实运行容器的载体，每启动一个容器都�
 
 ### crictl
 
+> 属于kubernetes
+
 [官方地址](https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md）
 
  *crictl* 是CRI 兼容的容器运行时命令行接口
@@ -6215,7 +6498,7 @@ crictl by default connects on Unix to:
 #### 配置
 
 ```sh
-sudo echo "runtime-endpoint: unix:///run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
+sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
 ```
 
 #### 相关命令
@@ -6223,178 +6506,22 @@ sudo echo "runtime-endpoint: unix:///run/containerd/containerd.sock" |sudo tee /
 ```sh
 crictl pods
 sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
+
 ```
 
-注:如果`ctr pull`了镜像，则在crictl中是可以看到的。
+#### 与ctr
 
-### containerd
+ctr是containerd的命令，crictl是kubernetes的命令，两者镜像是互通的，如果看不到，可能是namespace不一样导致的。
 
- ctr is an unsupported debug and administrative client for interacting
- with the containerd daemon. Because it is unsupported, the commands,
- options, and operations are not guaranteed to be backward compatible or
- stable from release to release of the containerd project
+ctictl image list= ctr -n=k8s.io image list
 
-#### 安装
+```
+sudo ctr -n=k8s.io images import coredns1.8.0.tar
+```
 
-安装kubelet的时候，会自动依赖安装。作如下基本配置
 
-#### 配置
 
-1. 创建配置文件
-
-   ```sh
-   sudo containerd config default|sudo tee /etc/containerd/config.toml
-   ```
-
-2. 非root执行
-
-   config.toml中设置uid和gid
-
-   ```toml
-   [grpc]
-     address = "/run/containerd/containerd.sock"
-     tcp_address = ""
-     tcp_tls_cert = ""
-     tcp_tls_key = ""
-     uid = 1000
-     gid = 1000
-   ```
-
-   
-
-3. 需要配置内核插件
-
-   ```sh
-   cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
-   overlay
-   br_netfilter
-   EOF
-   ```
-
-4. 修改 pause的register
-
-   ```sh
-   sudo sed -i "s/k8s.gcr.io\/pause:3.1/bjrdc206.reg\/gcr\/pause:3.1/g" /etc/containerd/config.toml
-   ```
-
-   ```
-   sudo systemctl daemon-reload
-   sudo systemctl restart containerd
-   ```
-
-5. 安装register的证书
-
-   ```sh
-   sudo cp /home/bjrdc/bjrdc206.reg.crt /usr/local/share/ca-certificates/
-   sudo cp  /home/bjrdc/ca.crt /etc/ca-certificates/update.d/
-   sudo update-ca-certificates
-   ```
-
-6. 修改本地存储路径
-
-   ```
-   cat /etc/containerd/config.toml 
-   version = 2
-   root = "/cloud/var/lib/containerd"
-   state = "/run/containerd"
-   ```
-
-   
-
-#### ctr
-
-1. pull
-
-   ```sh
-   ctr image pull --skip-verify bjrdc206.reg/bjrdc-dev/java:8-jdk-bjrdc-v1.0.1
-   ctr images pull hub-mirror.c.163.com/library/redis:alpine
-   ctr  images pull hub.c.163.com/library/nginx:latest
-   ```
-
-   如果没有安装bjrdc206.reg的证书的话会报错误
-
-   `x509: certificate signed by unknown authority`
-
-   解决办法是下载bjrdc206.reg的证书`/etc/docker/certs.d/bjrdc206.reg/ca.crt`，并安装到本地
-
-   ```sh
-   cp ca.crt /etc/ca-certificates/update.d
-   sudo update-ca-certificates
-   ```
-
-2. run
-
-   ```sh
-   bjrdc@bjrdc105:~$ ctr images ls
-   REF                                                             TYPE                                                      DIGEST                                                                  SIZE      PLATFORMS                                                                                LABELS 
-   hub-mirror.c.163.com/library/redis:alpine                       application/vnd.docker.distribution.manifest.list.v2+json sha256:2cd821f730b90a197816252972c2472e3d1fad3c42f052580bc958d3ad641f96 10.1 MiB  linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/s390x -      
-   hub.c.163.com/library/nginx:latest                              application/vnd.oci.image.manifest.v1+json                sha256:8eeb06742b41fb67514e4b14049f6740dc582520486d7a1612e78c55b1dbe40e 41.2 MiB  linux/amd64 
-   ```
-
-   ```sh
-   sudo ctr run hub-mirror.c.163.com/library/redis:alpine redis-v1
-   1:C 20 Jan 2021 01:56:25.900 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-   ...
-   ```
-
-   ctr run 相关参数
-
-   ```
-   sudo ctr run -h
-   NAME:
-      ctr run - run a container
-   
-   USAGE:
-      ctr run [command options] [flags] Image|RootFS ID [COMMAND] [ARG...]
-   
-   OPTIONS:
-      --rm                      remove the container after running
-      --null-io                 send all IO to /dev/null
-      --log-uri value           log uri
-      --detach, -d              detach from the task after it has started execution
-      --fifo-dir value          directory used for storing IO FIFOs
-      --cgroup value            cgroup path (To disable use of cgroup, set to "" explicitly)
-      --platform value          run image for specific platform
-      --snapshotter value       snapshotter name. Empty value stands for the default value. [$CONTAINERD_SNAPSHOTTER]
-      --config value, -c value  path to the runtime-specific spec config file
-      --cwd value               specify the working directory of the process
-      --env value               specify additional container environment variables (i.e. FOO=bar)
-      --env-file value          specify additional container environment variables in a file(i.e. FOO=bar, one per line)
-      --label value             specify additional labels (i.e. foo=bar)
-      --mount value             specify additional container mount (ex: type=bind,src=/tmp,dst=/host,options=rbind:ro)
-      --net-host                enable host networking for the container
-      --privileged              run privileged container
-      --read-only               set the containers filesystem as readonly
-      --runtime value           runtime name (default: "io.containerd.runc.v2")
-      --tty, -t                 allocate a TTY for the container
-      --with-ns value           specify existing Linux namespaces to join at container runtime (format '<nstype>:<path>')
-      --pid-file value          file path to write the task's pid
-      --gpus value              add gpus to the container (default: 0)
-      --allow-new-privs         turn off OCI spec's NoNewPrivileges feature flag
-      --memory-limit value      memory limit (in bytes) for the container (default: 0)
-      --device value            add a device to a container
-      --seccomp                 enable the default seccomp profile
-      --rootfs                  use custom rootfs that is not managed by containerd snapshotter
-      --no-pivot                disable use of pivot-root (linux only)
-   ```
-
-3. ls/rm
-
-   ```
-   ctr c ls
-   ctr c rm nginx-test-1
-   ```
-
-4. task
-
-   ```
-   ctr task ls
-   sudo ctr task attach redis-v1
-   ```
-
-   
-
-#### runc
+#### 
 
 ### 替换docker 为containerd
 
