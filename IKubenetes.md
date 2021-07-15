@@ -712,9 +712,15 @@ sudo systemctl restart containerd
       EOF
       ```
 
+   5. crictl 配置
+
+      ```
+      sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
+      ```
+
       
 
-   7. 重启
+   6. 重启
 
       ```
       reboot
@@ -722,7 +728,7 @@ sudo systemctl restart containerd
 
       
 
-   8. 初始化
+   7. 初始化
 
       ```sh
       kubeadm init \
@@ -754,7 +760,7 @@ sudo systemctl restart containerd
 
       
 
-   9. .kube/config
+   8. .kube/config
 
       ```sh
       mkdir -p $HOME/.kube
@@ -762,7 +768,7 @@ sudo systemctl restart containerd
       sudo chown $(id -u):$(id -g) $HOME/.kube/config
       ```
 
-   10. 部署 flannel 网络
+   9. 部署 flannel 网络
 
       > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
       >
@@ -838,51 +844,57 @@ sudo systemctl restart containerd
    4. containerd
    
       详见上文
-      
-   5. 最好重启一下
    
 2. 安装kubectl kubeadm
 
+   
+
    ```sh
    curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
-   # 添加 k8s 镜像源
    ```
+
    
-   
-   
+
    ```sh
    cat <<EOF |sudo tee /etc/apt/sources.list.d/kubernetes.list
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
    ```
-   
+
    ```sh
-   sudo apt update
-   sudo apt-get install -y kubelet kubeadm
+   sudo apt update && sudo apt install -y kubelet kubeadm
    ```
+
    
-   
-   
+
 3. 修改环境变量
 
    如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
 
    ```sh
-   cat >/var/lib/kubelet/kubeadm-flags.env <<EOF
+   cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
    KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
    EOF
    ```
 
    如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，详见上文安装pause
 
-4. 记得重新load
+4. 记得重新load，最好重启一下机器
 
    ```sh
    sudo systemctl daemon-reload
    sudo systemctl restart kubelet
    ```
 
-5. join
+5. crictl 配置
+
+   ```
+   sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
+   ```
+
+   
+
+6. join
 
    1. on master
 
