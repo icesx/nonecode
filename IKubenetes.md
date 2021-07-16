@@ -365,32 +365,12 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 
 或者直接重启host
 
-## containerd（kubernetes>=1.20.0）
+## CRI
 
- ctr is an unsupported debug and administrative client for interacting
- with the containerd daemon. Because it is unsupported, the commands,
- options, and operations are not guaranteed to be backward compatible or
- stable from release to release of the containerd project
-
-### 安装
-
-如果是v1.20后版本，需要安装containerd
+### 操作系统配置
 
 ```sh
-sudo apt-get install -y containerd
-```
-
-
-
-```sh
-sudo mkdir -p /etc/containerd
-sudo containerd config default | sudo tee /etc/containerd/config.toml
-```
-
-
-
-```sh
-cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf 
+cat <<EOF | sudo tee /etc/modules-load.d/cri.conf 
 overlay 
 br_netfilter 
 EOF
@@ -404,12 +384,48 @@ sudo modprobe br_netfilter
 ```
 
 ```
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+```
+
+```
+sudo sysctl --system
+```
+
+
+
+### containerd（kubernetes>=1.20.0）
+
+ ctr is an unsupported debug and administrative client for interacting
+ with the containerd daemon. Because it is unsupported, the commands,
+ options, and operations are not guaranteed to be backward compatible or
+ stable from release to release of the containerd project
+
+#### 安装
+
+如果是v1.20后版本，需要安装containerd
+
+```
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+```
+
+
+
+```sh
+sudo apt-get install -y containerd
+```
+
+```
 sudo systemctl restart containerd
 ```
 
 
 
-### 配置
+#### 配置
 
 1. 非root执行
 
@@ -464,7 +480,7 @@ sudo systemctl restart containerd
    
    
 
-### pause
+#### pause
 
 国内有墙的原因，导致google的镜像拿不下来，但是docker.io作了映射如下
 
@@ -519,7 +535,7 @@ sudo systemctl restart containerd
 
 
 
-### ctr 命令
+#### ctr 命令
 
 1. pull
 
@@ -570,6 +586,67 @@ sudo systemctl restart containerd
    ```
    
    
+
+### CRI-O
+
+#### 安装
+
+| 操作系统     | `$OS`           |
+| ------------ | --------------- |
+| Ubuntu 20.04 | `xUbuntu_20.04` |
+| Ubuntu 19.10 | `xUbuntu_19.10` |
+| Ubuntu 19.04 | `xUbuntu_19.04` |
+| Ubuntu 18.04 | `xUbuntu_18.04` |
+
+然后，将 `$VERSION` 设置为与你的 Kubernetes 相匹配的 CRI-O 版本。 例如，如果你要安装 CRI-O 1.20, 请设置 `VERSION=1.20`. 你也可以安装一个特定的发行版本。 例如要安装 1.20.0 版本，设置 `VERSION=1.20:1.20.0`
+
+```
+export OS=xUbuntu_18.04
+export VERSION=1.21
+```
+
+
+
+```shell
+cat <<EOF | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/ /
+EOF
+cat <<EOF | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.list
+deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/$VERSION/$OS/ /
+EOF
+```
+
+```
+curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers.gpg add -
+curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/Release.key | sudo apt-key --keyring /etc/apt/trusted.gpg.d/libcontainers-cri-o.gpg add -
+
+```
+
+
+
+```
+sudo apt-get update
+sudo apt-get install cri-o cri-o-runc
+```
+
+#### 配置
+
+```
+cat << EOF |sudo tee /etc/crio/crio.conf
+`sudo crio config --default`
+EOF
+```
+
+
+
+#### 启动
+
+```
+sudo systemctl daemon-reload
+sudo systemctl enable crio --now
+```
+
+
 
 ## Kubernetes install
 
