@@ -367,6 +367,28 @@ sudo docker-compose up -d -f /docker/harbor/docker-compose.yml
 
 ## CRI
 
+### docker
+
+目前1.20.x版本后已经不需要安装docker，如果是老版本的，需要安装docker。安装方式如下
+
+```sh
+sudo apt install -y docker.io
+systemctl enable docker.service
+cat > /etc/docker/daemon.json <<EOF
+{
+"graph": "/docker",
+"exec-opts": ["native.cgroupdriver=systemd"],
+"log-driver": "json-file",
+"log-opts": {
+ "max-size": "100m"
+},
+"storage-driver": "overlay2"
+}
+EOF
+```
+
+
+
 ### 操作系统配置
 
 ```sh
@@ -602,7 +624,7 @@ sudo systemctl restart containerd
 
 ```
 export OS=xUbuntu_18.04
-export VERSION=1.21
+export VERSION=1.22
 ```
 
 
@@ -631,13 +653,54 @@ sudo apt-get install cri-o cri-o-runc
 
 #### 配置
 
-```
-cat << EOF |sudo tee /etc/crio/crio.conf
-`sudo crio config --default`
-EOF
-```
+1. 默认配置
 
+   ```sh
+   cat << EOF |sudo tee /etc/crio/crio.conf
+   `sudo crio config --default`
+   EOF
+   ```
 
+2. 修改storage
+
+   ubuntu18，的内核版本低，不支持`metacopy=off`
+
+   ```sh
+   sudo sed -i s/nodev\,metacopy=on//g /etc/crio/crio.conf
+   ```
+
+   ```toml
+   storage_option = [
+           "overlay.mountopt=",
+   ]
+   ```
+
+   ```sh
+   sudo systemctl restart crio
+   ```
+
+3. 秀爱pause
+
+   vi /etc/crio/crio.conf
+
+   ```
+   #pause_image = "k8s.gcr.io/pause:3.5"
+   pause_image = "bjrdc206.reg/gcr/pause:3.2"
+   ```
+
+   
+
+4. 命令
+
+   ```
+   sudo ctictl image 
+   ```
+
+   
+
+#### 登录
+
+暂时未找到crio的登录register的配置
 
 #### 启动
 
@@ -716,154 +779,135 @@ sudo systemctl enable crio --now
 
       > 1.20.x版本后不需要docker，故不需要安装docker
 
+      
+   
+4. 安装
+
+   1. （阿里云）
+
+   
+
+   ```sh
+   sudo su root
+   curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
+   ```
+
+   
+
+   ```sh
+   # 添加 k8s 镜像源
+   sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+   deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
+   EOF
+   ```
+
+    on master
+
+   ```sh
+   sudo apt update
+   sudo apt-get install -y kubectl kubeadm kubelet
+   ```
+
+   
+
+   1. 按照安装官方教程安装（需要梯子）
+
+   ```bash
+   sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+   cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+   deb https://apt.kubernetes.io/ kubernetes-xenial main
+   EOF
+   sudo apt-get update
+   sudo apt-get install -y kubelet kubeadm kubectl
+   sudo apt-mark hold kubelet kubeadm kubectl
+   ```
+
+   
+
+5. 环境变量
+
+   ```sh
+   cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
+   KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+   EOF
+   ```
+
+6. crictl 配置
+
+   ```
+   sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
+   ```
+
+   
+
+7. 重启
+
+   ```
+   reboot
+   ```
+
+   
+
+8. 初始化
+
+   ```sh
+   kubeadm init \
+   --apiserver-advertise-address=172.16.15.17 \
+   --image-repository registry.aliyuncs.com/google_containers \
+   --pod-network-cidr=10.244.0.0/16 \
+   --kubernetes-version=v1.21.0\
+   --cri-socket=/run/containerd/containerd.sock
+   #如果无法下载，需要设置--kubernetes-version为当前registry服务器上有的版本
+   ```
+
+   v1.20.x 之后的版本废弃了docker，可以选择新版本安装。
+
+   ```sh
+   kubectl get nodes
+   ```
+
+   初始化过程中会出现多次找不到镜像的问题，需要人工去下载进行。
+
+   ```
+   kubeadm reset -f
+   ```
+
+   
+
+   执行完成后，返回内容如下，在slaver节点执行。
+
+   kubeadm join 172.16.15.17:6443 --token 1cx9wb.3bkuu2eq5qh8vn9k  --discovery-token-ca-cert-hash sha256:f680fe2f1575db37e653e2879ded96efc40e5104acd69aa66947b350ec3d35ce
+
+   
+
+9. .kube/config
+
+   ```sh
+   mkdir -p $HOME/.kube
+   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+   sudo chown $(id -u):$(id -g) $HOME/.kube/config
+   ```
+
+10. 部署 flannel 网络
+
+   > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
+   >
+   > ```sh
+   > kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+   > ```
+   >
+   > *但是这个网络是做什么的呢？*
+   >
+   > **打通pod与集群**
+
+   1. 查看pod
+
       ```sh
-      sudo apt install docker.io
-      sudo systemctl enable docker.service
+      kubectl get pod --all-namespaces
       ```
 
-      
-
-      ```sh
-      cat <<EOF |sudo tee /etc/docker/daemon.json
-      {
-          "graph": "/docker",
-          "exec-opts": ["native.cgroupdriver=systemd"],
-          "log-driver": "json-file",
-          "log-opts": {
-          "max-size": "100m"
-      },
-      "storage-driver": "overlay2"
-      }
-      EOF
-      ```
-
-      
-
-   2. 安装（阿里云）
-
-      
-
-      ```sh
-      sudo su root
-      curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add - 
-      ```
-      
-      
-      
-      ```sh
-      # 添加 k8s 镜像源
-      sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-      deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-      EOF
-      ```
-      
-       on master
-      
-      ```sh
-      sudo apt update
-      sudo apt-get install -y kubectl kubeadm kubelet
-      ```
-      
-      
-      
-   5. 按照安装官方教程安装（需要梯子）
-
-      ```bash
-      sudo apt-get update && sudo apt-get install -y apt-transport-https curl
-      curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-      cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
-      deb https://apt.kubernetes.io/ kubernetes-xenial main
-      EOF
-      sudo apt-get update
-      sudo apt-get install -y kubelet kubeadm kubectl
-      sudo apt-mark hold kubelet kubeadm kubectl
-      ```
-
-      
-
-   6. 环境变量
-
-      ```sh
-      cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
-      KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
-      EOF
-      ```
-
-   5. crictl 配置
-
-      ```
-      sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
-      ```
-
-      
-
-   6. 重启
-
-      ```
-      reboot
-      ```
-
-      
-
-   7. 初始化
-
-      ```sh
-      kubeadm init \
-      --apiserver-advertise-address=172.16.15.17 \
-      --image-repository registry.aliyuncs.com/google_containers \
-      --pod-network-cidr=10.244.0.0/16 \
-      --kubernetes-version=v1.21.0\
-      --cri-socket=/run/containerd/containerd.sock
-      #如果无法下载，需要设置--kubernetes-version为当前registry服务器上有的版本
-      ```
-
-      v1.20.x 之后的版本废弃了docker，可以选择新版本安装。
-
-      ```sh
-      kubectl get nodes
-      ```
-
-      初始化过程中会出现多次找不到镜像的问题，需要人工去下载进行。
-
-      ```
-      kubeadm reset -f
-      ```
-
-      
-
-      执行完成后，返回内容如下，在slaver节点执行。
-
-      kubeadm join 172.16.15.17:6443 --token 1cx9wb.3bkuu2eq5qh8vn9k  --discovery-token-ca-cert-hash sha256:f680fe2f1575db37e653e2879ded96efc40e5104acd69aa66947b350ec3d35ce
-
-      
-
-   8. .kube/config
-
-      ```sh
-      mkdir -p $HOME/.kube
-      sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-      sudo chown $(id -u):$(id -g) $HOME/.kube/config
-      ```
-
-   9. 部署 flannel 网络
-
-      > Flannel是CoreOS团队针对Kubernetes设计的一个网络规划服务；简单来说，它的功能是让集群中的不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址，并使Docker容器可以互连。
-      >
-      > ```sh
-      > kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-      > ```
-      >
-      > *但是这个网络是做什么的呢？*
-      >
-      > **打通pod与集群**
-
-   11. 查看pod
-
-       ```sh
-       kubectl get pod --all-namespaces
-       ```
-
-12. 安装dashborad
+11. 安装dashborad
 
     ```sh
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
@@ -896,29 +940,15 @@ sudo systemctl enable crio --now
       sudo sysctl --system
       ```
 
-      
-
    3. docker
 
-      docker*如果使用containerd则不需要安装docker*
-   
-      ```sh
-      sudo apt install -y docker.io
-      systemctl enable docker.service
-      cat > /etc/docker/daemon.json <<EOF
-      {
-      "graph": "/docker",
-      "exec-opts": ["native.cgroupdriver=systemd"],
-      "log-driver": "json-file",
-      "log-opts": {
-       "max-size": "100m"
-      },
-      "storage-driver": "overlay2"
-      }
-      EOF
-      ```
-      
+      详见上文
+
    4. containerd
+
+      详见上文
+   
+   5. cri-o
    
       详见上文
    
@@ -946,15 +976,21 @@ sudo systemctl enable crio --now
 
 3. 修改环境变量
 
-   如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
+   1. contained
 
-   ```sh
-   cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
-   KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
-   EOF
-   ```
+      如果默认安装，可能在在node增加到集群后，无法下载需要的pod，需要在`/var/lib/kubelet/kubeadm-flags.env `增加如下内容
 
-   如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，详见上文安装pause
+      ```sh
+      cat <<EOF |sudo tee /var/lib/kubelet/kubeadm-flags.env
+      KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.2 --resolv-conf=/run/systemd/resolve/resolv.conf"
+      EOF
+      ```
+
+      如果是v1.20.0以后版本，使用containerd作为cri，默认是无法下载pause的，详见上文安装pause
+
+   2. cri-o
+
+      
 
 4. 记得重新load，最好重启一下机器
 
@@ -965,11 +1001,23 @@ sudo systemctl enable crio --now
 
 5. crictl 配置
 
-   ```
-   sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
-   ```
+   1. containerd
 
-   
+      ```sh
+      sudo echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" |sudo tee /etc/crictl.yaml
+      ```
+
+   2. cri-o
+
+      ```sh
+      sudo echo "runtime-endpoint: unix:///run/crio/crio.sock" |sudo tee /etc/crictl.yaml
+      ```
+
+      ```sh
+      sudo crictl images list
+      ```
+
+      
 
 6. join
 
@@ -1030,7 +1078,9 @@ debug: false
 EOF
 ```
 
+#####  could not find a JWS signature in the cluster-info ConfigMap for token ID "d4xo0n"
 
+token 过期
 
 ### master 上安装其他组件
 
@@ -6601,7 +6651,7 @@ sudo crictl --runtime-endpoint /var/run/containerd/containerd.sock images
 
 ctr是containerd的命令，crictl是kubernetes的命令，两者镜像是互通的，如果看不到，可能是namespace不一样导致的。
 
-ctictl image list= ctr -n=k8s.io image list
+ctictl image = ctr -n=k8s.io image list
 
 ```
 sudo ctr -n=k8s.io images import coredns1.8.0.tar
@@ -6609,7 +6659,7 @@ sudo ctr -n=k8s.io images import coredns1.8.0.tar
 
 
 
-#### 
+
 
 ### 替换docker 为containerd
 

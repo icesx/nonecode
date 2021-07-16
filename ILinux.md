@@ -711,6 +711,20 @@ udp
 
 ### subString
 
+### lsblk
+
+```sh
+lsblk -l
+```
+
+### journalctl 
+
+```
+journalctl -ax --no-page
+```
+
+
+
 ## ulimit 
 
 1. /etc/security/limits.conf
