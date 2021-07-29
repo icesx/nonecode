@@ -480,19 +480,6 @@ echo '- - -' >/sys/class/scsi_host/host0/scan
 
 ## NET
 
-### dns
-
-> For static IP situations, the Ubuntu Server Guide says to change the file /etc/network/interfaces, which may look like this:
-
-```
-iface eth0 inet static
-address 192.168.3.3
-netmask 255.255.255.0
-gateway 192.168.3.1
-dns-search example.com
-dns-nameservers 192.168.3.45 192.168.8.10
-```
-
 
 ### TIME_WAIT
 
@@ -544,6 +531,18 @@ tcpkill -i eth1 -9 host 183.129.145.18
 ```
 tcpdump tcp port 8088 -s 0 -v -w hsvod.pcap
 ```
+
+### dns
+
+```
+sudo apt install resolvconf
+cat <<EOF |sudo tee /etc/resolvconf/resolv.conf.d/head
+nameserver 10.96.0.10
+EOF
+resolvconf -u
+```
+
+
 
 ## SSH
 

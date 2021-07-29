@@ -1283,23 +1283,17 @@ token 过期
 
    ```sh
    wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud/deploy.yaml
-   
    ```
-
+   
 2. 准备image
 
-   由于默认使用的镜像是`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`这个镜像在k8s中无法下载，但是不知道为何在docker中可以。
+   由于默认使用的镜像是`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.46.0`这个镜像在k8s中无法下载，最好在github中找到一个可用的。
 
-   > 使用如下命令，将该image下载并推送到harbor中
-
-   ```sh
-   docker pull quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
-   docker tag quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0 bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
-   docker login bjrdc206:443
-   sudo docker push bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0
+   ```
+   docker pull bitnami/nginx-ingress-controller:0.46.0
    ```
 
-   修改deploy.yaml 将其中的`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`替换为`bjrdc206:443/bjrdc-dev/nginx-ingress-controller:0.33.0`
+   修改deploy.yaml 将其中的`quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0`替换为`bitnami/nginx-ingress-controller:0.46.0`
 
 3. 安装ingress-nginx
 
@@ -1410,6 +1404,106 @@ token 过期
 
    > **ingress 和spring-cloud-gateway/zuul均可以实现网管的作用。gateway的功能更加强大，ingress如果能够满足需求，那么最好使用ingress（满足云原生架构理念）**
 
+## 网络穿透
+
+### 	in openvpn
+
+如果需要将本机纳入到集群中，可以nsloopup到service，则需要在openvpn的配置`/etc/openvpn/server.conf`中增加dns的push
+
+```
+push "route 10.0.0.0 255.0.0.0"
+```
+
+如此加入到openvpn网络的机器如果dnsserver配置了10.96.0.10，则可以通过该dnsserver lookup 到service
+
+### 打通虚拟网络
+
+ 1. 配置路由
+
+    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在**vpn的主机**上增加指向10.0.0.0/8的路由
+
+    ```sh
+    route add -net 10.0.0.0/8 gw 172.16.15.17
+    ```
+
+    172.16.15.17为k8s的master的ip
+
+    或者通过netplan配置，and config to netplan.yaml
+
+    ```yaml
+    network:
+      version: 2
+      renderer: networkd
+      ethernets:
+        ens19:
+    ...
+          routes:
+          - to: 10.0.0.0/8
+            via: 172.16.15.17
+    ```
+
+    
+
+    但是打通IP由有什么用呢？能够发现service吗？*可以*
+
+### 本地resolv配置
+
+本机dns server 配置使用 systemd-resolved进行，其他的方式都不是最新的了。
+
+vi /etc/systemd/resolved.conf
+
+```
+[Resolve]
+DNS=10.96.0.10
+#FallbackDNS=
+#Domains=
+#LLMNR=no
+#MulticastDNS=no
+#DNSSEC=no
+#DNSOverTLS=no
+#Cache=yes
+#DNSStubListener=yes
+#ReadEtcHosts=yes
+```
+
+```
+sudo systemctl daemon-reload
+sudo systemctl restart systemd-resolved
+```
+
+
+
+### 验证
+
+
+
+```sh
+nslookup es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local 10.96.0.10
+Server:		10.96.0.10
+Address:	10.96.0.10#53
+
+Name:	es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local
+Address: 10.244.1.101
+```
+
+如果无法查找到，则使用如下命令
+
+```
+nslookup -norecurse hello-node.bjrdc-dev.svc.cluster.local
+Server:		10.96.0.10
+Address:	10.96.0.10#53
+
+Name:	hello-node.bjrdc-dev.svc.cluster.local
+Address: 10.110.0.151
+
+```
+
+```
+curl hello-node.bjrdc-dev.svc.cluster.local:3000
+```
+
+
+
 ## DNS
 
 ### 基本配置
@@ -1419,8 +1513,6 @@ token 过期
 kubernetes安装的时候，会自动的安装一个kube-dns的服务，该服务用于对service设置域名（因为service的clusterIp是会变化的，在service重启，或者故障的时候），建议使用域名进行service的访问，域名的格式如下
 
 ${servicename}.\${namespace}.svc.cluster.local
-
-注：**pod可以ping，service是不能ping的**
 
 ```sh
 ping hello-node.bjrdc-dev.svc.cluster.local
@@ -1437,28 +1529,6 @@ dns 其实是配置在/var/lib/kubelet/config.yaml这个文件里的
 
 ```
 kubectl exec -ti busybox -- nslookup kubernetes.default
-```
-
-
-
-### in openvpn
-
-如果需要将本机纳入到集群中，可以nsloopup到service，则需要在openvpn的配置`/etc/openvpn/server.conf`中增加dns的push
-
-```
-push "route 10.0.0.0 255.0.0.0"
-```
-
-如此加入到openvpn网络的机器如果dnsserver配置了10.96.0.10，则可以通过该dnsserver lookup 到service
-
-```sh
-nslookup es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local 10.96.0.10
-Server:		10.96.0.10
-Address:	10.96.0.10#53
-
-Name:	es-stateful-2.es-stateful-headless.bjrdc-dev.svc.cluster.local
-Address: 10.244.1.101
-
 ```
 
 
@@ -6241,50 +6311,6 @@ The **kubernetes-maven-plugin** brings your Java applications on to [Kubernetes]
 ## 本地开发
 
 > kubernets虽然提供了强大的平台，但是本地开发调试却比较麻烦，就像开发大数据系统一样，需要当前开发主机与所有节点能够通信
-
-### 打通虚拟网络
-
- 1. 配置路由
-
-    kubernets 的所有的pod使用的网络为10.0.0.0/8，故不能通过本机与此网络直接打通。打通的办法是，在vpn的主机上增加指向10.0.0.0/8的路由
-
-    ```sh
-    route add -net 10.0.0.0/8 gw 172.16.15.17
-    ```
-
-    172.16.15.17为k8s的master的ip
-
-    或者通过netplan配置，and config to netplan.yaml
-
-    ```yaml
-    network:
-      version: 2
-      renderer: networkd
-      ethernets:
-        ens19:
-    ...
-          routes:
-          - to: 10.0.0.0/8
-            via: 172.16.15.17
-    ```
-
-    
-
-    但是打通IP由有什么用呢？能够发现service吗？*可以*
-
- 2. 配置dns，*该方式似乎已经过时，推荐使用systemd-resolved*
-
-    只能通过`resolvconf`来实现更新，相关方法如下
-
-    ```sh
-    sudo apt install resolvconf
-    cat  /etc/resolvconf/resolv.conf.d/head <<EOF
-    nameserver 10.96.0.10
-    EOF
-    resolvconf -u
-    ```
-
-
 
 ### spring-cloud on k8s
 

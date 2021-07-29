@@ -349,6 +349,10 @@ sudo ceph fs new cephfs bjrdc-pool-metadata bjrdc-pool
 
 ### 挂载
 
+```
+sudo apt install ceph-common
+```
+
 mount
 
 ```
@@ -374,6 +378,8 @@ cat ceph.client.admin.keyring
        caps mon = "allow *"
        caps osd = "allow *"
 ```
+
+xxxxx== 即为secret。
 
 mount on fstab
 
