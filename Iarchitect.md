@@ -806,7 +806,7 @@ A$\to$B,B$\to$C,得到A$\to$C
 
 ##### 2NF
 
-消除非主属性对候选键的部分依赖
+**消除** 非主属性对候选键的部分依赖
 
 每一个非主属性完全依赖主键（不存在部分依赖）
 
@@ -832,17 +832,144 @@ A$\to$B,B$\to$C,得到A$\to$C
 
 #### 无损分解
 
-电话会议影响，没有上完。
+保持函数依赖分解
+
+模式分解：将一个模式分解为多个模式的过程。
+
+两个维度
+
+1. 保持函数依赖
+2. 保持务实
+
+**函数依赖是存在于属性之间的，属性在函数依赖就在**
+
+![image-20210730215214076](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730215214076.png)
+
+![image-20210730215732108](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730215732108.png)
+
+无损：可以还原
+
+有损：无能还原
+
+![image-20210730215925520](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730215925520.png)
+
+只有自然连接和投影两种运算
+
+#### 无损的判断
+
+1. 首先看有没有保持函数依赖。
+2. 通过自然连接还原：同名属性列，取值相等。
+3. 同名属性列作为函数依赖并且保留下来了。
+
+##### 表格法，判断无损的通用方式
+
+1. 作表
+2. 同名属性列，并有保留
+3. 还原右侧
+
+![image-20210730221152323](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730221152323.png)
 
 
 
-##### 表格法
+![image-20210730222346494](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730222346494.png)
+
+第一个无损，**第二个有损**
+
+##### 公式法
+
+交集推倒差集
+
+**虽然保持函数依赖，但是仍然可能有损**
 
 
 
+##### 冗余函数依赖
+
+![image-20210730223305715](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730223305715.png)
+
+![image-20210730223606058](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730223606058.png)
+
+![image-20210730232044108](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210730232044108.png)
+
+### 并发控制
+
+事务：原子性、持续性、隔离性、一致性
+
+![image-20210731135148041](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731135148041.png)
+
+#### 问题
+
+1. read uncommitted
+   脏读：读取到了其他事物修改但是未提交的内容
+
+2. read committed
+   不可重复读：事物未提交，结果不可见
+
+3. repeatable read
+   同一事物的多个实例，并发读取数据时，会看到同样的行。
+   导致幻读：一个事物读取范围行，另外一个事物增加行，用户再读取该范围数据行时，出现幻影行。
+
+4. serializable
+   事物排序
+
+5. 汇总
+
+| 隔离级别                     | 脏读（Dirty Read） | 不可重复读（NonRepeatable Read） | 幻读（Phantom Read） |
+| ---------------------------- | ------------------ | -------------------------------- | -------------------- |
+| 未提交读（Read uncommitted） | 可能               | 可能                             | 可能                 |
+| 已提交读（Read committed）   | 不可能             | 可能                             | 可能                 |
+| 可重复读（Repeatable read）  | 不可能             | 不可能                           | 可能                 |
+| 可串行化（Serializable ）    | 不可能             | 不可能                           | 不可能               |
+
+#### 锁
+
+S：
+
+加S后，其他事务可以加S，不能加X。
+
+X：
+
+加X后，其他事务加任何锁失败。
 
 
 
+![image-20210731140413884](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731140413884.png)
+
+#### 一级封锁协议（防止丢失修改）
+
+加写锁
+
+![image-20210731140156857](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731140156857.png)
+
+#### 二级封锁协议
+
+不可解决
+
+![image-20210731140222531](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731140222531.png)
+
+### 数据库安全性
+
+![image-20210731141019724](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731141019724.png)
+
+### 数据备份
+
+#### 冷备份
+
+复制文件、容易恢复、不能按需求恢复
+
+#### 热备份
+
+不能出错
+
+#### 镜像
+
+#### 备份策略
+
+全备份、差量备份（上次完全备份完后的变化数据）、增量备份（上次备份后的数据）
+
+### 故障与恢复
+
+![image-20210731144651524](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731144651524.png)
 
 ## 安全性和保密性设计
 
