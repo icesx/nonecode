@@ -113,7 +113,7 @@ http://maven.aliyun.com/nexus/content/groups/public
    <server>
    	<id>nexus</id>
    	<username>deploy</username>
-   	<password>zgjx@321</password>
+   	<password>xxxx</password>
    </server>
      <server>
    	  <id>release</id>
@@ -155,7 +155,7 @@ http://maven.aliyun.com/nexus/content/groups/public
 <server>
 	<id>nexus</id>
 	<username>deploy</username>
-	<password>zgjx@321</password>
+	<password>xxxx</password>
 </server>
 </servers>
 ....

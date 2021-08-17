@@ -247,7 +247,7 @@ You must reset your password using ALTER USER statement before executing this st
 解决办法：
 
 ```sh
-set password=password('zgjx@321');
+set password=password('xxxx');
 ```
 
 ## 密码权限
@@ -301,7 +301,7 @@ https://downloads.mysql.com/source/dbt2-0.37.50.15.tar.gz
 
 ```sql
 create database dbt2
-GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON dbt2.* TO 'bjrdc'@'%' IDENTIFIED BY  'zgjx@321';
+GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,CREATE TEMPORARY TABLES,EXECUTE ON dbt2.* TO 'bjrdc'@'%' IDENTIFIED BY  'xxxx';
 flush privileges;
 ```
 
@@ -312,8 +312,8 @@ flush privileges;
 > 测试脚本
 >
 > ```sh
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3306 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
 >
 > 测试结果
@@ -351,8 +351,8 @@ flush privileges;
 > 测试脚本
 >
 > ```sh
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3308 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
 >
 > 测试结果
@@ -391,8 +391,8 @@ flush privileges;
 > 测试脚本
 >
 > ```sh
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 prepare
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=bjrdc100 --mysql-port=3307 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
 >
 > 测试结果
@@ -431,7 +431,7 @@ flush privileges;
 > 测试脚本
 >
 > ```sh
-> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3307 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+> ./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3307 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 > ```
 >
 > 测试结果
@@ -480,7 +480,7 @@ flush privileges;
 >测试脚本
 >
 >```sh
->./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3309 --mysql-user=bjrdc --mysql-password='zgjx@321' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
+>./sysbench ../share/sysbench/oltp_read_write.lua --mysql-host=localhost --mysql-port=3309 --mysql-user=bjrdc --mysql-password='xxxx' --mysql-db=dbt2 --db-driver=mysql --tables=10 --table-size=1000000 --report-interval=10 --threads=128 --time=120 run
 >```
 >
 >测试结果
@@ -612,7 +612,7 @@ GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,
 2. 第二种
 
 ```sql
-CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'zgjx@321';
+CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'xxxx';
 GRANT ALL PRIVILEGES ON * . * TO 'bjrdc'@'%';
 ```
 

@@ -6446,29 +6446,8 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 
 1. storageclass（可选）
 
-   ```yaml
-   cat 0-zookeeper-storageclass.yaml 
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: ceph-storageclass-zookeeper
-     namespace: bjrdc-dev
-   provisioner: ceph.com/rbd
-   parameters:
-     monitors: 172.16.15.208:6789
-     adminId: admin
-     adminSecretName: ceph-rbd-secret
-     adminSecretNamespace: bjrdc-dev
-     pool: k8s_pool_zookeeper_01
-     userId: admin
-     userSecretName: ceph-rbd-secret
-     fsType: ext4
-     imageFormat: "2"
-     imageFeatures: "layering"
-   ```
-
+   使用前文创建的storageclass `csi-rbd-sc`
    
-
 2. configmap
 
    ```yaml
@@ -6549,7 +6528,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
          name: zookeeper-data
        spec:
          accessModes: [ "ReadWriteOnce" ]
-         storageClassName: ceph-storageclass-zookeeper
+         storageClassName: csi-rbd-sc
          resources:
            requests:
              storage: 2Gi
@@ -6557,7 +6536,7 @@ kubernetes-zookeeper的镜像的版本比较落后，如果需要使用最新版
 
 4. headless
 
-   ```
+   ```yaml
    cat 2-zookeeper-cluster-service.yaml 
    # Headless service for stable DNS entries of StatefulSet members.
    apiVersion: v1

@@ -1,21 +1,17 @@
 ## 安装部署
-```
-	cat >>/home/docker/software/spark-1.5.0-bin-hadoop2.6/conf/spark-env.sh<<EOF
-	HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
-	EOF
-```
-### 启动pi
-```
-./spark-submit --master yarn --class  org.apache.spark.examples.SparkPi /home/bjrdc/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar
+```sh
+cat >>/home/docker/software/spark-1.5.0-bin-hadoop2.6/conf/spark-env.sh<<EOF
+HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
+EOF
 ```
 ### 启动Spark wordcount
 ```
 	/home/docker/software/spark-1.5.0/bin/spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/docker/mrs/spark-mapreduce-0.0.1-SNAPSHOT-package.jar
-	./spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 
+	./spark-submit --master yarn --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 
 ```
 ### Pi
 ```
-	./spark-submit --master yarn-cluster --class org.apache.spark.examples.SparkPi   /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 10     
+./spark-submit --master yarn  --deploy-mode cluster --class  org.apache.spark.examples.SparkPi /home/bjrdc/software/spark-3.1.2-bin-hadoop3.2/examples/jars/spark-examples_2.12-3.1.2.jar 10
 ```
 ### jmx
 在执行spark-commit 的时候带上如下参数，用于监控executor
@@ -75,9 +71,9 @@ SLF4J: Found binding in [jar:file:/home/bjrdc/software/hadoop-3.0.3/share/hadoop
 ### 安装部署
 	A、spark安装
 ```
-		cat >>/home/docker/spark-1.5.0/conf/spark-env.sh<<EOF
-			HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
-		EOF
+cat >>/home/docker/spark-1.5.0/conf/spark-env.sh<<EOF
+HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
+EOF
 ```
 ### 执行
 	./software/spark-1.5.0/bin/spark-submit --master yarn-cluster --class com.xjgz.cdc.spark.streaming.alarm.PersonAlarm  /home/docker/mrs/spark-streaming-0.0.1-SNAPSHOT-package.jar
@@ -87,10 +83,10 @@ A、classnotfound org.apache.hadoop.hbase.ipc.RpcControllerFactory
  这个问题是因为Hbase中已经有了Phoniex的jar包，而hadoop启动的时候也加载了所有的Hbase的jar包，即加载了Phoneix的jar。而phoniex的jar中已经有了一个包叫做org.apache.hadoop.hbase.ipc，所以spark执行的时候不会去重新加载hbase-client.jar中的org.apache.hadoop.hbase.ipc
 		解决办法
 ```
-		cat>>/home/docker/software/spark-1.5.0/conf/spark-defaults.conf<<EOF
+cat>>/home/docker/software/spark-1.5.0/conf/spark-defaults.conf<<EOF
 
-		spark.executor.extraClassPath	   /home/docker/mrs/lib/hbase-client-1.1.2.jar
-		EOF
+spark.executor.extraClassPath	   /home/docker/mrs/lib/hbase-client-1.1.2.jar
+EOF
 ```
 B、org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.hdfs.server.namenode.LeaseExpiredException): No lease on /spark/checkpoint/temp (inode 23828): File does not exist.
  原因是多个application公用了一个checkpoint目录，将每个应用的目录修改成自己的即可。

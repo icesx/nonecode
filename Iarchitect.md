@@ -218,6 +218,8 @@ cache+主存储的平均周期=命中率*cache访问时间+（1-命中率）*内
 3. 总容量=存储单元个数*编址内容（8bit，或者字长）
 4. 芯片个数=总容量/单位芯片容量
 
+*把题的截图放到这里*
+
 #### 磁盘
 
 ##### 磁盘管理
@@ -970,6 +972,581 @@ X：
 ### 故障与恢复
 
 ![image-20210731144651524](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210731144651524.png)
+
+----
+
+2021-08-03
+
+-----
+
+## 数学与经济管理
+
+### 图论
+
+#### 最小生成树
+
+1. 所有定点接入
+2. 没有回路
+3. 权重最小
+
+可以有多种形态，但是权值最小。
+
+##### 克鲁斯卡尔算法
+
+找最小边，不接入回路的边。
+
+##### 普利姆算法
+
+最近定点，选中的节点集合找下一个最近点。
+
+![image-20210803203444693](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803203444693.png)
+
+### 最短路径（没看懂）
+
+### 网络与最大流量
+
+由瓶颈决定
+
+![image-20210803201507161](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803201507161.png)
+
+
+
+### 运筹方法
+
+动态规划重点
+
+关键路径法
+
+#### 线性规划
+
+变量
+
+可行域
+
+![image-20210803204701805](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803204701805.png)
+
+![image-20210803204739873](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803204739873.png)
+
+![image-20210803205313284](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803205313284.png)
+
+#### 动态规划
+
+![image-20210803210605307](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803210605307.png)
+
+![image-20210803210849671](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803210849671.png)
+
+#### 预测-博弈论
+
+#### 预测-状态转移矩阵
+
+![image-20210803212257849](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803212257849.png)
+
+![image-20210803212634652](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210803212634652.png)
+
+---
+
+2021-08-05
+
+----
+
+### 排队论
+
+![image-20210810202015099](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810202015099.png)
+
+### 决策问题
+
+1. 可供选择的方案
+2. 衡量方案的准则
+3. 确定性决策
+4. 风险决策（概率）
+5. 不确定决策
+
+#### 不确定决策
+
+![image-20210810203313590](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810203313590.png)
+
+![image-20210810203835858](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810203835858.png)
+
+需要计算后悔值矩阵
+
+![image-20210810204143193](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810204143193.png)
+
+#### 决策表和决策树
+
+加权平均分
+
+![image-20210810205329620](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810205329620.png)
+
+![image-20210810205617186](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810205617186.png)
+
+![image-20210810213446112](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810213446112.png)
+
+![image-20210810213416382](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810213416382.png)
+
+### 数学建模
+
+建立的近似模型
+
+![image-20210810213648543](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810213648543.png)
+
+![image-20210810213944682](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810213944682.png)
+
+
+
+![image-20210810214139491](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810214139491.png)
+
+![image-20210810214348211](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210810214348211.png)
+
+---
+
+2021-08-05
+
+---
+
+## 系统性能与性能评价
+
+### 性能指标
+
+![image-20210811201554917](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811201554917.png)
+
+![image-20210811202256639](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811202256639.png)
+
+#### 主频=外频*倍频
+
+百万条指令每秒
+
+#### CPI（clock per instruction）
+
+每条指令的适中周期
+
+#### IPC（instruction per clock）
+
+每周期指令条数
+
+#### MIPS
+
+MIPS=指令条数/执行时间\*$10^6$​=主频/CPI=主频\*IPC
+
+#### FMIPS
+
+FMIPS=浮点操作次数/(执行时间*${10^6}$​)
+
+#### RT
+
+响应时间
+
+#### TAT
+
+完成时间
+
+#### 兼容性
+
+### 性能调整
+
+![image-20210811203238032](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811203238032.png)
+
+### 阿姆达尔解决方案
+
+系统中某组件采用某种更快执行方式。
+
+![image-20210811204712928](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811204712928.png)
+
+
+
+### 性能评价方法（重点）
+
+时钟频率法、MIPS、等效指令速度法、数据处理速率法、综合理论性能发、
+
+![image-20210811205018913](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811205018913.png)
+
+#### 基准程序法（重点）
+
+![image-20210811205605535](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210811205605535.png)
+
+
+
+## 论文协作技巧
+
+雷区
+
+注意的地方
+
+对素材的积累很重要
+
+系分考的比较细，比高项难度更大
+
+要有自己的理解组织
+
+**千万不要直接复用范文**，结构可以参考
+
+从什么地方入手
+
+### 考试大纲
+
+1. 系统建模
+2. 软件架构设计
+3. 系统设计
+4. 分布式系统设计
+5. 系统可靠性分析与设计
+6. 系统安全性和保密性设计
+
+
+
+![image-20210812205347224](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210812205347224.png)
+
+### 考点
+
+1. 架构风格和架构评估
+2. 数据库技术
+3. 软件开发过程
+4. 系统集成，面向服务
+
+![image-20210812205943060](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210812205943060.png)
+
+### 不能押题
+
+### 现在开始的工作
+
+1. 开始写论文了
+2. 开始练字了
+3. 先作word，然后提交答题面板里，提交老师修改。
+
+### 注意事项
+
+1. 不要压题
+   1. 项目背景可以复用，不要用网上的，近三年以内的项目
+2. 不要抄范文
+3. 作好功课
+   1. 积累理论
+4. 迈出第一步
+5. 换个视角给自己评价
+
+![image-20210812211914524](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210812211914524.png)
+
+### 写作
+
+不用写题目
+
+#### 摘要
+
+写到300-320字，不能太少
+
+#### 正文
+
+不要超过2800字，要求写到2200-2500字。
+
+### 技巧
+
+响应题目中的三个问题
+
+#### 找准核心论点（5分钟）
+
+和技术实践相关
+
+#### 搭建论文框架（10分钟）
+
+先写什么、再写什么、最后写什么
+
+#### 撰写摘要（15分钟）
+
+中心思想表达出来，让阅卷老师。**非常关键**
+
+#### 正文写作（90分钟）
+
+
+
+第一个问题相对固定，写的是项目背景。
+
+第二个问题一般是理论问题。
+
+第三个要结合项目写理论的东西。
+
+#### 万能框架
+
+![image-20210813205208686](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813205208686.png)
+
+#### 摘要
+
+1. 背景、职责、**总概**、最终效果
+
+#### 正文
+
+1. 项目背景（体现出真实性）
+   1. 项目来龙去脉
+   2. 系统具体情况
+   3. 岗位：架构师或者技术负责人
+   4. 概要的项目背景和正文中的项目背景不矛盾，要更加细致
+2. 过度内容
+   1. 灵活
+3. 主体内容（最为关键）
+   1. 1200字左右。
+   2. 一总加三分：四个段落。
+4. 结论
+   1. 效果
+   2. 不足和问题
+   3. 提出解决思路
+
+#### 写法
+
+1. 摘要
+
+![image-20210813212254299](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813212254299.png)
+
+2. 正文
+
+   ![image-20210813212324141](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813212324141.png)
+
+   **特别关注以架构为主要进行写，不要探讨具体技术内容**
+
+   **不要画图**
+
+   ![image-20210813212829639](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813212829639.png)
+
+   写项目的时候，项目一般要写中大型项目，周期上不能短，8个月以上。
+
+   ![image-20210813213502977](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813213502977.png)
+
+   ![image-20210813213537999](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210813213537999.png)
+
+   
+
+## 知识产权与标准化
+
+考3分
+
+![image-20210814212558874](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814212558874.png)
+
+### 著作权
+
+有原件不代表有著作权。无论原件在哪里，著作权都归作者。
+
+不需要申请
+
+### 软件著作权
+
+不需要申请，作品完成即开始保护
+
+登记制度便于举证
+
+包含：程序及文档
+
+代码是不受保护的，具有一定功能的程序
+
+### 专利权
+
+需要申请
+
+需要有一些发明创造
+
+### 商标
+
+需要申请，核准之日才生效
+
+### 商业秘密权
+
+技术与经营
+
+必须有保密措施才能认证商业秘密，保密协议。
+
+### 保护期限
+
+#### 无期限
+
+署名权、修改权、保护作品完整权。
+
+#### 50年
+
+单位作品 手册发表后50年
+
+#### 商标
+
+10年后续注。只有商标权可以续注。
+
+同音或者相似的都是一样的商标
+
+### 专利
+
+发明专利：20年
+
+实用新型10年外观设计10年
+
+商业秘密：不确定
+
+
+
+![image-20210814215447116](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814215447116.png)
+
+#### 软件作品是没有提到署名权的。
+
+![image-20210814220440398](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814220440398.png)
+
+专利不验证谁先使用
+
+### 侵权判定
+
+![image-20210814221826295](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814221826295.png)
+
+**时事新闻不受保护**
+
+思想、过程操作方法、数据概念不受保护
+
+**要推广，促进社会发展的都不受保护**
+
+### 合理试用
+
+合理使用不代表对象不受保护
+
+![image-20210814222224470](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814222224470.png)
+
+引用作品100%，侵权吗？不一定。不能占主体。
+
+
+
+算法不受著作权保护，但是可以申请专利
+
+### 标准化
+
+![image-20210814223644513](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814223644513.png)
+
+![image-20210814223748059](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210814223748059.png)
+
+## 计算机网络
+
+4分左右
+
+![image-20210815194831228](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210815194831228.png)
+
+### 协议蔟
+
+![image-20210815204536586](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210815204536586.png)
+
+重点：
+
+dhcp
+
+dns
+
+![image-20210815205304566](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210815205304566.png)
+
+
+
+### DHCP
+
+固定分配
+
+动态分配
+
+自动分配
+
+### DNS
+
+迭代
+
+![image-20210815214858880](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210815214858880.png)
+
+根域名
+
+递归
+
+#### 网络规划与设计
+
+重点掌握
+
+1. 逻辑网络规划
+2. 物理网络规划
+
+基本过程
+
+1. 需求分析：需求规范
+
+![image-20210816203634249](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816203634249.png)
+
+  5个阶段：
+
+![image-20210816204349803](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816204349803.png)
+
+#### 分层设计 重点
+
+![image-20210816205053232](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816205053232.png)
+
+1. 核心层：访问外围
+2. 汇聚层：骨干网
+3. 接入层：用户接口
+
+#### 网络冗余
+
+1. 备用路径：
+   1. 一般不会启用，只有主路径失效才启用。
+2. 负载分担
+   1. 多种分担形式，只有存在备用路径，才考虑负载分担。
+
+### 网络存储
+
+das、NAS、SAN、SCSI、ISCSI
+
+### RAID
+
+![image-20210816211700317](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816211700317.png)
+
+### IPV6
+
+1. 128位
+2. 简化报文头
+3. 提高安全性
+4. 单播、组播、仁播
+
+地址格式
+
+1. 8个16进制字段组成
+2. 冒分16进制
+3. 每段4位16进制
+4. 每台电脑都有三个地址。
+5. ip地址中不能有多个：：
+
+### 过度技术
+
+1. 双协议栈技术
+2. 隧道技术
+3. NAT-PT技术
+
+### 综合布线
+
+1. 工作区子系统（工作间）
+2. 水平干线子系统（一层楼）
+3. 管理间子系统（楼层机房）
+4. 垂直干线子系统（竖井）
+5. 设备建子系统（楼机房）
+6. 建筑群子系统（园区）
+
+### 物联网
+
+![image-20210816220730867](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816220730867.png)
+
+1. 感知层
+2. 网络层
+3. 应用层
+
+### 云计算
+
+
+
+## 总结
+
+![image-20210816222403248](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222403248.png)
+
+![image-20210816222331820](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222331820.png)
+
+![image-20210816222446706](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222446706.png)
+
+![image-20210816222509454](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222509454.png)
+
+![image-20210816222535821](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222535821.png)
+
+![image-20210816222600176](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222600176.png)
+
+![image-20210816222638331](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210816222638331.png)
+
+
 
 ## 安全性和保密性设计
 

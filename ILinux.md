@@ -797,8 +797,8 @@ disable selinux
 
 ```sh
 sambapasswd -a docker
-zgjx@321
-zgjx@321
+xxxx
+xxxx
 ```
 
 
@@ -913,4 +913,20 @@ curl -H "Authorization:Basic YmplZGM6eHh4Cg==" http://rabbit-stateful-0.rabbit-s
 ```
 curl -i -u guest:guest http://localhost:15672/api/vhosts
 ```
+
+## patch
+
+1. 下载需要的patch文件如
+
+   ```sh
+   wget https://issues.apache.org/jira/secure/attachment/12962642/HADOOP-16167.004.patch
+   ```
+
+2. 补丁操作
+
+   ```sh
+   patch software/hadoop-3.0.3/libexec/hadoop-functions.sh <HADOOP-16167.004.patch
+   ```
+
+   
 

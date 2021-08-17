@@ -138,15 +138,13 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
 ### kubernetes下使用
 
-#### 1. install
-
-先安装好kubernetes，在安装成功后，在gitlab的管理界面增加kubernetes集群，相关的参数要求可以看gitlab的说明
-
-#### 2. register
+#### 1. register
 
 在gitlab的管理界面获取runner的token，保存下来待在kubernetes中配置的时候使用。
 
-#### 3. kubernetes install runner
+
+
+#### 3. kubernetes 配置
 
 > 在kubernetes中安装runner较为复杂，网上也找不到好的资料，很多都是据一`helm`的手动安装了有一份是老外写的，但是测试有问题，只能作为参考 [老外的k8s安装runner的事例](https://edenmal.moe/post/2017/GitLab-Kubernetes-Running-CI-Runners-in-Kubernetes/#Step-3-Write-manifest-for-GitLab-CI-Runners)
 
@@ -282,7 +280,35 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
        wait
    ```
 
-5. 设置runner token
+#### 链接集群
+
+先安装好kubernetes，在安装成功后，在gitlab的管理界面增加kubernetes集群，相关的参数要求可以看gitlab的说明
+
+1. 获取ca
+
+   ```
+   kubectl get secret default-token-z2rm7 -o jsonpath="{['data']['ca\.crt']}" | base64 --decode                    
+   ```
+
+2. 获取service token
+
+   ```
+   kubectl -n gitlab-runner describe secret $(kubectl -n gitlab-runner get secret | grep gitlab | awk '{print $1}')
+   ```
+
+   
+
+![image-20210803192814196](/ICESX/ISunflower/nonecode/IGitlab.assets/image-20210803192814196.png)
+
+#### 安装runner
+
+Obtain a token:
+
+- For a [shared runner](https://docs.gitlab.com/ee/ci/runners/#shared-runners), have an administrator go to the GitLab Admin Area and click **Overview > Runners**
+- For a [group runner](https://docs.gitlab.com/ee/ci/runners/README.html#group-runners), go to **Settings > CI/CD** and expand the **Runners** section
+- For a [project-specific runner](https://docs.gitlab.com/ee/ci/runners/README.html#specific-runners), go to **Settings > CI/CD** and expand the **Runners** sect
+
+1. 设置runner token
 
    ```yaml
    cat 4-gitlab-secret-token.yaml 
@@ -303,7 +329,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
    echo token | base64 -w0
    ```
 
-6. 设置statefulset
+2. 设置statefulset
 
    ```yaml
    cat 5-gitlab-runner-stateful.yaml 
@@ -390,7 +416,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
    如上代码用于增加runner和maven的pod中需要域名
 
-8. settings.xml
+3. settings.xml
 
    需要将settings.xml放到项目根目录和`.gitlab-ci.yml`相同目录
 
@@ -456,7 +482,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
    </settings>
    ```
 
-9. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
+4. 在gitlab管理后台中增加环境变量`MAVEN_REPO_PASS`和`MAVEN_REPO_USER`用于登录私有仓库，该两个变量最终会兑现到`settings.xml`
 
 ### gitlab-ci.yml
 

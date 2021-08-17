@@ -289,6 +289,6 @@ mysql> update wp_options SET option_value='http://bjrdc212/blog' WHERE option_na
 
 
 ```
- php srdb.cli.php  -h localhost -n wordpress  -u wordpress -p "zgjx@321" -r "http://bjrdc212/" -s "http://211.157.177.101:10080/"
+ php srdb.cli.php  -h localhost -n wordpress  -u wordpress -p "xxxx" -r "http://bjrdc212/" -s "http://211.157.177.101:10080/"
 ```
 
