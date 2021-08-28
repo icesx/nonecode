@@ -114,6 +114,8 @@ https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/
 
 ### 下载模板
 
+[下载地址](http://download.proxmox.com/images/system/)
+
 ```pveam update
 pveam update
 pveam available

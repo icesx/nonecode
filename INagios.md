@@ -381,7 +381,7 @@ sudo apt install postfix mailutils
 #### smtp密码配置
 
 ```sh
-echo [smtp.163.com]:465 username:password > /etc/postfix/sasl_password
+    echo [smtp.163.com]:465 username:password > /etc/postfix/sasl_password
 postmap /etc/postfix/sasl_passwd
 chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db

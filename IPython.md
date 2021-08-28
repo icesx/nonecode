@@ -34,7 +34,7 @@ index-url = https://mirrors.aliyun.com/pypi/simple/
 	则PYTHONPATH=/TOOLS/pythonLibs/lib/python2.7/site-packages
 	否则无法安装成功，提示
 	TEST FAILED: /TOOLS/pythonLibs/lib/python2.7/site-packages/ does NOT support .pth files
-error: bad install directory or PYTHONPATH
+	error: bad install directory or PYTHONPATH
 	
 3. 配置好了环境变量后，采用如下方式安装
 
@@ -99,6 +99,7 @@ pip list
 
  ```
 sudo apt install virtualenv
+
  ```
 
  创建虚拟环境

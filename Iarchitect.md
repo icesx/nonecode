@@ -682,9 +682,9 @@ ER模型
 
 
 
-![image-20210729215356980](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210729215356980.png)
+![image-20210729215356980](./Iarchitect.assets/image-20210729215356980.png)
 
-![image-20210729215249327](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20210729215249327.png)
+![image-20210729215249327](./Iarchitect.assets/image-20210729215249327.png)
 
 
 

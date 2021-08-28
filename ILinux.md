@@ -930,3 +930,29 @@ curl -i -u guest:guest http://localhost:15672/api/vhosts
 
    
 
+## csvkit
+
+
+
+```shll
+sudo apt install csvkit
+```
+
+```
+for i in `find .|grep csv|grep -v ok`; do csvsql --db "mysql://hav:hav321@bjrdc37/hav"  --insert $i;echo $i; done
+```
+
+## date
+
+随机生成时间
+
+```
+for i in {0..10000}; do date -d "$((RANDOM%1+2020))-$((RANDOM%6+1))-$((RANDOM%28+1)) $((RANDOM%22+1)):$((RANDOM%59+1)):$((RANDOM%59+1))" '+%Y-%m-%d,%H:%M:%S'; done >> time
+```
+
+随机抽取行
+
+```
+shuf -n 100 Chinese_Names_Corpus_Gender（120W）.txt |awk -F ',' '{print $1}' > name.txt
+```
+

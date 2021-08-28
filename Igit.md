@@ -24,7 +24,7 @@ $git push
 
 ## git client
 
-```
+```shell
 git clone http://server/spring-cloud-config.git
 
 cd spring-cloud-config
