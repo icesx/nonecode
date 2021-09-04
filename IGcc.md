@@ -2,21 +2,24 @@ gcc
 ==================
 ## 命名
 
-```
 工具链有一个松散的名称约定arch[-vendor][-os]-abi：
 
 arch适用于架构：arm，mips，x86，i686 ......
 vendor是工具链供应商：苹果，
 os适用于操作系统：linux，none（裸机）
 abi适用于应用程序二进制接口约定：eabi，gnueabi，gnueabihf
-```
 
 ## 编译安装
 ​	下载[gcc 下载](https://gcc.gnu.org/mirrors.html) 
-​	suao apt install libmpc-dev zip
-​	./configure --enable-checking=release --enable-languages=c,c++ --prefix=/usr/lib/gcc-6.3.0
-​	make -j4
-​	make install
+
+```sh
+suao apt install libmpc-dev zip
+./configure --enable-checking=release --enable-languages=c,c++ --prefix=/usr/lib/gcc-6.3.0
+make -j4
+make install
+```
+
+
 
 ## arm 交叉编译工具
 https://releases.linaro.org/components/toolchain/binaries/
@@ -29,7 +32,7 @@ https://blog.csdn.net/ykr168age/article/details/61615212
 如果当前系统已经安装有gcc，一般安装在“/usr/lib/gcc”下，如果需要多版本，需要如下操作
 40、50为优先级	
 
-```
+```sh
 whereis gcc
 /usr/bin/gcc
 //gcc 安装目录，一般也是一个链接文件，链接到/usr/bin/gcc-5
@@ -48,7 +51,7 @@ sudo update-alternatives --remove gcc /usr/bin/gcc-4.9
  至此 gcc版本切换完成
  下一步需要将libstdc++.so.6 链接完成。
 
-```
+```sh
 cd /usr/lib/aarch64-linux-gnu/
 sudo ln -s /usr/lib/gcc-6.3.0/lib64/libstdc++.so.6.0.22 libstdc++.so.6.0.22
 sudo ln -s libstdc++.so.6.0.22 libstdc++.so.6

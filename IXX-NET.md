@@ -89,3 +89,18 @@ sudo service miredo restart
 
 ### 修改login server
 
+
+
+```
+ cat /TOOLS/software/XX-Net/data/x_tunnel/client.json 
+{
+  "login_account": "icesxrun@gmail.com",
+  "login_password": "",
+  "socks_host": "0.0.0.0",
+  "server_host": "miami01.xx-net.org"
+
+```
+
+  "server_host": "miami01.xx-net.org"
+
+"server_host":"v13.xx-net.org"

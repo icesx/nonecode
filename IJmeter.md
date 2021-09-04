@@ -5,9 +5,10 @@ Jmeter
 
 ### 线程组
 
+1. 一个线程可以理解为一个用户，线程数即为用户数
+2. ramp-up 在多少秒内完成所有用户的启动
 
-
-### 控制器
+![image-20210903105705746](IJmeter.assets/image-20210903105705746.png)
 
 
 
@@ -24,7 +25,9 @@ Jmeter
 
 2. 添加 CSV Data Set Config
 
-   
+   可以使用scv的表头作为变量名
+
+   ![image-20210903110107543](IJmeter.assets/image-20210903110107543.png)
 
 3. sample->http request->paramters
 
@@ -32,9 +35,37 @@ Jmeter
 
    name	${name}
 
+   ![image-20210903110217513](IJmeter.assets/image-20210903110217513.png)
+
 ### test fragment
 
-> 用于批量增加fragment
+> 用于批量增加fragment，是顺序执行的。
+
+![image-20210903110304888](IJmeter.assets/image-20210903110304888.png)
+
+### Json extractor
+
+如果response是json内容的话，可以从response中提取变量
+
+![image-20210903110431338](IJmeter.assets/image-20210903110431338.png)
+
+Regular extractor
+
+![image-20210903111058581](IJmeter.assets/image-20210903111058581.png)
+
+### controller
+
+#### sample
+
+按顺序执行
+
+#### if
+
+在达到if条件判断的时候，再执行其中的请求
+
+![image-20210903112202996](IJmeter.assets/image-20210903112202996.png)
+
+![image-20210903112223631](IJmeter.assets/image-20210903112223631.png)
 
 
 
