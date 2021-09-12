@@ -2922,7 +2922,7 @@ CCB：需求变更委员会
 关联关系：
 
 	1. 聚合：生命周期不同：汽车和轮子
- 	2. 组合：声明周期相同：公司和轮子
+	2. 组合：声明周期相同：公司和轮子
 
 实现关系：类实现接口
 
@@ -3107,6 +3107,8 @@ CCB：需求变更委员会
 
 ### 3独立构件风格
 
+事件驱动、隐式调用
+
 ![image-20210911174041297](Iarchitect.assets/image-20210911174041297.png)
 
 强调构建的独立性，通过事件驱动，降低构建的耦合性。
@@ -3142,6 +3144,8 @@ openstack
 ### 5仓库风格
 多个组件共享数据。
 
+数据共享风格。
+
 数据库管理系统就是这种风格，不是数据仓库。
 
 ![image-20210911175705916](Iarchitect.assets/image-20210911175705916.png)
@@ -3156,11 +3160,139 @@ openstack
 
 经典场景：语音识别、知识推理、集成开发环境。
 
+![image-20210911193005977](Iarchitect.assets/image-20210911193005977.png)
+
+
+
 #### 超文本系统
 
 用文件存储数据，所以可以理解为仓库风格。
 
+### 其他风格
 
+#### 闭环控制架构（过程控制）
+
+![image-20210911193148450](Iarchitect.assets/image-20210911193148450.png)
+
+开环与闭环区别就是-**有没有反馈的回路**
+
+#### C2风格
+
+![image-20210911193715057](Iarchitect.assets/image-20210911193715057.png)
+
+允许并发操作、不允许构件与构件相关
+
+### 习题
+
+![image-20210911194754844](Iarchitect.assets/image-20210911194754844.png)
+
+
+
+![image-20210911195234984](Iarchitect.assets/image-20210911195234984.png)
+
+![image-20210911200428299](Iarchitect.assets/image-20210911200428299.png)
+
+### 偏应用架构风格
+
+#### 层次架构风格
+
+![image-20210911200719541](Iarchitect.assets/image-20210911200719541.png)
+
+![image-20210911200808207](Iarchitect.assets/image-20210911200808207.png)
+
+
+
+![image-20210911200950022](Iarchitect.assets/image-20210911200950022.png)
+
+![image-20210911201106136](Iarchitect.assets/image-20210911201106136.png)
+
+![image-20210911201235158](Iarchitect.assets/image-20210911201235158.png)
+
+### BS架构
+
+![image-20210911201523480](Iarchitect.assets/image-20210911201523480.png)
+
+### MVC
+
+![image-20210911201704463](Iarchitect.assets/image-20210911201704463.png)
+
+![image-20210911201821116](Iarchitect.assets/image-20210911201821116.png)
+
+**非严格的分层结构**
+
+### MVP
+
+
+
+![image-20210911201935226](Iarchitect.assets/image-20210911201935226.png)
+
+### MVVM
+
+![image-20210911201952631](Iarchitect.assets/image-20210911201952631.png)
+
+### RIA
+
+![image-20210911202049644](Iarchitect.assets/image-20210911202049644.png)
+
+### SOA
+
+![image-20210911202148061](Iarchitect.assets/image-20210911202148061.png)
+
+
+
+支持对遗留系统的改造。
+
+![image-20210911202510778](Iarchitect.assets/image-20210911202510778.png)
+
+服务比构件颗粒度更大。
+
+松散耦合、粗粒度高、标准化
+
+#### SOA的实现方式
+
+##### ESB
+
+企业服务总线。
+
+![image-20210911202743836](Iarchitect.assets/image-20210911202743836.png)
+
+
+
+##### webservice
+
+![image-20210911202646987](Iarchitect.assets/image-20210911202646987.png)
+
+注册中心、服务提供者、服务请求者
+
+#### 关键技术
+
+![image-20210911203438193](Iarchitect.assets/image-20210911203438193.png)
+
+### 微服务
+
+![image-20210911203505569](Iarchitect.assets/image-20210911203505569.png)
+
+活字印刷
+
+#### 微服务的来历
+
+![image-20210911203803726](Iarchitect.assets/image-20210911203803726.png)
+
+#### 优点
+
+![image-20210911204259296](Iarchitect.assets/image-20210911204259296.png)
+
+技术异构性、弹性、扩展性、简化部署、与组织匹配、可组合性、可替代的优化
+
+#### 挑战
+
+![image-20210911204609638](Iarchitect.assets/image-20210911204609638.png)
+
+### VS SOA
+
+![image-20210911204712939](Iarchitect.assets/image-20210911204712939.png)
+
+![image-20210911205023810](Iarchitect.assets/image-20210911205023810.png)
 
 
 
