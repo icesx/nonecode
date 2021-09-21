@@ -73,7 +73,11 @@ If everything worked, you should be able to navigate to `hostname:port` in your 
 
 ### start
 
-```
+superset默认命令启动是开发模式，生产模式需要使用gunicron
+
+
+
+```sh
 sudo apt install gunicorn
 ```
 
@@ -87,7 +91,7 @@ gunicorn  -w 10 -k gevent --timeout 120 -b  0.0.0.0:8088  "superset.app:create_a
 
 ### error: can't find Rust compiler
 
-```
+```sh
 pip install --upgrade pip 
 ```
 
@@ -95,7 +99,7 @@ pip install --upgrade pip
 
 ### Python.h: No such file or directory
 
-```
+```sh
 sudo apt install python3-dev
 ```
 
@@ -115,4 +119,6 @@ Apache Kylin
 ```
 kylin://ADMIN:KYLIN@bjrdc42:7070/learn_kylin
 ```
+
+## 图表共享
 

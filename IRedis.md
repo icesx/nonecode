@@ -86,7 +86,7 @@ redis :6379 > shutdown
 
 ### redis cluster
 
-![img](https://pic1.zhimg.com/80/v2-d7623e8b34eea72c0651dc4158954b88_1440w.jpg)
+![img](IRedis.assets/v2-d7623e8b34eea72c0651dc4158954b88_1440w.jpg)
 
 Redis Cluster要求至少需要3个master才能组成一个集群，同时每个master至少需要有一个slave节点。各个节点之间保持TCP通信。当master发生了宕机， Redis Cluster自动会将对应的slave节点提拔为master，来重新对外提供服务。
 

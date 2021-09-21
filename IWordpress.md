@@ -13,7 +13,7 @@ wordpress
 
    2. 配置
 
-      ```
+      ```sh
       cat > /etc/apache2/sites-available/wordpress.conf <<EOF
       Alias /blog /usr/share/wordpress
       <Directory /usr/share/wordpress>
@@ -79,7 +79,7 @@ wordpress
        
     6. 配置数据库链接
    
-    ```
+    ```php
        cat >/etc/wordpress/config-bjrdc212.php <<EOF
     <?php
        define('DB_NAME', 'wordpress');
@@ -96,7 +96,7 @@ wordpress
     7. 访问
    
     ```
-       bjrdc212/blog
+    bjrdc212/blog
     http://bjrdc212/blog/wp-admin/
     ```
    

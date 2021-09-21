@@ -3,7 +3,7 @@ Kubernetes Doing
 
 ## 架构
 
-![架构图](https://jimmysong.io/kubernetes-handbook/images/architecture.png)
+![架构图](IKubenetes.assets/architecture.png)
 
 - etcd保存了整个集群的状态；
 - apiserver提供了资源操作的唯一入口，并提供认证、授权、访问控制、API注册和发现等机制；
@@ -13,7 +13,7 @@ Kubernetes Doing
 - Container runtime负责镜像管理以及Pod和容器的真正运行（CRI）；
 - kube-proxy负责为Service提供cluster内部的服务发现和负载均衡；
 
-![架构图](https://jimmysong.io/kubernetes-handbook/images/kubernetes-high-level-component-archtecture.jpg)
+![架构图](IKubenetes.assets/kubernetes-high-level-component-archtecture.jpg)
 ## 云原生
 
 这里我们抛出一个我们自己的理解：云原生代表着原生为云设计。
@@ -24,7 +24,7 @@ CNCF，全称Cloud Native Computing Foundation（云原生计算基金会），�
 
 https://github.com/cncf/landscape
 
-![](https://landscape.cncf.io/images/serverless.png)
+![](IKubenetes.assets/serverless.png)
 
 ## 体验Docker
 
@@ -796,7 +796,7 @@ sudo systemctl enable crio --now
 
    ```sh
    # 添加 k8s 镜像源
-   sudo cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+   cat <<EOF |sudo tee /etc/apt/sources.list.d/kubernetes.list
    deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
    EOF
    ```
