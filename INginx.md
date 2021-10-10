@@ -1,4 +1,4 @@
-### 安装
+## 安装
 
 ```
 sudo apt-get install libpcre3 libpcre3-dev zlib1g-dev gcc make
@@ -118,6 +118,16 @@ Default:
 Sets the maxium buffer size used for processing mp4 file. If the meta data exceeds thissize Nginx will return a 500 status code and log an error resembling the following:
 "/video/file.mp4" mp4 moov atom is too large:
 12583268, you may want to increase mp4_max_buffer_size
+
+## 修改源代码
+
+### 更改server
+
+```
+sed -i s/"Server: nginx"/"Server: moa-server-v"/g src/http/ngx_http_header_filter_module.c 
+```
+
+
 
 ## 日志切割
 
