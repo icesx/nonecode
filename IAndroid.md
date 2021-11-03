@@ -152,6 +152,8 @@ Ota update is a normal way for system app updating.
 
 ### 基本命令
 
+#### TCP/IP
+
 ```
 $adb connect 192.168.31.158
 $adb root
@@ -166,6 +168,13 @@ adb install C:/work/example.apk
 adb uninstall <app package name>
 
 adb shell am set-debug-app -w com.example.jishuxiaoheiwu.appdebugsample
+```
+
+#### USB
+
+```
+adb usb
+adb unstall com.example.flutter_app
 ```
 
 
