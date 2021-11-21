@@ -99,14 +99,17 @@ pip list
 
  ```
 sudo apt install virtualenv
-
  ```
 
  创建虚拟环境
 
- ```
+ ```sh
 virtualenv --no-site-packages --python=python3.6 venv
  ```
 
  `--no-site-packages`，这样，已经安装到系统Python环境中的所有第三方包都不会复制过来
+
+```
+virtualenv --python=python3.8 venv
+```
 

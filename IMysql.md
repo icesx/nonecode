@@ -1,8 +1,9 @@
 mysql
 =========
 
-## 安装
-### 简单安装
+## mysql5
+### install
+
 ```sh
 $tar –zxvf mysql-enterprise-5.0.30-linux-i686-glibc23.tar.gz –C /usr/local/
 $cd /usr/local/
@@ -250,7 +251,27 @@ You must reset your password using ALTER USER statement before executing this st
 set password=password('xxxx');
 ```
 
+## mysql8
+
+```shell
+wget https://cdn.mysql.com/archives/mysql-8.0/mysql-8.0.26-linux-glibc2.12-x86_64.tar.xz
+xz -d mysql-8.0.26-linux-glibc2.12-x86_64.tar.xz 
+tar -xvf mysql-8.0.26-linux-glibc2.12-x86_64.tar 
+mv mysql-8.0.26-linux-glibc2.12-x86_64 /cloud/
+sudo chown bjrdc:bjrdc /cloud/
+mv mysql-8.0.26-linux-glibc2.12-x86_64 /cloud/
+cd /usr/local/
+sudo ln -s /cloud/mysql-8.0.26-linux-glibc2.12-x86_64 mysql
+cd /usr/local/mysql/bin
+./mysqld --initialize --user=bjrdc
+./mysqld_safe --user=bjrdc&
+```
+
+
+
 ## 密码权限
+
+### mysql5
 
 ```sql
 create database cdc default charset uft8;
@@ -261,6 +282,15 @@ GRANT  ALTER,USAGE,DROP,SELECT, INSERT, UPDATE, DELETE, CREATE,INDEX,SHOW VIEW ,
 
 ```sql
 GRANT ALL PRIVILEGES ON dbt2.* TO 'bjrdc'@'%';
+```
+
+### mysql8
+
+```mysql
+create database cdc COLLATE utf8_general_ci;
+CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'xx@xx';
+GRANT ALL PRIVILEGES ON hav_superset.* TO  'bjrdc'@'%';
+FLUSH PRIVILEGES;
 ```
 
 
