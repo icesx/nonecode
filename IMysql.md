@@ -288,7 +288,7 @@ GRANT ALL PRIVILEGES ON dbt2.* TO 'bjrdc'@'%';
 
 ```mysql
 create database cdc COLLATE utf8_general_ci;
-CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'xx@xx';
+CREATE USER 'bjrdc'@'%' IDENTIFIED BY 'xxxx';
 GRANT ALL PRIVILEGES ON hav_superset.* TO  'bjrdc'@'%';
 FLUSH PRIVILEGES;
 ```

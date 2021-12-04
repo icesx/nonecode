@@ -1,0 +1,12 @@
+在maven的使用过程中，有时候由于网络的原因从主库下载jar非常慢，此时需要做一下代理，用云主机做一个反响代理，然后在setting.xml中设置地址如下
+    <mirror>
+      <id>mymirror</id>
+      <mirrorOf>central</mirrorOf>
+      <name>Human Readable Name for this Mirror.</name>
+      <url>http://42.96.142.145/maven2</url>
+    </mirror>
+central代表，主要资源通过42.96.142.145获取，其他的仍然使用默认。
+在145的服务器上使用nginx做反响代理如下：
+	location /maven2 {
+        	proxy_pass  http://repo.maven.apache.org/maven2;
+    	}

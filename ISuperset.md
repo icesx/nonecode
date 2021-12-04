@@ -111,6 +111,10 @@ sudo apt install python3-dev
 
 ### "Flask-Caching: CACHE_TYPE is set to null, "
 
+#### ERROR: flask-appbuilder 3.4.0 has requirement Flask-WTF<0.15.0,>=0.14.2, but you'll have flask-wtf 1.0.0 which is incompatible.
+
+
+
 ## Kylin
 
 
@@ -123,6 +127,8 @@ Apache Kylin
 ```
 kylin://ADMIN:KYLIN@bjrdc42:7070/learn_kylin
 ```
+
+
 
 ## 配置
 
@@ -172,13 +178,21 @@ git switch origin/1.3
 
 #### 编译superset
 
-1. 穿件虚拟环境
+1. mysql
+
+   ```
+   sudo apt-get install libmysqlclient-dev
+   ```
+
+   
+
+2. 穿件虚拟环境
 
    ```sh
    virtualenv --python=python3.8 /TOOLS/py_venv/venv_superset
    ```
 
-2. 编译superset
+3. 编译superset
 
    ```sh
    source /TOOLS/py_venv/venv_superset/bin/activate
@@ -206,7 +220,7 @@ git switch origin/1.3
    superset load-examples
    ```
 
-3. 启动
+4. 启动
 
    ```sh
    superset run -p 8088 --with-threads --reload --debugger
@@ -505,4 +519,48 @@ SQLALCHEMY_DATABASE_URI = 'mysql://superset:xxxxx@bjrdc60/hav_superset'
 ## 部署
 
 ### nginx+superset
+
+## API对接
+
+superset的api真的好恶心，没有文档，只有一个swagger，所以不知道如何对接。经过摸索2天后，通过抓包后来确定了基本的对接方案。
+
+1. 首先访问首页，获取到默认cookie和csrf_token
+
+   ```
+   curl -v -X 'GET' 'http://bjrdc49:8088/login/'
+   ```
+
+   csrf_token在返回页面的隐藏域中
+
+   cookie在header中
+
+   ---
+
+   Set-Cookie: **session=eyJjc3JmX3Rva2VuIjoiNzgwOWJkZWFkYzE0N2UzYmM0Yzk3YjNmMzhhZmQ3Yzc2Y2E1MTVkZSIsImxvY2FsZSI6InpoIn0.YZzOFg.Jyvx8GWQ4AjJwFQ00yWx22Cg1W8**; HttpOnly; Path=/; SameSite=Lax
+
+   <input id="csrf_token" name="csrf_token" type="hidden" value="Ijc4MDliZGVhZGMxNDdlM2JjNGM5N2IzZjM4YWZkN2M3NmNhNTE1ZGUi.YZzOFg.s4j0-ehzjf7Ly15Q3Uh8XfUte0Y">
+
+   ---
+
+2. 登录，使用获取到的cookie和csrf_token和账户密码进行登录，返回值中有一个cookie，该cookie是后续访问中需要用的cookie
+
+   
+
+   ```
+   curl -v -X 'POST' 'http://bjrdc49:8088/login/' -H 'Cookie: session=eyJjc3JmX3Rva2VuIjoiNzgwOWJkZWFkYzE0N2UzYmM0Yzk3YjNmMzhhZmQ3Yzc2Y2E1MTVkZSIsImxvY2FsZSI6InpoIn0.YZzOFg.Jyvx8GWQ4AjJwFQ00yWx22Cg1W8' -d 'csrf_token=Ijc4MDliZGVhZGMxNDdlM2JjNGM5N2IzZjM4YWZkN2M3NmNhNTE1ZGUi.YZzOFg.s4j0-ehzjf7Ly15Q3Uh8XfUte0Y&username=admin&password=zgjx@321'
+   ```
+
+   Set-Cookie: **session=.eJwtjzFuAzEMwP7iOYNk2ZaczxwkS0KCBA1wlywt-vfe0JEDAfKnbLnHcSvX9_6JS9nuXq4FwSZ0qtgbBCEIuVLUujrOkU2WIUIqEtbQRpJDs6UAglawmjylJ3BwukA6TBmDQL3BpG7WjThTovqSNNAmg5Wm8CBp1riWS1nHntv79Yivs4cFpnmoL2wcZKutyUZJoum8eCzt2D1O7_la-ozT-b6d9Dli_18qv390SELC.YZzPDw.uuUfPy3fKxdTJxCSA6rdnKitzOE**; HttpOnly; Path=/; SameSite=Lax
+
+   ----
+
+3. 获取chart数据
+
+   使用登录成功后获取到的cookie获取API中的数据
+
+   ```sh
+   curl -v -X 'GET' 'http://bjrdc49:8088/api/v1/chart/256' -H 'Cookie: session=.eJwtjzFuAzEMwP7iOYNk2ZaczxwkS0KCBA1wlywt-vfe0JEDAfKnbLnHcSvX9_6JS9nuXq4FwSZ0qtgbBCEIuVLUujrOkU2WIUIqEtbQRpJDs6UAglawmjylJ3BwukA6TBmDQL3BpG7WjThTovqSNNAmg5Wm8CBp1riWS1nHntv79Yivs4cFpnmoL2wcZKutyUZJoum8eCzt2D1O7_la-ozT-b6d9Dli_18qv390SELC.YZzPDw.uuUfPy3fKxdTJxCSA6rdnKitzOE'
+   ```
+
+**注：不知为何superset的/security/login 可以登录成功，并获取到token，但是后续使用token的时候不成功**
 

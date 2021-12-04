@@ -161,6 +161,10 @@ npm update express
 npm init
 ```
 
+## NPX
+
+npx 主要用于命令行的寻址等辅助功能上，而 npm 是管理依赖的。
+
 
 
 ## Yarn
