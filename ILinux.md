@@ -169,6 +169,44 @@ iperf -s
 iperf -c server
 ```
 
+### 触摸板
+
+1. 查看触摸板设备
+
+   ```
+   lsusb
+   Bus 003 Device 003: ID 06cb:00f9 Synaptics, Inc.
+   ```
+
+2. 安装驱动
+
+   ```
+   sudo apt install xserver-xorg-input-synaptics
+   ```
+
+
+### desktop
+
+注：desktop文件名必须与`startupWMclass`相同，这个属性用于窗口分类的，相同的进程会折叠到一起。
+
+```
+cat jetbrains-idea-ce.desktop 
+```
+
+```
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=IntelliJ IDEA Community Edition
+Icon=/TOOLS/IDE/idea-IC/bin/idea.svg
+Exec="/TOOLS/IDE/idea-IC/bin/idea.sh" %f
+Comment=Capable and Ergonomic IDE for JVM
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=jetbrains-idea-ce
+
+```
+
 
 
 ## systemd service
