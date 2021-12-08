@@ -207,6 +207,24 @@ StartupWMClass=jetbrains-idea-ce
 
 ```
 
+### nautilus
+
+#### 隐藏bookmark
+
+```
+echo "enabled=False" > ~/.config/user-dirs.conf
+vi ~/.config/user-dirs.dirs
+```
+
+
+
+### 修改文件权限
+
+```
+chmod -R 755 *
+find . -type f -exec chmod -x {} \;
+```
+
 
 
 ## systemd service
@@ -479,7 +497,7 @@ exit 0
 sudo chmod 755 /etc/rc.local
 ```
 
-### apt
+## apt
 
 ```sh
 sudo apt-get build-dep --download-only -o dir::cache=./ openssh-server
@@ -590,7 +608,7 @@ resolvconf -u
 
 ```
 
-## resync
+## rsync
 
 ### 断点续传
 
@@ -869,25 +887,31 @@ i
 ：wq！
 ```
 
+可以设置快捷键
 
+Add this to your `~/.vimrc` and you will only have to press **F2** before and after pasting:
+
+```
+set pastetoggle=<F2>
+```
 
 ## sendmail
 
 1. install
 
-```
-sudo apt install postfix mailutils
-```
+   ```sh
+   sudo apt install postfix mailutils
+   ```
 
+2. 发送邮件
 
+   ```sh
+   echo "test message42..." | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
+   echo "test message42..." | mailx -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
+   -r : from
+   ```
 
-1. 发送邮件
-
-```sh
-echo "test message42..." | mail -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
-echo "test message42..." | mailx -s 'nagios notification' 13824365716@139.com -r 'nagios@bjrdc51.xjgz.com
--r : from
-```
+   
 
 ## cat EOF
 

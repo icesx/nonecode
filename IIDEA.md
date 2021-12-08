@@ -8,32 +8,32 @@ IIDEA
 | ctrl+w                | 选中文字，多次点击后扩大选中范围                             |
 | ctrl+e                |                                                              |
 | ctrl+1，2             | 打开对应的窗口                                               |
-| ctrl+alt+l            | 格式化代码                                                   |
+| **ctrl+alt+l**        | 格式化代码                                                   |
 | ctrl+tab              | 切换打开的文件                                               |
 | ctrl+F4               | 关闭当前窗口                                                 |
-| ctrl+Y                | 删除当前行                                                   |
+| **ctrl+Y**            | 删除当前行                                                   |
 | ctrl+shift+U          | 切换大小写                                                   |
-| F2,shift+F2           | 快速定位错误                                                 |
+| **F2**,**shift+F2**   | 快速定位错误                                                 |
 | ctrl+shift+alt+T      | 重构                                                         |
-| F4                    | 引导到定义                                                   |
+| **F4**                | 引导到定义                                                   |
 | ctrl+shift+R          | 搜索并重命名                                                 |
-| shift+F6              | 重命名                                                       |
+| **shift+F6**          | 重命名                                                       |
 | shift+F3,F3           | 上一个，下一个相同关键字                                     |
 | ctrl+F7               | 选中相同关键字                                               |
 | alt+insert            | 新建文件，文件夹                                             |
 | ctrl+shift+上下       | 上下移动一行代码                                             |
-| ctrl+K                | git commit                                                   |
-| ctrl+shift+K          | git push                                                     |
-| F6                    | mv file                                                      |
+| **ctrl+K**            | git commit                                                   |
+| **ctrl+shift+K**      | git push                                                     |
+| **F6**                | mv file                                                      |
 | ctrl+R                | 替换当前文本                                                 |
 | alt+shift+enter       | auto import                                                  |
 | alt+shift+F10         | run...                                                       |
-| shift+F10             | run 上次                                                     |
-| ctrl+shift+F10        | run 当前                                                     |
+| **shift+F10**         | run 上次                                                     |
+| **ctrl+shift+F10**    | run 当前                                                     |
 | Ctrl+Alt+Space        | content assist                                               |
-| ctrl+shift+enter      | 光标上增加一行                                               |
-| ctrl+alt+enter        | 光标下增加一行                                               |
-| ctrl+F                | 搜索                                                         |
+| **ctrl+shift+enter**  | 光标上增加一行                                               |
+| **ctrl+alt+enter**    | 光标下增加一行                                               |
+| **ctrl+F**            | 搜索                                                         |
 | ctrl+shift+F          | 搜索in file                                                  |
 | Ctrl + B              | 进入光标所在的方法/变量的接口或是定义处，等效于 Ctrl + 左键单击 （必备） |
 | alt+shift+ left/rigth | navigate 返回或者前进上次光标位置                            |
@@ -245,3 +245,14 @@ IIDEA
 | Tab           | 缩进 （必备）                                                |
 | ESC           | 从工具窗口进入代码文件窗口 （必备）                          |
 | 连按两次Shift | 弹出 Search Everywhere 弹出层                                |
+
+
+
+## 插件
+
+| 序号 | 插件               | 功能                   |
+| ---- | ------------------ | ---------------------- |
+| 1    | maven helper       | pom文件中jar的依赖分析 |
+| 2    | builder gennerator |                        |
+| 3    | scala              |                        |
+

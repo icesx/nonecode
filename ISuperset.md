@@ -5,7 +5,7 @@ Superset
 
 ## 安装
 
-**Debian and Ubuntu**
+### **Debian and Ubuntu**
 
 The following command will ensure that the required dependencies are installed:
 
@@ -19,7 +19,7 @@ In Ubuntu 20.04 the following command will ensure that the required dependencies
 sudo apt-get install build-essential libssl-dev libffi-dev python3-dev python3-pip libsasl2-dev libldap2-dev
 ```
 
-### Python Virtual Environment
+#### Python Virtual Environment
 
 ```shell
 sudo apt install virtualenv
@@ -28,7 +28,7 @@ virtualenv --python=python3.8 venv
 
 
 
-### Installing and Initializing Superset
+#### Installing and Initializing Superset
 
 ```sh
 source venv/bin/activate
@@ -67,7 +67,7 @@ superset load_examples
 superset init
 ```
 
-test
+#### test
 
 ```
 superset run -p 8088 -h bjrdc49 --with-threads --reload --debugger
@@ -75,7 +75,7 @@ superset run -p 8088 -h bjrdc49 --with-threads --reload --debugger
 
 If everything worked, you should be able to navigate to `hostname:port` in your browser (e.g. locally by default at `localhost:8088`) and login using the username and password you created.
 
-### start
+#### start
 
 superset默认命令启动是开发模式，生产模式需要使用gunicron
 
@@ -91,9 +91,9 @@ sudo apt install gunicorn
 gunicorn  -w 10 -k gevent --timeout 120 -b  0.0.0.0:8088  "superset.app:create_app()" --daemon
 ```
 
+### 错误处理
 
-
-### error: can't find Rust compiler
+#### error: can't find Rust compiler
 
 ```sh
 pip install --upgrade pip 
@@ -101,7 +101,7 @@ pip install --upgrade pip
 
 
 
-### Python.h: No such file or directory
+#### Python.h: No such file or directory
 
 ```sh
 sudo apt install python3-dev
@@ -109,15 +109,17 @@ sudo apt install python3-dev
 
 
 
-### "Flask-Caching: CACHE_TYPE is set to null, "
+#### Flask-Caching: CACHE_TYPE is set to null,
+
+
 
 #### ERROR: flask-appbuilder 3.4.0 has requirement Flask-WTF<0.15.0,>=0.14.2, but you'll have flask-wtf 1.0.0 which is incompatible.
 
 
 
-## Kylin
+## 数据源
 
-
+### Kylin
 
 ```
 kylin://<username>:<password>@<hostname>:<port>/<project>?<param1>=<value1>&<param2>=<value2>
@@ -128,15 +130,19 @@ Apache Kylin
 kylin://ADMIN:KYLIN@bjrdc42:7070/learn_kylin
 ```
 
+### mysql
+
 
 
 ## 配置
 
+在PYTONPATH `venv/lib/python3.8/site-package/`下放置`superset_config.py`文件
+
 ### 语言设置
 
-修改config.py文件，设置`BABEL_DEFAULT_LOCALE = "zh"`
+修改`superset_config.py`文件，设置`BABEL_DEFAULT_LOCALE = "zh"`
 
-```
+```python
 BABEL_DEFAULT_LOCALE = "zh"
 # Your application default translation path
 #BABEL_DEFAULT_FOLDER = "superset/translations"
@@ -160,6 +166,16 @@ LANGUAGES = {
 # incomplete and not well maintained.
 #LANGUAGES = {}
 ```
+
+### 存储数据库
+
+```python
+SQLALCHEMY_DATABASE_URI = 'mysql://superset:superset123@bjrdc60/hav_superset'
+```
+
+
+
+### thumbnail
 
 
 
