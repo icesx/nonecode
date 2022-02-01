@@ -61,6 +61,12 @@ git config --global credential.helper 'cache --timeout=360000'
 git config --global core.quotepath false
 ```
 
+### chmod
+
+```
+git config --add core.filemode false
+```
+
 
 
 ## branch
@@ -103,6 +109,14 @@ git branch -r
 
 6. 提交代码
     `git push`
+    
+7. 删除本地分支
+
+    ```
+    git branch dev -D
+    ```
+
+    
 ## 异常情况
 ### merge冲突
 如果在从dev merge到master后，提交的时候，发现master remote已经更新，此时可以将master还原，再pull之后在进行merge

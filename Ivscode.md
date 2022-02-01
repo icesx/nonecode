@@ -52,6 +52,10 @@ So you will have the following values for each variable:
 
 ## 基本操作
 
+### 同步
+
+可以登录微软账号，同步本地和服务器保存的配置，放置以后删除的影响。	
+
 ### settings.json
 
 F1-
@@ -76,7 +80,7 @@ F1-
 
 ## 快捷键
 
-1. 命令面板：Ctrl + Shift + P
+1. 命令面板：Ctrl + Shift + P或者F1
 2. **注释**：
    1. 单行注释：[ctrl+k,ctrl+c] 或 ctrl+/
    2. 取消单行注释：[ctrl+k,ctrl+u] (按下ctrl不放，再按k + u)

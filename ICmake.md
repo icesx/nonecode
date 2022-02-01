@@ -82,7 +82,38 @@ endforeach (sub)
 | CMAKE_MODULE_PATH                               | 如果工程复杂，可能需要编写一些cmake模块，这里通过SET指定这个变量 |
 | LIBRARY_OUTPUT_DIR,BINARY_OUTPUT_DIR            | 库和可执行的最终存放目录                                     |
 
+### 开启日志
 
+有时为了显示gcc的命令，需要打开cmake的执行命令，需要在CMakeList.txt前面增加如下	
+
+```cmake
+SET(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
+```
+
+### 链接.S(ASM)文件
+
+汇编文件如果不能自动链接，需要作两处调整
+
+1. 增加ASM的语音支持
+
+   ```cmake
+   enable_language(ASM)
+   ```
+
+2. 增加对S文件的设置
+
+   ```cmake
+   aux_source_directory(. SRC)
+   set(SRC
+       ${SRC}
+       wiring_pulse.s.S
+   )
+   set(SO arduino)
+   add_library(${SO} OBJECT ${SRC})
+   
+   ```
+
+   
 
 ### 宏设置
 

@@ -225,7 +225,43 @@ chmod -R 755 *
 find . -type f -exec chmod -x {} \;
 ```
 
+### X11&Wayland
 
+1. 查看当前的显示服务
+
+   ```sh
+   echo $XDG_SESSION_TYPE
+   ```
+
+2. 修改为wayland（ubuntu21.10测试）
+
+   ```
+   vi /etc/gdm3/custom.conf
+   ```
+
+   ```conf
+   # GDM configuration storage
+   #
+   # See /usr/share/gdm/gdm.schemas for a list of available options.
+   
+   [daemon]
+   # Uncomment the line below to force the login screen to use Xorg
+   WaylandEnable=true
+   ```
+
+3. 登录的时候，选择wayland方式
+
+4. 显卡
+
+   按照如上方式并不能在显卡上进行渲染，需要如下修改：
+
+   [未找到]
+
+### 快捷键
+
+#### 当前目录打开terminal
+
+ctrl+F10 e
 
 ## systemd service
 
@@ -783,7 +819,8 @@ journalctl -ax --no-page
 ## ulimit 
 
 1. /etc/security/limits.conf
-​	$echo "* - nofile 102400" >> /etc/security/limits.conf/etc/pam.d/login
+​	$echo "* - nofile 102400" >> /etc/security/limits.conf
+2. /etc/pam.d/login
 
 ​	session required /lib/security/pam_limits.so 
 
@@ -793,6 +830,20 @@ journalctl -ax --no-page
 3. /etc/ssh/sshd_config
 
 ​	UsePAM yes
+
+### ubuntu20+
+
+```sh
+vi /etc/systemd/user.conf
+..
+DefaultLimitNOFILE=1024000
+```
+
+```
+sudo systemctl restart user@1000
+```
+
+
 
 ### mount
 	/etc/fstab

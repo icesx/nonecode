@@ -18,7 +18,7 @@ IIDEA
 | **F4**                | 引导到定义                                                   |
 | ctrl+shift+R          | 搜索并重命名                                                 |
 | **shift+F6**          | 重命名                                                       |
-| shift+F3,F3           | 上一个，下一个相同关键字                                     |
+| **ctrl+F3,F3**        | 上一个，下一个相同关键字                                     |
 | ctrl+F7               | 选中相同关键字                                               |
 | alt+insert            | 新建文件，文件夹                                             |
 | ctrl+shift+上下       | 上下移动一行代码                                             |
@@ -41,7 +41,7 @@ IIDEA
 | alt+shift+7           | find used                                                    |
 | ctrl+alt+O            | autoimport                                                   |
 | ctrl+shift+O          | mavne reload                                                 |
-|                       |                                                              |
+| ctrl+F12              | 显示成员                                                     |
 |                       |                                                              |
 |                       |                                                              |
 

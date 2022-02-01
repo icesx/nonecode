@@ -3,11 +3,34 @@ tensorflow
 ## on ubuntu
 ### install
 
+#### cpu
+
 ```sh
 sudo apt install python3 python3-pip
 pip3 install tensorflow 
 #非gpu版本
 ```
+#### gpu (tensorflow2)
+
+```
+pip install --upgrade pip
+pip3 install tensorflow 
+```
+
+#### CUDA
+
+```sh
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /"
+sudo apt-get update
+sudo apt install cuda-minimal-build-11-5 
+sudo apt install libcublas-dev-11-5 libcublaslt11 libcufft-11-5 libcurand-11-5 libcusolver-11-5 libcusparse-11-5
+```
+
+mini安装不会安装过多的依赖，如果使用 `sudo apt-get -y install cuda`会安装5G多的东西，还会更新本地驱动，影响fn+F5.
+
 ### 模型训练
 
 

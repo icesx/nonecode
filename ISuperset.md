@@ -177,6 +177,106 @@ SQLALCHEMY_DATABASE_URI = 'mysql://superset:superset123@bjrdc60/hav_superset'
 
 ### thumbnail
 
+#### 原理
+
+1. 使用redis存储缩略图
+2. 使用webdriver生成缩略图，注意chromedriver需要和chrome版本对应
+3. 异步通知celery创建缩略图
+
+#### webdriver安装
+
+```sh
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt install -y ./google-chrome-stable_current_amd64.deb
+```
+
+chrome安装成功后，查看chrome的版本号，如版本号未96.xx.x.x
+
+则在`https://chromedriver.storage.googleapis.com/`的xml中查看对应的99版本的chromedriver的版本，如为
+
+```xml
+<Contents>
+<Key>96.0.4664.18/chromedriver_linux64.zip</Key>
+<Generation>1635142532134035</Generation>
+<MetaGeneration>1</MetaGeneration>
+<LastModified>2021-10-25T06:15:32.167Z</LastModified>
+<ETag>"e8b409daf617e69cbf9a325606d65375"</ETag>
+<Size>9981693</Size>
+</Contents>
+```
+
+
+
+```sh
+    wget https://chromedriver.storage.googleapis.com/96.0.4664.18/chromedriver_linux64.zip && \
+    unzip chromedriver_linux64.zip && \
+    chmod +x chromedriver && \
+    mv chromedriver /usr/bin && \
+    rm -f google-chrome-stable_current_amd64.deb chromedriver_linux64.zip
+```
+
+#### 配置
+
+superset_config.py，中增加如下配置
+
+```python
+FEATURE_FLAGS = {
+    "THUMBNAILS": True,
+}
+from superset.typing import CacheConfig
+THUMBNAIL_CACHE_CONFIG: CacheConfig = {
+    'CACHE_TYPE': 'redis',
+    'CACHE_DEFAULT_TIMEOUT': 24 * 60 * 60,
+    'CACHE_KEY_PREFIX': 'thumbnail_',
+    'CACHE_NO_NULL_WARNING': True,
+    'CACHE_REDIS_URL': 'redis://localhost:6379/0'
+}
+
+class CeleryConfig(object):
+    BROKER_URL = "redis://localhost:6379/1"
+    CELERY_IMPORTS = ("superset.sql_lab", "superset.tasks", "superset.tasks.thumbnails",)
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+    CELERYD_PREFETCH_MULTIPLIER = 10
+    CELERY_ACKS_LATE = True
+
+CELERY_CONFIG = CeleryConfig
+
+DATA_CACHE_CONFIG = {
+    'CACHE_TYPE': 'redis',
+    'CACHE_DEFAULT_TIMEOUT': 60 * 60 * 24, # 1 day default (in secs)
+    'CACHE_KEY_PREFIX': 'superset_results',
+    'CACHE_REDIS_URL': 'redis://localhost:6379/2',
+}
+#此处要写外网地址，不知道原因
+WEBDRIVER_BASEURL = "http://bjrdc61:8088/"
+WEBDRIVER_TYPE= "chrome"
+WEBDRIVER_OPTION_ARGS = [
+        "--force-device-scale-factor=2.0",
+        "--high-dpi-support=2.0",
+        "--headless",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-extensions",
+        "--disable-dev-shm-usage",
+        "--disable-extensions",
+        "--disable-dev-shm-usage",
+        ]
+```
+
+#### 启动celery
+
+```
+celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 3&
+```
+
+#### 替代方案
+
+由于superset的缩略图使用celery，而找了先关的资料，并没有找到将celery分布式部署的方案，而且此种截图的方案并不稳定。
+
+可以采用`selenium`使用pyhton自己构建截图的方案
+
 
 
 ## 开发

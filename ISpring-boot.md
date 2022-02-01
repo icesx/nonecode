@@ -17,9 +17,12 @@ https://start.spring.io/
 + 
 
 ### War
-mvn clean package
 
-mvn clean spring-boot:repackage
+```
+mvn clean package spring-boot:repackage
+```
+
+
 
 ### actuator
 #### 依赖

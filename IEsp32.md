@@ -102,7 +102,7 @@ idf.py -p /dev/ttyUSB0 monitor
 
 ## vscode
 
-在安装vscode环境之前，要求已经安装了esp-idf 和 espressif
+
 
 ### 安装esp-idf插件
 
