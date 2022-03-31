@@ -79,3 +79,36 @@ electronic
 ### 光耦
 
 ## 电路
+
+## 软件
+
+### AD
+
+
+
+### KiCad
+
+#### Altium -> KiCad converter
+
+http://www2.futureware.at/KiCad/
+
+#### KiCad 开源元件库收集
+
+KiCad 官方 https://gitee.com/KiCAD-CN https://github.com/kicadDigikey
+
+ KiCad 元件库 https://github.com/digikey/digikey-kicad-library
+
+嘉立创 / 立创商城 KiCad 元件库 https://github.com/xtoolbox/lc_kicad_libSparkFun 
+
+KiCad 元件库 https://github.com/sparkfun/SparkFun-KiCad-Libraries
+
+#### 插件
+
+[基于原理图的位置在PCB上自动布局器件]
+
+https://github.com/ian-ross/kicad-plugins
+
+### lceda
+
+
+

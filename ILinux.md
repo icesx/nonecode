@@ -249,6 +249,12 @@ find . -type f -exec chmod -x {} \;
    WaylandEnable=true
    ```
 
+3. Through manual testing, I have determined that *my* problem was that the "nvidia-drm" modeset was disabled. The best way I have found so far to remedy the situation is by adding the following to the "/etc/default/grub" file:
+
+   ```
+   GRUB_CMDLINE_LINUX="nvidia-drm.modeset=1"
+   ```
+
 3. 登录的时候，选择wayland方式
 
 4. 显卡
@@ -262,6 +268,15 @@ find . -type f -exec chmod -x {} \;
 #### 当前目录打开terminal
 
 ctrl+F10 e
+
+### 下载deb及依赖
+
+```sh
+name=$@
+apt-cache depends -i $name | awk '/Depends:/ {print $2}' |grep -v "<" | xargs  apt-get download && apt-get download $name
+```
+
+
 
 ## systemd service
 
@@ -867,6 +882,7 @@ ip link show
 ### 串口
 
 ```
+sudo chown i /dev/ttyACM0
 cu -l ttyAMA0 -s 115200
 ```
 

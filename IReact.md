@@ -78,3 +78,14 @@ code .
 In the File Explorer, one file you'll see is the application `README.md` Markdown file. This has lots of great information about the application and React in general. A nice way to review the README is by using the VS Code [Markdown Preview](https://code.visualstudio.com/docs/languages/markdown#_markdown-preview). You can open the preview in either the current editor group (**Markdown: Open Preview** Ctrl+Shift+V) or in a new editor group to the side (**Markdown: Open Preview to the Side** Ctrl+K V). You'll get nice formatting, hyperlink navigation to headers, and syntax highlighting in code blocks.
 
 ## vscode
+
+## 重要组件
+
+#### antd
+
+#### flux
+
+#### redux
+
+#### dispatcher
+

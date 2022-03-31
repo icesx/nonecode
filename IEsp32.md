@@ -255,7 +255,7 @@ F1->ESP-IDF:create project->template-app，项目建成后，会自动打开`ONB
 
 点击工具栏上的`build-project`进行编译。
 
-## 重要快捷键
+### 重要快捷键
 
 | key    | 说明         |
 | ------ | ------------ |
@@ -263,27 +263,27 @@ F1->ESP-IDF:create project->template-app，项目建成后，会自动打开`ONB
 | F1     | 插件选择命令 |
 |        |              |
 
-## 开发
+## 开发环境
 
-## vscode+cmake
+### vscode+cmake
 
 使用纯粹的vscode+cmake的方式，进行开发，花2天时间将环境配置好，但是编译的时候，由于缺少了一些宏变量，无法编译通过，暂时放弃。待后续通过其他方式编译好了后，在回头调整。
 
 
 
-## arduino
+### arduino
 
 > [arduino esp扩展](https://github.com/espressif/arduino-esp32)
 
 使用ttgo官方推荐的arduino进行开发，通过各种配置后，最终也无法编译成功。。。。
 
-## platformIO
+### platformIO
 
 [官网](https://docs.platformio.org/en/latest/)
 
 使用PIO，大概话费3个小时编译成功。总结经验如下：
 
-### 基本概念
+#### 基本概念
 
 PIO中对于一种平台包含三总定义：
 
@@ -299,17 +299,17 @@ PIO中对于一种平台包含三总定义：
 
    开发框架，如`framework = arduino`
 
-### 插件安装
+#### 插件安装
 
 > 在vscode中直接搜索platformIO，在搜索的结构中选择安装即可。
 
-### .platformio目录
+#### .platformio目录
 
 默认platformio会在`$HOME/.platformio`下安装需要的平台、编译环境、框架文件等。为了防止`HOME`爆满，可以通过软件链接的方式将文件存储到其他目录
 
 
 
-### 基本原理
+#### 基本原理
 
 原理不能深究，简单来说有如下几点
 
@@ -424,9 +424,11 @@ PIO中对于一种平台包含三总定义：
 
    
 
-## vscode+esp-idf
+### vscode+esp-idf[OK]
 
-### 目录结构
+最终经过尝试后发现使用vscode+esp-idf插件的组合是最好的，当然需要使用cmake作为编译工具
+
+#### 项目目录结构
 
 ├── CMakeLists.txt
 ├── components
@@ -440,7 +442,7 @@ PIO中对于一种平台包含三总定义：
 ├── README.md
 └── sdkconfig
 
-### 基本配置
+#### 基本配置
 
 1. sdkconfig
 
@@ -482,6 +484,31 @@ PIO中对于一种平台包含三总定义：
    ```
 
    
+
+### ESP-IDF
+
+#### 插件命令
+
+| 序号 | 命令                                                   | 说明                           |
+| ---- | ------------------------------------------------------ | ------------------------------ |
+| 1    | esp-idf:add escode config folder                       | 增加esp-idf的环境到.vscode目录 |
+| 2    | esp-idf:build,flash and start a monitor on your devics |                                |
+| 3    |                                                        |                                |
+
+### TTGO
+
+恢复出厂固件
+
+```sh
+cd /TOOLS/SDK/esp32/esp-idf/esp-idf/components/esptool_py/esptool
+python esptool.py --chip esp32 --port /dev/ttyUSB0 -b 921600 write_flash 0x0 /ICESX/workspace_esp32/TTGO-T-Display/firmware/LilyGo_T_Display_20200414.bin 
+
+
+```
+
+
+
+## 开发相关
 
 ### display
 
@@ -574,5 +601,11 @@ idf_component_register(SRCS ${srcs}
                     INCLUDE_DIRS "."
                     REQUIRES display_common
                     EMBED_FILES image.jpg)
+```
+
+### menuconfig
+
+```
+make menuconfig
 ```
 

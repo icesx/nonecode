@@ -33,4 +33,27 @@ IML
 	HMM存在两种训练的方法，第一种为监督学习：训练样本中存在标注信息；第二种为非监督学习：训练样本中不存在标注信息。
 #### 监督学习
 	1. 转移概率矩阵估计
-	
+
+## 开源数据集
+
+### text recognation 
+
+https://www.robots.ox.ac.uk/~vgg/data/text/
+
+### 人脸识别
+
+![img](/ICESX/ISunflower/nonecode/IML.assets/03b0616ebf7b03d26dc4d52b9da8807e.png)
+
+## 参考模型
+
+### AlexNet
+
+![image-20220209214805515](/ICESX/ISunflower/nonecode/IML.assets/image-20220209214805515.png)
+
+### VGG
+
+![CNN结构演变总结（一）经典模型](/ICESX/ISunflower/nonecode/IML.assets/29102354628639.png)
+
+## 资源
+
+https://wizardforcel.gitbooks.io/dm-algo-top10/content/cart.html

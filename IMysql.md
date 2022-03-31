@@ -253,6 +253,8 @@ set password=password('xxxx');
 
 ## mysql8
 
+### install
+
 ```shell
 wget https://cdn.mysql.com/archives/mysql-8.0/mysql-8.0.26-linux-glibc2.12-x86_64.tar.xz
 xz -d mysql-8.0.26-linux-glibc2.12-x86_64.tar.xz 
@@ -263,6 +265,11 @@ mv mysql-8.0.26-linux-glibc2.12-x86_64 /cloud/
 cd /usr/local/
 sudo ln -s /cloud/mysql-8.0.26-linux-glibc2.12-x86_64 mysql
 cd /usr/local/mysql/bin
+```
+
+### 初始化
+
+```
 ./mysqld --initialize --user=bjrdc
 ./mysqld_safe --user=bjrdc&
 ```
@@ -858,3 +865,67 @@ set global max_connections=1000
 
 ## mysql fabrice
 
+## 性能优化
+
+### 覆盖索引
+
+#### 使用覆盖索引，少使用select*
+
+需要用到什么数据就查询什么数据，这样可以减少网络的传输和mysql的全表扫描。
+
+尽量使用覆盖索引，比如索引为name，age，address的组合索引，那么尽量覆盖这三个字段之中的值，mysql将会直接在索引上取值（using index），并且返回值不包含不是索引的字段。
+
+#### 基本概念
+
+创建一个索引，该索引包含查询中用到的所有字段，称为“覆盖索引”。
+
+#### **判断标准**
+
+使用explain，可以通过输出的extra列来判断，对于一个索引覆盖查询，显示为**using index**,MySQL查询优化器在执行查询前会决定是否有索引覆盖查询
+
+### 垂直分割
+
+“垂直分割”是一种把数据库中的表，按列变成几张表的方法。这样可以降低表的复杂度和字段的数目，从而达到优化的目的。
+
+示例一：
+
+在Users表中有一个字段是address，它是可选字段，并且不需要经常读取或是修改。
+
+那么，就可以把它放到另外一张表中，这样会让原表有更好的性能。
+
+示例二：
+
+有一个叫 “last_login”的字段，它会在每次用户登录时被更新，每次更新时会导致该表的查询缓存被清空。
+
+所以，可以把这个字段放到另一个表中。
+
+这样就不会影响对用户ID、用户名、用户角色(假设这几个属性并不频繁修改)的不停地读取了，因为查询缓存会增加很多性能。
+
+ 
+
+### 不正确的使用导致索引失效
+
+如果查询中有某个列的范围查询，则其右边所有列都无法使用索引。
+
+**for update锁表**
+
+A, B两个事务分别使用select ... where ... for update进行查询时：
+
+1. A事务执行查询操作的时候，如果这个查询结果为空，无论where条件是否是索引字段，B事务执行查询操作时，不会被阻塞。
+2. A事务执行查询操作的时候，当where条件是索引字段，则B事务执行同样的查询时会被行加锁阻塞；当where条件不是索引字段，则B事务执行有结果集的查询，都会被阻塞。
+
+> for update操作一定要谨慎，之前笔者就遇到过for update产生gap锁，导致后续请求阻塞的问题。 之后的博客单独介绍MySQL的锁机制，同时讲解下更多死锁的情况。
+
+### order by的索引生效
+
+order by排序应该遵循最佳左前缀查询，如果是使用多个索引字段进行排序，那么排序的规则必须相同（同是升序或者降序），否则索引同样会失效。
+
+
+
+### 小表驱动大表
+
+![img](/ICESX/ISunflower/nonecode/IMysql.assets/171401a253f1cac9tplv-t2oaga2asx-zoom-in-crop-mark1956000.awebp) *多表关联*
+
+第一张表是全表索引(要以此关联其他表)，其余表的查询类型type为range(索引区间获得)，也就是6 * 1 * 1，共遍历查询6次即可;
+
+建议使用left join时，以小表关联大表，因为使用join的话，第一张表是必须全扫描的，以少关联多就可以减少这个扫描次数.

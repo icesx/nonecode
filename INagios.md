@@ -318,7 +318,9 @@ define service {
 
 
 
-### 邮件通知
+## 邮件通知
+
+### nagios 配置
 
 1. Prepare
 
@@ -360,15 +362,13 @@ define contact {
 }
 ```
 
-## 邮件通知
-
-### 基本概念
+### 操作系统配置
 
 ubuntu 中mail命令使用的是mailutils程序，通过postfix来进行邮件的发送。发送邮件需要安装postfix程序，通过postfix可以以本地为邮件服务【postfix】也可以使用smtp。
 
 在阿里云上，由于关闭了25端口，故无法通过本地发送邮件出去，需要使用postfix链接到其他的类似163邮箱的ssl端口465上方可
 
-### 安装
+安装mailtuils
 
 ```
 sudo apt install postfix mailutils
@@ -381,7 +381,7 @@ sudo apt install postfix mailutils
 #### smtp密码配置
 
 ```sh
-    echo [smtp.163.com]:465 username:password > /etc/postfix/sasl_password
+echo [smtp.163.com]:465 username:password > /etc/postfix/sasl_password
 postmap /etc/postfix/sasl_passwd
 chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
 sudo chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
@@ -424,7 +424,7 @@ echo "This is really cool!" | mailx -s "我正在使用postfix给自己发送邮
 
 
 
-### check mysql
+## check mysql
 
 1. 使用端口监控的方式，会在mysql中产生connetct_error,当sum_connect_error达到最大值后，会让mysl拒绝该服务器的链接（如果该服务器部署其他的应用，则会出现异常）
 

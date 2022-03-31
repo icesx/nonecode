@@ -1,5 +1,4 @@
-Superset
-======
+# Superset
 
 [官网](https://superset.apache.org/docs/intro)
 
@@ -39,6 +38,15 @@ pip3 install setuptools-rust
 ```
 
 First, start by installing `apache-superset`:
+
+如果使用mysql作为数据库，需要先安装mysql的库
+
+```
+sudo apt install libmysqlclient-dev
+pip3 install mysqlclient
+```
+
+
 
 ```
 pip3 install apache-superset
@@ -392,11 +400,13 @@ npm run build
 
 
 
-### 自己开发方式（IDEA）
+### 启动方式
 
 [参考](https://apache-superset.readthedocs.io/en/latest/installation.html)
 
-#### 启动superset
+#### 启动superset（pycharm）
+
+superset/cli.py 使用click库作为命令行工具.当执行`superset run..`命令的时候，其实是跑到了`flask/cli.py`里执行了flask的命令。
 
 1. 安装pycharm
 
@@ -416,11 +426,233 @@ npm run build
 
 5. superset-frontend需要另行启动
 
-#### 启动superset-frontend
+#### 启动superset-frontend（vscode）
+
+vscode中
+
+f1->npm:run script->dev-server
+
+#### 
+
+### 前端原理
+
+superset的前端分为superset-frontend 和superset/superset。两个项目没有完全解耦。其中
+
+1. superset/superset是一个flask的项目，使用flask的模板技术进行前端的页面的管理。
+2. superset-frontend是react项目，纯静态的项目。
+
+#### superset flask
 
 
 
-#### 修改
+
+
+#### superset-frontend
+
+使用react开发的前端应用，经测试是不能直接使用的，编译后，需要cp（自动）到`superset/superset/static/assets/`目录下。
+
+使用webpack进行开发模式运行的时候，其实是启动了一个webpack的proxy，该代理会将用户请求代理到**superset**后端也就是python开发的flask应用（原理尚未完全搞明白）。
+
+
+
+#### flask代理
+
+superset-frontend通过webpack的proxy来对flask的html进行替换，替换为webpack提供的最新的开发模式的js和css
+
+### superset-ui
+
+1. @superset-ui/core/lib/connection
+
+   实现与superset后端restful通信的库
+
+
+
+### 修改urlbase
+
+#### 基本原理
+
+superset的地址是前端和后端紧密配合的，前端虽然是react开发的应用，但是却不是真正的前后端分离。基本的配合方式是
+
+1. superset通过FAB进行整个后端页面的构建，因此菜单、权限、链接等均通过FAB实现。
+2. 菜单创建后，菜单中的页面的内容是通过falsk的模板将react的资源（js、css）等导入到页面。
+3. 当页面渲染的时候，react首先后去检查当前页面的url和react中的路由对应，就会进行页面的绘制。
+4. 需要注意的是，有一些页面的菜单是react绘制的。
+
+superset-flask的后端应用（FAB）会通过模板技术发布相关的web地址，但是只在框架层面，主要是菜单。
+
+菜单中的地址是可以通过修改python代码来实现修改。
+
+#### 后端修改
+
+故增加前缀的，有如下修改修改
+
+1. config.py 添加
+
+   ```python
+   URL_PREFIX = "/superset"
+   ```
+
+2. create dataviews_utils.py
+
+   ```python
+   # coding:utf-8
+   # Copyright (C)
+   # Author: I
+   # Contact: 12157724@qq.com
+   import logging
+   
+   from superset import app
+   
+   default_url_prefix = app.config['URL_PREFIX']
+   logger = logging.getLogger(__name__)
+   
+   
+   def base_url(route_base, view):
+       if route_base is None:
+           route_base = "/" + view.__class__.__name__.lower()
+           logger.debug(
+               "route_base is none so set to its class name's lower " + route_base)
+       if route_base.startswith(default_url_prefix) is False:
+           route_base = default_url_prefix + route_base
+           logger.info("route_base is not startwith 'superset' so add it: " +
+                       route_base)
+       else:
+           logger.info("do nothing for:" + route_base)
+       return route_base
+   
+   ```
+
+   
+
+3. superset/core.py
+
+   修改所有的`redirect`增加前缀
+
+   ```python
+   return redirect(default_url_prefix+"/")
+   ```
+
+4. superset/views/base.py
+
+   ```python
+   class SupersetModelView(ModelView):
+       page_size = 100
+       list_widget = SupersetListWidget
+   
+       # ICESX add this method,to add /superset to all modelview
+       def __init__(self, **kwargs):
+           super().__init__(**kwargs)
+           self.route_base = base_url(self.route_base, self)
+   
+   
+   ```
+
+   ```python
+   class BaseSupersetView(BaseView):
+       # ICESX add this for add superset for all view
+       def __init__(self, **kwargs):
+           super().__init__(**kwargs)
+           base_url(self.route_base, self)
+   
+   ```
+
+5. superst/initialization/\_\_init\_\_.py 中修改所有的`add_link`(add_link是FAB设置菜单和链接的函数)，类似如下代码
+
+   ```python
+           appbuilder.add_link(
+               "Home",
+               label=__("Home"),
+               href=default_url_prefix+"/welcome/",
+               cond=lambda: bool(appbuilder.app.config["LOGO_TARGET_PATH"]),
+           )
+   ```
+
+   
+
+6. superset/views/sql_lab.py
+
+   ```python
+   class SqlLab(BaseSupersetView):
+       """The base views for Superset!"""
+   
+       @expose("/my_queries/")
+       @has_access
+       def my_queries(self) -> FlaskResponse:  # pylint: disable=no-self-use
+           """Assigns a list of found users to the given role."""
+           # return redirect("/savedqueryview/list/?_flt_0_user={}".format(g.user.get_id())) //ICESX
+           return redirect("/superset/savedqueryview/list/?_flt_0_user={}".format(g.user.get_id()))
+   
+   ```
+
+7. superset/views/database|dashboard|/views.py
+
+   `return redirect(`
+
+   replace all to 
+
+   `return redirect(default_url_prefix+`
+
+#### 前端修改
+
+当浏览器的地址发生变化的时候，会触发react的渲染，也就是说后端expose的地址其实必须和前端需要渲染的路由匹配的。而susperset-frontend中有2个地方和路由相关的
+
+
+
+1. add file dataviews/config.ts
+
+   ```typescript
+   const baseConfig = {
+       "base_url_prefix": "/superset"
+   }
+   export default baseConfig;
+   
+   ```
+
+   
+
+2. src/views/routes.tsx
+
+   ![image-20220317082456606](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317082456606.png)
+
+3. /src/views/CRUD/data/common.ts
+
+   ![image-20220317081903739](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317081903739.png)
+
+4. /src/views/CRUD/chart/ChartList.tsx
+
+   ```typescript
+         onClick: () => {
+           window.location.assign('/chart/add');
+         },
+   ```
+
+   ```typescript
+         onClick: () => {
+           window.location.assign(baseConfig.base_url_prefix+'/chart/add');
+         },
+   ```
+
+5. src/views/CRUD/dashboard/DashboardList.tsx
+
+   ![image-20220317082147706](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317082147706.png)
+
+   
+
+6. src/views/CRUD/data/query/QueryList.tsx
+
+   ![image-20220317082237339](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317082237339.png)
+
+7. src/views/CRUD/welcome/ChartTable.tsx
+
+   ![image-20220317082332380](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317082332380.png)
+
+   
+
+8. src/views/CRUD/welcome/DashboardTable.ts
+
+   ![image-20220317082414651](/ICESX/ISunflower/nonecode/ISuperset.assets/image-20220317082414651.png)
+
+   
 
 
 

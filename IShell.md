@@ -1,18 +1,20 @@
 shell
 ====
 
-### Linux shell 截取字符变量的前 8 位,有方法如下:
+## 字符串
+
+### 截取前8
+
 ```sh
-1. expr substr “$a” 1 8
-2. echo $a|awk ‘{print substr(,1,8)}’
-3. echo $a|cut -c1-8
-4. echo $
-5. expr $a : ‘\(.\\).*’
-6. echo $a|dd bs=1 count=8 2>/dev/null
+expr substr “$a” 1 8
+echo $a|awk ‘{print substr(,1,8)}’
+echo $a|cut -c1-8
+expr $a : ‘\(.\\).*’
+echo $a|dd bs=1 count=8 2>/dev/null
 ```
 
 ### 按指定的字符串截取
-#### 第一种方法:
+#### 第一种方法
 ```sh
 ${varible##*string} 从左向右截取最后一个 string 后的字符串
 ${varible#*string}从左向右截取第一个 string 后的字符串
@@ -28,7 +30,10 @@ rthought.jpg
 $ echo ${MYVAR#*fo}
 odforthought.jpg
 ```
-#### 第二种方法:${varible:n1:n2}:截取变量 varible 从 n1 到 n2 之间的字符串。
+#### 第二种方法
+
+${varible:n1:n2}:截取变量 varible 从 n1 到 n2 之间的字符串。
+
 可以根据特定字符偏移和长度,使用另一种形式的变量扩展,来选择特定子字符串。试着在 bash 中输入以下行:
 ```sh
 $ EXCLAIM=cowabunga
@@ -37,7 +42,10 @@ cow
 $ echo ${EXCLAIM:3:7}
 abunga
 ```
-#### 第三种方法：按照指定要求分割:
+#### 第三种方法
+
+按照指定要求分割:
+
 比如获取后缀名
 ```sh
 ls -al | cut -d “.” -f2
@@ -58,7 +66,7 @@ fun_1 command arg
 }
 ```
 ## if
-#### 字符串为空判断
+### 字符串为空判断
 ```sh
 if [ $(echo $command|wc -L) -eq 0 ];then
 	show_usage
@@ -67,14 +75,14 @@ elif [ $(echo $arg|wc -L) -eq 0 ];then
 else
 fi
 ```
-#### 字符串相等
+### 字符串相等
 ```sh
 if [[ $command = "all" ]];then
 else
 fi
 ```
 
-#### 文件判断
+### 文件判断
 ```sh
 file=/home/xx/y.txt
 if[! -f $file];then
@@ -82,7 +90,7 @@ else
 	echo ""	
 fi
 ```
-#### 目录判断
+### 目录判断
 ```sh
 file=/home/xx
 if[! -d $file];then
@@ -90,6 +98,8 @@ else
 	echo ""
 fi
 ```
+
+## 循环
 
 ### until
 
@@ -104,6 +114,8 @@ done
 ```sh
 until mysql -h 127.0.0.1 -e "SELECT 1"; do sleep 1; done
 ```
+
+## 正则
 
 ### grep
 

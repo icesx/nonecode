@@ -89,6 +89,8 @@ cp pki/dh.pem /etc/openvpn/
 
 ### vars
 
+**一定要作**
+
 ```
 vi /etc/openvpn/easy-rsa/vars
 ​		export KEY_NAME="server"
@@ -178,6 +180,15 @@ iptables -t nat -A POSTROUTING -d 172.16.1.0/24 -o eth1 -j MASQUERADE
 ```
 #### ubuntu 
 将ufw默认的转发功能打开
+
+```
+vi /etc/sysctl.conf
+net.ipv4.ip_forward=1
+sudo systctl -p
+```
+
+
+
 ```
 vi /etc/default/ufw	
 ```
@@ -250,4 +261,6 @@ service openvpn@server restart
 	
 	
 	
-2. 
+2. [OpenSSL Error messages: error:1416F086:SSL routines:tls_process_server_certificate:certificate verify failed](https://stackoverflow.com/questions/57358047/openssl-error-messages-error1416f086ssl-routinestls-process-server-certifica)
+
+   

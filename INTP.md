@@ -59,6 +59,34 @@ ntpq -p
 `#date -R`
 ### no server suitabl for synchronization found
 `chenge to ip not use hostname`
+
 ### on server 
 `watch ntpq -p`
 
+
+
+## 离线
+
+如果ntp服务器离线的话，按照如下步骤
+
+1. 备份默认配置
+
+   ```
+   cp /etc/ntp.conf /etc/ntp.conf.orig
+   ```
+
+2. 创建本地服务
+
+   ```
+   vi /etc/ntp.conf
+   server 127.127.1.0
+   fudge 127.127.1.0 stratum 10
+   ```
+   
+3. 等一会服务正常后，即可通过ntpdate获取时间
+
+   ```
+   ntpdate -u xx.xx.xx.xx
+   ```
+
+   

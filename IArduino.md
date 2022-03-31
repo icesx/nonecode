@@ -15,7 +15,7 @@ Arduino
 
 2. 烧写
 
-   ```
+   ```sh
    sudo avrdude -pm2560 -cstk500v2 -P/dev/ttyACM0 -b115200 -D  -Uflash:w:/ICESX/workSpaceC/SmartCarPark/product/code/frontend/demo/eclipse/Blink/ATMEGA2560/Blink.hex
    ```
 
@@ -61,10 +61,14 @@ sudo apt-get install avrdude binutils-avr gcc-avr avr-libc gdb-avr
         		
 
      4. ArdunioAIO-properties-AVR-AVRDude-programmer-New：Configer Name ：ATMEGA328P_16MHZ;programmer-hardware:Atmel STK500 Version 2.x firmware -D -OK
-        		`sudo avrdude -pm2560 -cstk500v2 -P/dev/ttyACM0 -b115200 -D  -Uflash:w:/ICESX/workSpaceC/SmartCarPark/product/code/frontend/demo/eclipse/Blink/ATMEGA2560/Blink.hex`
      
-
+         ```sh
+         sudo avrdude -pm2560 -cstk500v2 -P/dev/ttyACM0 -b115200 -D  -Uflash:w:/ICESX/workSpaceC/SmartCarPark/product/code/frontend/demo/eclipse/Blink/ATMEGA2560/Blink.hex
+         ```
+     
+     
      5. ArdunioAIO-properties-C/C++Build-ManageConfiger-New：ATMMEGA328P_16MHZ-SetActive
+     
 6. ArdunioAIO-properties-C/C++Build-Settings-Addtion Tools in Toolchain-checkon Genner HEX file for Flash Memory
    7. ArdunioAIO-properties-C/C++Build-Settings-AVR Compiler
        ​			
@@ -123,7 +127,6 @@ Ardunio mega2560
   11. 果然将这个宏增加到SmartCarParkFront-Lib，上led的闪动正常了。
   12. 同时在avrdude的的的命令也按照arduinoIED的修改了一下。
 
-     ​	
 2. 但是后来不知道怎么的，又不行了，于是又花了一天半时间来定位问题：
 
   3. 经过对比发现确实arduinoIDE的编译命令和eclipse的有差别，但是不管怎样将eclipse的命令改成和arduino的一样，都不行，LED仍然是不闪。
@@ -156,7 +159,43 @@ Ardunio mega2560
 
 ### arduino plugin
 
-
+采用arduino插件不能支持多项目，即不能将一个项目的库编译好了，供另外一个项目使用，故放弃。
 
 ### cmake
+
+采用cmake作为编译工具，如此可以脱离arduino的开发环境，全部使用vscode，只是在烧写和查看日志的时候，要使用命令行。
+
+
+
+### burn
+
+修改权限
+
+```sh
+sudo chown i /dev/ttyACM0
+```
+
+
+
+手动burn采用如下命令
+
+```sh
+/TOOLS/IDE/arduino/hardware/tools/avr/bin/avrdude -p m2560 -C /TOOLS/IDE/arduino/hardware/tools/avr/etc/avrdude.conf -u -U flash:w:atmega2560.hex -c stk500v2 -P /dev/ttyACM0 -D
+```
+
+或者
+
+```sh
+sudo apt install avrdude
+avrdude -pm2560 -cstk500v2 -P/dev/ttyACM0 -b115200 -D  -Uflash:w:atmega2560.hex
+```
+
+
+
+### 串口
+
+```
+sudo chown i /dev/ttyACM0
+cu -l ttyAMA0 -s 115200
+```
 
