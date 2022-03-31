@@ -895,7 +895,7 @@ superset的api真的好恶心，没有文档，只有一个swagger，所以不�
    
 
    ```
-   curl -v -X 'POST' 'http://bjrdc49:8088/login/' -H 'Cookie: session=eyJjc3JmX3Rva2VuIjoiNzgwOWJkZWFkYzE0N2UzYmM0Yzk3YjNmMzhhZmQ3Yzc2Y2E1MTVkZSIsImxvY2FsZSI6InpoIn0.YZzOFg.Jyvx8GWQ4AjJwFQ00yWx22Cg1W8' -d 'csrf_token=Ijc4MDliZGVhZGMxNDdlM2JjNGM5N2IzZjM4YWZkN2M3NmNhNTE1ZGUi.YZzOFg.s4j0-ehzjf7Ly15Q3Uh8XfUte0Y&username=admin&password=zgjx@321'
+   curl -v -X 'POST' 'http://bjrdc49:8088/login/' -H 'Cookie: session=eyJjc3JmX3Rva2VuIjoiNzgwOWJkZWFkYzE0N2UzYmM0Yzk3YjNmMzhhZmQ3Yzc2Y2E1MTVkZSIsImxvY2FsZSI6InpoIn0.YZzOFg.Jyvx8GWQ4AjJwFQ00yWx22Cg1W8' -d 'csrf_token=Ijc4MDliZGVhZGMxNDdlM2JjNGM5N2IzZjM4YWZkN2M3NmNhNTE1ZGUi.YZzOFg.s4j0-ehzjf7Ly15Q3Uh8XfUte0Y&username=admin&password=xxxxx'
    ```
 
    Set-Cookie: **session=.eJwtjzFuAzEMwP7iOYNk2ZaczxwkS0KCBA1wlywt-vfe0JEDAfKnbLnHcSvX9_6JS9nuXq4FwSZ0qtgbBCEIuVLUujrOkU2WIUIqEtbQRpJDs6UAglawmjylJ3BwukA6TBmDQL3BpG7WjThTovqSNNAmg5Wm8CBp1riWS1nHntv79Yivs4cFpnmoL2wcZKutyUZJoum8eCzt2D1O7_la-ozT-b6d9Dli_18qv390SELC.YZzPDw.uuUfPy3fKxdTJxCSA6rdnKitzOE**; HttpOnly; Path=/; SameSite=Lax
