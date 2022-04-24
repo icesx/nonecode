@@ -3,26 +3,28 @@ git
 # command 
 
 ### clone
-```
+```sh
 $git clone http://xxx
 ```
 ### commit
-```
+```sh
 $git commit .
 $git commit -a .
 ```
 ### push
-```
+```sh
 $git push .
 ```
 ### push delete file
-```
+```sh
 $git add -A
 $git commit -m ""
 $git push
 ```
 
 ## git client
+
+
 
 ```shell
 git clone http://server/spring-cloud-config.git
@@ -47,7 +49,7 @@ error: failed to push some refs to 'http://solar27/spring-cloud-config.git'
 
 ### 保持密码
 
-```
+```sh
 git config --global credential.helper cache
 git config --global credential.helper 'cache --timeout=360000'
 ```
@@ -57,14 +59,20 @@ git config --global credential.helper 'cache --timeout=360000'
 
 ### 中文文件
 
-```
+```sh
 git config --global core.quotepath false
 ```
 
 ### chmod
 
-```
+```sh
 git config --add core.filemode false
+```
+
+### remove
+
+```
+git remove -v
 ```
 
 
@@ -362,15 +370,6 @@ git submodule update --init --recursive
    git submodule update --init --recursive
    git pull --recurse-submodules
    ```
-
-   
-
-
-
-
-
-
-
 
 
 

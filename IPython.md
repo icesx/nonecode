@@ -22,8 +22,10 @@ export PYTHONUSERBASE=/TOOLS/PYTHON_PATH
 ### pip 源
 add some code to `~/.config/pip/pip.conf`
 ```ini
+cat <<EOF >~/.config/pip/conf
 [global]
 index-url = https://mirrors.aliyun.com/pypi/simple/
+EOF
 ```
 ### python path
 

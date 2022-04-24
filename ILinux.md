@@ -800,10 +800,15 @@ chown uucp /dev/ttyUSB0
 sudo cu -l /dev/ttyUSB0 -s 115200
 ```
 ### timezone
-	java 读取默认市区的时候，使用的可能是/etc/localtime。因为在centos7下出现的一个情况是，使用centos的命令tzselect。发现系统的时区修改了，但是java的时区未修改，解决办法是，修改/etc/localtime
+	#ls -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 	#ls -l /etc/localtime 
 	lrwxrwxrwx. 1 root root 33 5月   5 09:41 /etc/localtime -> /usr/share/zoneinfo/Asia/Shanghai
+如果不行的话就需要
+
+在java执行命令上增加` -Duser.timezone=GMT+8 `
+
 ### tar
+
 	tar -cvf test.tgz test/ --exclude *.txt --exclude *.jpg
 ### nc
 
