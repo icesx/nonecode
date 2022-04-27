@@ -18,8 +18,18 @@ sudo apt-get install -y nodejs
 安装nvm
 
 ```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+git clone https://github.com/nvm-sh/nvm.git
+mv nvm ~/.nvm
 ```
+
+add code to .profile
+
+```
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 
+```
+
+
 
 ### nodejs
 
