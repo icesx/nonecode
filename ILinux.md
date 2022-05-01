@@ -836,10 +836,18 @@ journalctl -ax --no-page
 
 
 
-## ulimit 
+### ulimit
+
+#### ubuntu18 
 
 1. /etc/security/limits.conf
-​	$echo "* - nofile 102400" >> /etc/security/limits.conf
+
+  ```
+  $echo "* - nofile 102400" >> /etc/security/limits.conf
+  ```
+
+  
+
 2. /etc/pam.d/login
 
 ​	session required /lib/security/pam_limits.so 
@@ -851,7 +859,7 @@ journalctl -ax --no-page
 
 ​	UsePAM yes
 
-### ubuntu20+
+#### ubuntu20+
 
 ```sh
 vi /etc/systemd/user.conf
@@ -862,6 +870,8 @@ DefaultLimitNOFILE=1024000
 ```
 sudo systemctl restart user@1000
 ```
+
+#### docker
 
 
 
