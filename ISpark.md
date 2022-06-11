@@ -4,10 +4,31 @@ cat >>/home/docker/software/spark-1.5.0-bin-hadoop2.6/conf/spark-env.sh<<EOF
 HADOOP_CONF_DIR=/home/docker/software/hadoop-2.6.0/etc/hadoop
 EOF
 ```
+### 初始化jar
+
+1. push jar 到hadoop
+
+   ```
+   jar cv0f spark-libs.jar -C $SPARK_HOME/jars/ .
+   ${HADOOP_HOME}/bin/hdfs dfs -put spark-libs.jar /spark/3_1_2/
+   ```
+
+2. 修改配置文件
+
+   ```sh
+   cat >> $SPARK_HOME/conf/spark_default.conf <<EOF
+   spark.yarn.archive=hdfs://bjrdc10:9100/spark/3_1_2/spark-libs.jar
+   spark.driver.extraClassPath=/home/bjrdc/software/spark-3.1.2-bin-hadoop3.2/jars/spark-sql_2.12-3.1.2.jar
+   EOF
+   ```
+
+   
+
 ### 启动Spark wordcount
+
 ```
-	/home/docker/software/spark-1.5.0/bin/spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/docker/mrs/spark-mapreduce-0.0.1-SNAPSHOT-package.jar
-	./spark-submit --master yarn --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 
+/home/docker/software/spark-1.5.0/bin/spark-submit --master yarn-cluster --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/docker/mrs/spark-mapreduce-0.0.1-SNAPSHOT-package.jar
+./spark-submit --master yarn --class  com.xjgz.cdc.spark.mr.HdfsWordCount  /home/solar/software/spark-2.3.1-bin-hadoop2.7/examples/jars/spark-examples_2.11-2.3.1.jar 
 ```
 ### Pi
 ```

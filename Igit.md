@@ -214,8 +214,20 @@ d5135553=d5135553f1d643f2cf589197ae98fda740f4b709
 
 恢复到制定的一个版本
 
-```
+```sh
 git reset --hard 45b998b84699b5a5ffcffb6c4ac9639a28235914
+```
+
+reset后如果丢失本地提交可以使用如下方式返回
+
+```sh
+git  reflog
+```
+
+在返回的结果中，选择提交记录
+
+```
+git reset --hard 09aa685 
 ```
 
 

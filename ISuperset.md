@@ -289,6 +289,18 @@ celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 3&
 
 ## 开发
 
+### 几个重要概念
+
+#### superset
+
+#### superset-core
+
+#### superset-ui
+
+#### superset-frontend
+
+
+
 ### 获取代码
 
 ```shell
@@ -464,8 +476,8 @@ superset-frontend通过webpack的proxy来对flask的html进行替换，替换为
 1. @superset-ui/core/lib/connection
 
    实现与superset后端restful通信的库
-
-
+   
+2. @superset-ui**的源代码在哪里呢**？
 
 ### 修改urlbase
 

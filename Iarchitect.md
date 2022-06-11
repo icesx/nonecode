@@ -5599,3 +5599,146 @@ release
 
 ![image-20211031154436579](Iarchitect.assets/image-20211031154436579.png)
 
+
+
+
+
+# 2022年
+
+## 备考攻略
+
+![image-20220531193344056](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531193344056.png)
+
+![image-20220531194326407](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531194326407.png)
+
+![image-20220531194535059](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531194535059.png)
+
+![image-20220531194803592](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531194803592.png)
+
+案例分析需要融混贯通
+
+![image-20220531195634439](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531195634439.png)
+
+要尊重理论，不能喂经验论
+
+
+
+费曼学习发
+
+![image-20220531201703238](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531201703238.png)
+
+![image-20220531202009142](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531202009142.png)
+
+![image-20220531202208890](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531202208890.png)
+
+![image-20220531202801954](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531202801954.png)
+
+转换视角，站在阅卷老师角度
+
+
+
+![image-20220531203714849](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531203714849.png)
+
+
+
+## 信息化
+
+信息化体系包含了方方面面，
+
+![image-20220531210426210](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531210426210.png)
+
+### 信息化的基本概念
+
+信息化的主体是社会成员（政府、企业、团队、个人）
+
+先进社会生产工具
+
+![image-20220531210550560](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531210550560.png)
+
+### 企业信息化目的
+
+提高企业竞争力
+
+设计三种创新
+
+1. 技术创新
+2. 管理创新
+3. 制度创新
+
+![image-20220531211205992](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531211205992.png)
+
+### 信息与信息化基本概念
+
+国家信息化体系的内容
+
+1. 信息资源的开发利用
+2. 信息网络的全面覆盖
+3. 信息技术的广泛应用
+4. 信息产业的大力发展
+5. 信息化人才的培养
+6. 信息化政策法规和标准规范建设
+
+![image-20220531211306548](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531211306548.png)
+
+
+
+### 信息化需求的三个层次
+
+
+
+![image-20220531211839839](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531211839839.png)
+
+### 企业信息化的方法
+
+
+
+![image-20220531211901398](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531211901398.png)
+
+### 信息系统战略规划方法
+
+现有企业战略，再有企业信息化战略（配合企业战略的），再细化到信息系统战略（开发哪些系统），最后是开发
+
+![image-20220531212137220](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531212137220.png)
+
+### 阶段
+
+1. 第一阶段：数据处理为核心，独立系统
+2. 第二阶段：整合以MIS系统为核心
+3. 第三阶段：以集成为核心
+
+（企业多个部门提出各自需求，后企业信息化建设为几级段，答：第一阶段）
+
+![image-20220531212725183](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531212725183.png)
+
+### 第一阶段
+
+#### 关键成功因素法
+
+什么是最重要的？抓住主要矛盾
+
+![image-20220531213606707](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531213606707.png)
+
+#### 战略集成转化法
+
+信息系统集合
+
+![image-20220531213821120](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531213821120.png)
+
+#### 企业系统规划法
+
+UC矩阵，子系统划分
+
+Create USE
+
+![image-20220531213849525](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531213849525.png)
+
+
+
+![image-20220531214118192](/ICESX/ISunflower/nonecode/Iarchitect.assets/image-20220531214118192.png)
+
+### 第二阶段
+
+#### 主题数据库
+
+整合多个数据库，供应用使用，消除信息孤岛
+

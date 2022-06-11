@@ -130,6 +130,19 @@ wget http://download.proxmox.com/images/system/debian-10.0-standard_10.0-1_amd64
 cp debian-10.0-standard_10.0-1_amd64.tar.gz /var/lib/vz/template/cache/
 ```
 
+## 配置
+
+### hostname/hosts
+
+默认pve会去修改container的hostname和hosts文件，如果需要自定义，可以登录到container中后，执行如下命令，pve在下次重启后，则不会自己修改hostname和hosts文件
+
+```
+sudo touch /etc/.pve-ignore.hostname
+sudo touch /etc/.pve-ignore.hosts
+```
+
+
+
 ## 升级
 
 ### 5 升级到6

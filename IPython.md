@@ -1,17 +1,22 @@
 python
 ====
 
+## install
+
 > 目前python2.X已经不维护，各大操作系统已经陆续替换到python3
 
-### 包安装
+## pip 
 
-#### easy_install vs pip
+easy_install vs pip
+
 easy_insall的作用和perl中的cpan, ruby中的gem类似，都提供了在线一键安装模块的傻瓜方便方式，而pip是easy_install的改进版, 提供更好的提示信息，删除package等功能。老版本的python中只有easy_install, 没有pip
 
-#### pip install
+### pip install
+
 ```sh
 $sudo apt install python3-pip
 ```
+
 如果用sudo apt 安装python的库,会安装到/usr/lib/python/site-packages下.如果用pip3安装会安装到~/.local/lib/python3.7/site-packages
 如果要修改pip的安装路径需要
 
@@ -19,8 +24,11 @@ $sudo apt install python3-pip
 export PYTHONPAT=$PYTHONPATH:/TOOLS/PYTHON_PATH/lib/python3.7/site-packages
 export PYTHONUSERBASE=/TOOLS/PYTHON_PATH
 ```
-### pip 源
+
+### 源
+
 add some code to `~/.config/pip/pip.conf`
+
 ```ini
 cat <<EOF >~/.config/pip/conf
 [global]
@@ -79,19 +87,34 @@ EOF
 
      此种安装方式会安装一堆链接文件进去
 
+### 多版本安装
+
+```sh
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+sudo apt install python3.7
+virtualenv -p /usr/bin/python3.7 venv_3.7
+```
+
+### 相关命令
+
+```
+pip show tensorflow
+pip list
+pip install -r requirements.txt
+```
+
+
+
+## 开发
+
 ### 私有成员
+
 Python不像C++、Java、C#等有明确的公共、私有或受保护的关键字来定义成员函数或属性，它使用约定的单下划线“_"和"__"双下划线作为函数或属性的前缀来标识。使用单下划线还是双下划线，是有很大的区别的。
 
 1. 单下划线的函数或属性，在类定义中可以调用和访问，类的实例可以直接访问，子类中可以访问；
 
 2. 双下划线的函数或属性，在类定义中可以调用和访问，类的实例不可以直接访问，子类不可访问。
-
-
-### pip
-```sh
-pip show tensorflow
-pip list
-```
 
 
 
@@ -112,6 +135,6 @@ virtualenv --no-site-packages --python=python3.6 venv
  `--no-site-packages`，这样，已经安装到系统Python环境中的所有第三方包都不会复制过来
 
 ```
-virtualenv --python=python3.8 venv
+virtualenv --python=/usr/bin/python3.8 venv
 ```
 

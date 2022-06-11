@@ -78,7 +78,7 @@ sudo systemctl start dnsmasq
 
 
 
-#### ubuntu18
+#### ubuntu 18
 
 network配置发生变化，修改方式如下：
 ```yaml
@@ -424,6 +424,7 @@ ufw default deny
 ufw status verbose 
 ufw status numbered 
 ufw delete 11
+sudo ufw allow from 172.31.0.0/16 to any port 5666
 ```
 ### 端口转发
 > 打开linux的ip转发
