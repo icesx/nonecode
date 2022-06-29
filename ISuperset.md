@@ -287,6 +287,30 @@ celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 3&
 
 
 
+## 样例
+
+superset 自带样例，可以使用如下命令下载
+
+```
+superset load_examples
+```
+
+但是由于需要去github上下载，经常会timeout。可以使用如下方法解决
+
+1. 从github上面下载文件集 examples-data-master.zip https://github.com/apache-superset/examples-data-maser
+
+2. 将下载的压缩文件解压后放到nginx下，如localhost:8888/examples-data-master。注：这个地址要列出所有的压缩包内容
+
+3. 修改superset的helper.py并修改ia
+
+   ```
+   vi /superset/examples/helpers.py
+   # BASE_URL = "https://github.com/apache-superset/examples-data/blob/master/"
+   BASE_URL="http://localhost:8888/examples-data-master/"
+   ```
+
+4. 重新执行`superset load_examples`
+
 ## 开发
 
 ### 几个重要概念

@@ -872,6 +872,14 @@ DefaultLimitNOFILE=1024000
 sudo systemctl restart user@1000
 ```
 
+#### 临时生效
+
+```
+sudo sh -c "ulimit -n 1024000 && exec su $LOGNAME"
+```
+
+
+
 #### docker
 
 
