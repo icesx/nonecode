@@ -94,3 +94,128 @@ In the File Explorer, one file you'll see is the application `README.md` Markdow
 ## webpack
 
 [官方资料](https://webpack.js.org/guides/getting-started/)
+
+
+
+## React
+
+### 基本概念
+
+#### useState
+
+#### useEffect
+
+#### Promise
+
+#### route
+
+#### props
+
+### 用法
+
+#### 数据绑定
+
+#### 异步请求
+
+#### 事件
+
+## 组件
+
+### redux
+
+#### useDispath
+
+#### createStore
+
+### 父子组件传值
+
+
+
+## TypeScript
+
+#### 声明文件
+
+#### interface
+
+```typescript
+interface Person {
+    readonly id: number;
+    name: string;
+    age?: number;
+    [propName: string]: any;
+}
+```
+
+#### 函数
+
+基本定义方法
+
+```typescript
+let mySum = function (x: number, y: number): number {
+    return x + y;
+};
+function sum(x, y) {
+    return x + y;
+}
+let mySum = function (x, y) {
+    return x + y;
+};
+let mySum: (x: number, y: number) => number = function (x: number, y: number): number {
+    return x + y;
+};
+```
+
+接口定义方法
+
+```ts
+interface SearchFunc {
+    (source: string, subString: string): boolean;
+}
+
+let mySearch: SearchFunc;
+mySearch = function(source: string, subString: string) {
+    return source.search(subString) !== -1;
+}
+```
+
+可选参数
+
+```ts
+function buildName(firstName: string, lastName?: string) {
+    if (lastName) {
+        return firstName + ' ' + lastName;
+    } else {
+        return firstName;
+    }
+}
+let tomcat = buildName('Tom', 'Cat');
+let tom = buildName('Tom');
+```
+
+默认参数
+
+```ts
+function buildName(firstName: string, lastName: string = 'Cat') {
+    return firstName + ' ' + lastName;
+}
+```
+
+剩余参数
+
+```ts
+function push(array, ...items) {
+    items.forEach(function(item) {
+        array.push(item);
+    });
+}
+
+let a: any[] = [];
+push(a, 1, 2, 3);
+```
+
+
+
+#### type
+
+
+

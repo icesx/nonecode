@@ -42,7 +42,7 @@ IIDEA
 | ctrl+alt+O            | autoimport                                                   |
 | ctrl+shift+O          | mavne reload                                                 |
 | ctrl+F12              | 显示成员                                                     |
-|                       |                                                              |
+| ctrl+shitf+n          | **查找文件**                                                 |
 |                       |                                                              |
 
 

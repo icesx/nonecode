@@ -263,4 +263,4 @@ service openvpn@server restart
 	
 2. [OpenSSL Error messages: error:1416F086:SSL routines:tls_process_server_certificate:certificate verify failed](https://stackoverflow.com/questions/57358047/openssl-error-messages-error1416f086ssl-routinestls-process-server-certifica)
 
-   
+3. 如果无法ping通vpn的网关可打开`redirect-gateway`

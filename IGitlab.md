@@ -180,7 +180,7 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
        resources: ["*"]
        verbs: ["*"]
    ---
-   kind: ClusterRoleBinding
+   kind: ClusterRoleBinding	
    apiVersion: rbac.authorization.k8s.io/v1
    metadata:
      name: gitlab-ci
@@ -284,13 +284,27 @@ runner是一个golang编写的gitlab的devops工具，用于进行ci和di工作�
 
 先安装好kubernetes，在安装成功后，在gitlab的管理界面增加kubernetes集群，相关的参数要求可以看gitlab的说明
 
-1. 获取ca
+1. 输入服务器的 API URL
 
    ```
-   kubectl get secret default-token-z2rm7 -o jsonpath="{['data']['ca\.crt']}" | base64 --decode                    
+   https://172.16.15.17:6443
    ```
 
-2. 获取service token
+2. 获取token名称
+
+   ```
+   kubectl get secrets
+   NAME                  TYPE                                  DATA   AGE
+   default-token-z2rm7   kubernetes.io/service-account-token   3      384d
+   ```
+
+3. 获取ca
+
+   ```
+   kubectl get secret default-token-z2rm7 -o jsonpath="{['data']['ca\.crt']}" | base64 --decode
+   ```
+
+4. 获取service token
 
    ```
    kubectl -n gitlab-runner describe secret $(kubectl -n gitlab-runner get secret | grep gitlab | awk '{print $1}')

@@ -906,6 +906,8 @@ SQLALCHEMY_DATABASE_URI = 'mysql://superset:xxxxx@bjrdc60/hav_superset'
 
 ## API对接
 
+### 登录-页面获取csrf_token
+
 superset的api真的好恶心，没有文档，只有一个swagger，所以不知道如何对接。经过摸索2天后，通过抓包后来确定了基本的对接方案。
 
 1. 首先访问首页，获取到默认cookie和csrf_token
@@ -948,3 +950,61 @@ superset的api真的好恶心，没有文档，只有一个swagger，所以不�
 
 **注：不知为何superset的/security/login 可以登录成功，并获取到token，但是后续使用token的时候不成功**
 
+
+
+### 登录-接口获取csrf-token
+
+**模拟方式**
+
+1. 获取access_token
+
+   ```sh
+   curl --location --request POST 'http://localhost:9000/api/v1/security/login' \
+   --header 'Content-Type: application/json' \
+   --data-raw '{
+    "username": "admin",
+    "password": "xxxxxx",
+    "provider": "db",
+    "refresh": true
+   }'
+   {
+     "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2NTcxODYwNjEsIm5iZiI6MTY1NzE4NjA2MSwianRpIjoiNTMwYWU5NzItNzJjNi00MGQ4LWI2MzItYTU4MzhiMTkyNDc4IiwiZXhwIjoxNjU3MTg2OTYxLCJpZGVudGl0eSI6MSwiZnJlc2giOnRydWUsInR5cGUiOiJhY2Nlc3MifQ.Vj3i4tQaWdNaal2a4-PTzGCD4L5HVJtfieu9411XJio", 
+     "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2NTcxODYwNjEsIm5iZiI6MTY1NzE4NjA2MSwianRpIjoiYjc5MmYwMzgtMjMzMi00M2E5LThhYzYtNzFkZjAzNDIwMDhiIiwiZXhwIjoxNjU5Nzc4MDYxLCJpZGVudGl0eSI6MSwidHlwZSI6InJlZnJlc2gifQ.Lo9mtTlyDQWHcmewg1OjAzSnhwZrGXrOaX8Oh2Mmk8E"
+   }
+   ```
+
+   
+
+2. 获取session
+
+   authorization 为 access_token
+
+   ```sh
+   curl -i -X GET 'http://localhost:9000/api/v1/security/csrf_token/' --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2NTcxODYwNjEsIm5iZiI6MTY1NzE4NjA2MSwianRpIjoiNTMwYWU5NzItNzJjNi00MGQ4LWI2MzItYTU4MzhiMTkyNDc4IiwiZXhwIjoxNjU3MTg2OTYxLCJpZGVudGl0eSI6MSwiZnJlc2giOnRydWUsInR5cGUiOiJhY2Nlc3MifQ.Vj3i4tQaWdNaal2a4-PTzGCD4L5HVJtfieu9411XJio' 
+   HTTP/1.1 200 OK
+   X-Powered-By: Express
+   content-type: application/json; charset=utf-8
+   content-length: 110
+   Vary: Cookie, Accept-Encoding
+   set-cookie: session=eyJjc3JmX3Rva2VuIjoiYTNlYjMwZjQ1Mzg1YTNjN2JlZDUwODQ3MTE1NTZmNTRiYWNiZTYyOCJ9.Ysao8Q.3R5GG0mMYJK36YT9hcRJxhIsgYE; HttpOnly; Path=/; SameSite=Lax
+   server: Werkzeug/1.0.1 Python/3.9.13
+   date: Thu, 07 Jul 2022 09:35:45 GMT
+   Connection: keep-alive
+   Keep-Alive: timeout=5
+   
+   {
+     "result": "ImEzZWIzMGY0NTM4NWEzYzdiZWQ1MDg0NzExNTU2ZjU0YmFjYmU2Mjgi.Ysao8A.mVwRD33d6zsTzyUNvkB3KJVZGVk"
+   }
+   ```
+
+   
+
+3. 调用接口
+
+   ```sh
+   curl -X GET 'http://localhost:9000/api/v1/chart/132' --header 'X-CSRFToken: ImEzZWIzMGY0NTM4NWEzYzdiZWQ1MDg0NzExNTU2ZjU0YmFjYmU2Mjgi.Ysao8A.mVwRD33d6zsTzyUNvkB3KJVZGVk' --header 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE2NTcxODYwNjEsIm5iZiI6MTY1NzE4NjA2MSwianRpIjoiNTMwYWU5NzItNzJjNi00MGQ4LWI2MzItYTU4MzhiMTkyNDc4IiwiZXhwIjoxNjU3MTg2OTYxLCJpZGVudGl0eSI6MSwiZnJlc2giOnRydWUsInR5cGUiOiJhY2Nlc3MifQ.Vj3i4tQaWdNaal2a4-PTzGCD4L5HVJtfieu9411XJio' --header 'Cookie: session=eyJjc3JmX3Rva2VuIjoiYTNlYjMwZjQ1Mzg1YTNjN2JlZDUwODQ3MTE1NTZmNTRiYWNiZTYyOCJ9.Ysao8Q.3R5GG0mMYJK36YT9hcRJxhIsgYE'
+   ```
+
+   
+   
+   

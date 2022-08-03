@@ -1082,6 +1082,25 @@ EOF
 
 token 过期
 
+##### 证书失效（Unable to connect to the server: x509: certificate has expired or is not yet valid）
+
+1. master上重新生成证书
+
+   ```
+   sudo kubeadm certs renew all
+   ```
+
+   重启所有节点，或者重启相关的pod
+
+2. mater上修改.kube/config文件
+
+   ```
+   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+   sudo chown $(id -u):$(id -g) $HOME/.kube/config
+   ```
+
+   
+
 ### master 上安装其他组件
 
 #### dashboard
@@ -5120,6 +5139,7 @@ kubectl get events
 kubectl get secret regcred --output=yaml
 kubectl get deployment metrics-server -n kube-system --output=yaml
 kubectl get serviceaccounts -n bjrdc-dev
+kubectl get sa -n bjrdc-dev
 kubectl get serviceaccounts -n bjrdc-dev -o yaml
 ```
 
