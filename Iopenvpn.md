@@ -252,6 +252,24 @@ service openvpn@server restart
 >
 > 之后重新吊销任何一个证书，即可更新crl.pem文件
 
+### 查看有效用户
+
+
+
+```sh
+cd /etc/openvpn/easy-rsa/keys/
+cat index.txt | grep ^V | awk -F "/" '{print $7, $8}'
+```
+
+```
+V       300422073202Z           05      unknown /C=US/ST=CA/L=SanFrancisco/O=Fort-Funston/OU=MyOrganizationalUnit/CN=wanwt/name=server/emailAddress=me@myhost.mydomain
+R       300507002139Z   211011122859Z   06      unknown /C=US/ST=CA/L=SanFrancisco/O=Fort-Funston/OU=MyOrganizationalUnit/CN=fugy/name=server/emailAddress=me@myhost.mydomain
+```
+
+V开头的是有效用户，R开头的是吊销用户
+
+
+
 ### 问题处理
 
 1. Failed to start OpenVPN Robust And Highly Flexible Tunneling Application On server.
