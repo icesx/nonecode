@@ -301,6 +301,55 @@ $ systemctl list-units --type=service
 $ systemctl list-dependencies nginx.service
 ```
 
+### 带参数的service
+
+name@parame.service 实际上是不存在的。他主要是通过 name@.service 来执行～也就是说， name@.service 的目的是为了要简化多个执行的启动设置， 他的命名方式是这样的：
+
+```
+原始文件：执行服务名称@.service
+可执行文件案：执行服务名称@范例名称.service
+```
+
+```
+cat openvpn@.service 
+[Unit]
+Description=OpenVPN connection to %i
+PartOf=openvpn.service
+Before=systemd-user-sessions.service
+After=network-online.target
+Wants=network-online.target
+Documentation=man:openvpn(8)
+Documentation=https://community.openvpn.net/openvpn/wiki/Openvpn24ManPage
+Documentation=https://community.openvpn.net/openvpn/wiki/HOWTO
+
+[Service]
+Type=notify
+PrivateTmp=true
+WorkingDirectory=/etc/openvpn
+ExecStart=/usr/sbin/openvpn --daemon ovpn-%i --status /run/openvpn/%i.status 10 --cd /etc/openvpn --script-security 2 --config /etc/openvpn/%i.conf --writepid /run/openvpn/%i.pid
+PIDFile=/run/openvpn/%i.pid
+KillMode=process
+CapabilityBoundingSet=CAP_IPC_LOCK CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_SETGID CAP_SETUID CAP_SYS_CHROOT CAP_DAC_OVERRIDE CAP_AUDIT_WRITE
+LimitNPROC=10
+DeviceAllow=/dev/null rw
+DeviceAllow=/dev/net/tun rw
+ProtectSystem=true
+ProtectHome=true
+RestartSec=5s
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+安装
+
+```
+systemctl -f enable openvpn@xx.service
+```
+
+
+
 ### service 文件格式
 
 > sshd 的service文件
@@ -352,7 +401,7 @@ WantedBy=multi-user.target
 
 1. 创建service文件
 
-   ```sh
+   ```ini
    cat harbor.service 
    [Unit]
    Description=Redis
@@ -1108,4 +1157,100 @@ for i in {0..10000}; do date -d "$((RANDOM%1+2020))-$((RANDOM%6+1))-$((RANDOM%28
 ```
 shuf -n 100 Chinese_Names_Corpus_Gender（120W）.txt |awk -F ',' '{print $1}' > name.txt
 ```
+
+## iostat
+
+iostat 参数 时间 次数
+
+### 参数说明
+
+1. -c： 显示CPU使用情况，与-d选项互斥
+2. -d： 显示磁盘使用情况，与-c选项互斥
+3. -N： 显示磁盘阵列(LVM) 信息
+4. -n： 显示NFS 使用情况
+5. -k： 以 KB 为单位显示每秒的磁盘请求数,默认单位块
+6. -m： 以 M 为单位显示
+7. -t： 报告每秒向终端读取和写入的字符数和CPU的信息
+8. -V： 显示版本信息
+9. -x： 显示详细信息
+10. -p：[磁盘] 显示磁盘和分区的情况
+
+### 属性说明
+
+#### CPU属性
+
+- %user：CPU处在用户模式下的时间百分比。
+- %nice：CPU处在带NICE值的用户模式下的时间百分比。
+- %system：CPU处在系统模式下的时间百分比。
+- %iowait：CPU等待输入输出完成时间的百分比。
+- %steal：管理程序维护另一个虚拟处理器时，虚拟CPU的无意识等待时间百分比。
+- %idle：CPU空闲时间百分比。
+
+#### 磁盘属性
+
+- rrqm/s: 每秒进行 merge 的读操作数目。即 rmerge/s
+- wrqm/s: 每秒进行 merge 的写操作数目。即 wmerge/s
+- r/s: 每秒完成的读 I/O 设备次数。即 rio/s
+- w/s: 每秒完成的写 I/O 设备次数。即 wio/s
+- rsec/s: 每秒读扇区数。即 rsect/s
+- wsec/s: 每秒写扇区数。即 wsect/s
+- rkB/s: 每秒读K字节数。是 rsect/s 的一半，因为每扇区大小为512字节。
+- wkB/s: 每秒写K字节数。是 wsect/s 的一半。
+- avgrq-sz: 平均每次设备I/O操作的数据大小 (扇区)。
+- avgqu-sz: 平均I/O队列长度。
+- await: 平均每次设备I/O操作的等待时间 (毫秒)。
+- svctm: 平均每次设备I/O操作的服务时间 (毫秒)。
+- %util: 一秒中有百分之多少的时间用于 I/O 操作，即被io消耗的cpu百分比
+
+### 例子
+
+```
+iostat -d 2 
+iostat -d sda 
+iostat -p sda 2 3   #每隔2秒显示一次sda及上面所有分区的统计信息,共输出3次
+```
+
+#### 查看TPS
+
+```
+iostat -k -d 1 1
+Linux 5.15.0-46-generic (iextreme) 	08/12/2022 	_x86_64_	(16 CPU)
+
+Device             tps    kB_read/s    kB_wrtn/s    kB_dscd/s    kB_read    kB_wrtn    kB_dscd
+loop0             0.04         0.32         0.00         0.00        362          0          0
+loop1             0.07         1.47         0.00         0.00       1651          0          0
+loop2             0.01         0.01         0.00         0.00         14          0          0
+nvme0n1          96.09      2362.93       379.34         0.00    2649998     425426          0
+```
+
+#### 查看使用率和响应时间
+
+```
+iostat -k -d -x 1 1
+Linux 5.15.0-46-generic (iextreme) 	08/12/2022 	_x86_64_	(16 CPU)
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+loop0            0.04      0.31     0.00   0.00    0.06     7.24    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+loop1            0.07      1.40     0.00   0.00    0.08    19.89    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.01
+loop2            0.01      0.01     0.00   0.00    0.00     1.27    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+nvme0n1         82.21   2243.20    37.39  31.27    0.15    27.29    9.24    362.99    10.07  52.16    2.60    39.29    0.00      0.00     0.00   0.00    0.00     0.00    0.86    0.59    0.04   2.40
+
+```
+
+
+
+### 命令输出
+
+| avg-cpu段 |                                                           |
+| --------- | --------------------------------------------------------- |
+| %user     | 在用户级别运行所使用的CPU的百分比. <60%                   |
+| %nice     | nice操作所使用的CPU的百分比                               |
+| %sys      | 在系统级别(kernel)运行所使用CPU的百分比. sy+us <80%       |
+| %iowait   | IO等待所占用的cup时间（重要） <30% (不同功能的服务器不同) |
+| %steal    | 丢失时间占用cpu 作为一个参考                              |
+| %idle     | CPU处于中断（空闲）状态的时间                             |
+
+
+
+## wine
 

@@ -267,11 +267,54 @@ sudo ln -s /cloud/mysql-8.0.26-linux-glibc2.12-x86_64 mysql
 cd /usr/local/mysql/bin
 ```
 
+注：mysql8 不需要放到/usr/local下
+
 ### 初始化
 
 ```
 ./mysqld --initialize --user=bjrdc
 ./mysqld_safe --user=bjrdc&
+```
+
+修改密码
+
+You must reset your password using ALTER USER statement before executing this statement
+
+```
+alter user 'root'@'localhost' identified by 'zgjx#321';
+```
+
+### service
+
+```ini
+[Unit]
+Description=mysql
+After=network.target
+
+
+[Service]
+User=bjrdc
+Group=bjrdc
+ExecStart=/data/mysql-8.0.26-linux-glibc2.12-x86_64/bin/mysqld_safe --user=bjrdc&
+
+ExecStop=kill -9 `cat /data/mysql-8.0.26-linux-glibc2.12-x86_64/data/bjrdc65.pid`
+KillMode=process
+Restart=on-failure
+RestartSec=50s
+
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
+
+## mysql8 apt 安装
+
+```
+sudo apt install mysql-server-8.0
+sudo mysql
+mysql >ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password by 'xxx'
 ```
 
 
@@ -785,6 +828,14 @@ mysql> show variables like "%slow%";
 | slow_query_log_file       | /usr/local/mysql/data/bjrdc86-slow.log |
 +---------------------------+----------------------------------------+
 5 rows in set (0.01 sec)
+```
+
+
+
+### 手动备份
+
+```
+/mysqldump -u root -p --default-character-set=utf8 --hex-blob hav_superset > /cloud/hav_superset_60_2022_08_06.sql 
 ```
 
 

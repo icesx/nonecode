@@ -125,6 +125,22 @@ sudo apt install python3-dev
 
 
 
+#### UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd2 in position 0: invalid continuation byte
+
+  File "/cloud/venv/lib/python3.8/site-packages/SQLAlchemy_Utils-0.37.9-py3.8.egg/sqlalchemy_utils/types/encrypted/encrypted_type.py", line 128, in decrypt
+    decrypted = decrypted.decode('utf-8')
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd2 in position 0: invalid continuation byte
+
+当superset切换数据库的时候，如果数据库是从老版本dump过来的话，可能会在`superset init`的时候出现这个问题，[解决办法](https://github.com/apache/superset/issues/8538#issuecomment-1046238602)是
+
+1. Change SECRET_KEY on superset_config.py
+2. Access psql client and connect to the superset DB (\connect db_name;)
+3. `update dbs set password = null, encrypted_extra=null;`
+4. superset db upgrade
+5. superset init
+6. superset run
+7. Update password on Superset: Data > Databases (I'm using 1.4.1 btw)
+
 ## 数据源
 
 ### Kylin
@@ -913,7 +929,7 @@ superset的api真的好恶心，没有文档，只有一个swagger，所以不�
 1. 首先访问首页，获取到默认cookie和csrf_token
 
    ```
-   curl -v -X 'GET' 'http://bjrdc49:8088/login/'
+   curl -I 'GET' 'http://bjrdc49:8088/login/'|grep csrf
    ```
 
    csrf_token在返回页面的隐藏域中

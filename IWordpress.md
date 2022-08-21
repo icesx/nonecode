@@ -11,74 +11,74 @@ wordpress
    sudo apt install wordpress
    ```
 
-   2. 配置
+2. 配置
 
-      ```sh
-      cat > /etc/apache2/sites-available/wordpress.conf <<EOF
-      Alias /blog /usr/share/wordpress
-      <Directory /usr/share/wordpress>
-          Options FollowSymLinks
-          AllowOverride Limit Options FileInfo
-          DirectoryIndex index.php
-          Order allow,deny
-          Allow from all
-      </Directory>
-      <Directory /usr/share/wordpress/wp-content>
-          Options FollowSymLinks
-          Order allow,deny
-          Allow from all
-      </Directory>
-      EOF
-      ```
+   ```sh
+   cat > /etc/apache2/sites-available/wordpress.conf <<EOF
+   Alias /blog /usr/share/wordpress
+   <Directory /usr/share/wordpress>
+       Options FollowSymLinks
+       AllowOverride Limit Options FileInfo
+       DirectoryIndex index.php
+       Order allow,deny
+       Allow from all
+   </Directory>
+   <Directory /usr/share/wordpress/wp-content>
+       Options FollowSymLinks
+       Order allow,deny
+       Allow from all
+   </Directory>
+   EOF
+   ```
 
-    3. 启动服务
+3. 启动服务
 
-       ```sh
-       sudo a2ensite wordpress
-       systemctl reload apache2
-       sudo systemctl reload apache2
-       sudo a2enmod rewrite
-       sudo service apache2 reload
-       ```
+    ```sh
+    sudo a2ensite wordpress
+    systemctl reload apache2
+    sudo systemctl reload apache2
+    sudo a2enmod rewrite
+    sudo service apache2 reload
+    ```
 
-    4. 安装mysql
+4. 安装mysql
 
-       ```
-       sudo apt install mysql-server php-mysql libapache2-mod-php
-       mysql -u root
-       ```
+    ```
+    sudo apt install mysql-server php-mysql libapache2-mod-php
+    mysql -u root
+    ```
 
-    5. 配置mysql
+5. 配置mysql
 
-       ```
-       $ sudo mysql -u root
-       Welcome to the MySQL monitor.  Commands end with ; or \g.
-       Your MySQL connection id is 7
-       Server version: 5.7.20-0ubuntu0.16.04.1 (Ubuntu)
-       
-       Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
-       
-       Oracle is a registered trademark of Oracle Corporation and/or its
-       affiliates. Other names may be trademarks of their respective
-       owners.
-       
-       Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
-       
-       mysql> CREATE DATABASE wordpress;
-       Query OK, 1 row affected (0,00 sec)
-       
-       mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER ON wordpress.* TO wordpress@localhost IDENTIFIED BY 'xxx';
-       Query OK, 1 row affected (0,00 sec)
-       
-       mysql> FLUSH PRIVILEGES;
-       Query OK, 1 row affected (0,00 sec)
-       
-       mysql> quit
-       sudo service mysql restart
-       ```
-       
-    6. 配置数据库链接
-   
+    ```
+    $ sudo mysql -u root
+    Welcome to the MySQL monitor.  Commands end with ; or \g.
+    Your MySQL connection id is 7
+    Server version: 5.7.20-0ubuntu0.16.04.1 (Ubuntu)
+    
+    Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+    
+    Oracle is a registered trademark of Oracle Corporation and/or its
+    affiliates. Other names may be trademarks of their respective
+    owners.
+    
+    Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+    
+    mysql> CREATE DATABASE wordpress;
+    Query OK, 1 row affected (0,00 sec)
+    
+    mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER ON wordpress.* TO wordpress@localhost IDENTIFIED BY 'xxx';
+    Query OK, 1 row affected (0,00 sec)
+    
+    mysql> FLUSH PRIVILEGES;
+    Query OK, 1 row affected (0,00 sec)
+    
+    mysql> quit
+    sudo service mysql restart
+    ```
+
+6. 配置数据库链接
+
     ```php
        cat >/etc/wordpress/config-bjrdc212.php <<EOF
     <?php
@@ -92,18 +92,18 @@ wordpress
        ?>
        EOF
     ```
-   
-    7. 访问
-   
+
+7. 访问
+
     ```
     bjrdc212/blog
     http://bjrdc212/blog/wp-admin/
     ```
-   
-    8. ftp
-   
+
+8. ftp
+
    [vstfp]: Ivsftpd.md
-   
+
     
 
 ## 插件
